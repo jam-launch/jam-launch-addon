@@ -1,0 +1,39 @@
+name: Release Addon
+on:
+  workflow_dispatch:
+
+jobs:
+
+  PackageAndRelease:
+    name: Package files for the jam_launch addon
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        path: addons/jam_launch
+      
+      - name: Determine version
+        run: echo "addon_version=${{ github.run_number }}.$(date +%Y%m%d)" >> "$GITHUB_ENV"
+      
+      - name: Update version in repo 
+        working-directory: addons/jam_launch
+        run: |
+          sed 's/^version\s*=.*/version="'${{ env.addon_version }}'"/' settings.cfg > settings.cfg
+          sed 's/^version\s*=.*/version="'${{ env.addon_version }}'"/' editor_plugin/plugin.cfg > editor_plugin/plugin.cfg
+          git commit -am "automated release updates for ${{ env.addon_version }}"
+          git tag ${{ env.addon_version }}
+          git push
+          git push --tags
+      
+      - name: Package the addon files
+        run: |
+          rm -rf addons/jam_launch/.github
+          rm -rf addons/jam_launch/.gitattributes
+          zip -r jam-launch-godot-addon.zip addons
+      
+      - uses: ncipollo/release-action@v1
+        with:
+          body: "Jam Launch addon for Godot"
+          artifacts: "jam-launch-godot-addon.zip"
+          tag: ${{ env.addon_version }}
