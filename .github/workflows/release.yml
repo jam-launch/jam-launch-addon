@@ -20,8 +20,14 @@ jobs:
       - name: Update version in repo 
         working-directory: addons/jam_launch
         run: |
-          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' settings.cfg > settings.cfg
-          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' editor_plugin/plugin.cfg > editor_plugin/plugin.cfg
+          echo "updating version in settings..."
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' settings.cfg 
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' settings.cfg > settings.cfg.new
+          mv settings.cfg.new settings.cfg
+          echo "updating version in plugin..."
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' editor_plugin/plugin.cfg
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' editor_plugin/plugin.cfg > editor_plugin/plugin.cfg.new
+          mv editor_plugin/plugin.cfg.new editor_plugin/plugin.cfg
           [[ -s settings.cfg ]]
           [[ -s editor_plugin/plugin.cfg ]]
           git config --global user.name 'Jam Launch GitHub Bot'
