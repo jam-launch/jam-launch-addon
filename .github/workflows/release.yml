@@ -11,7 +11,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        path: addons/jam_launch
+        with:
+          path: addons/jam_launch
       
       - name: Determine version
         run: echo "addon_version=${{ github.run_number }}.$(date +%Y%m%d)" >> "$GITHUB_ENV"
