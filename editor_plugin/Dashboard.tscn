@@ -1,0 +1,46 @@
+[gd_scene load_steps=7 format=3 uid="uid://b1on16edsk3a6"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Dashboard.gd" id="1_pqj8q"]
+[ext_resource type="PackedScene" uid="uid://dvpd3fdw8nehb" path="res://addons/jam_launch/editor_plugin/Login.tscn" id="2_hl1us"]
+[ext_resource type="PackedScene" uid="uid://gfu0s6x0ss0y" path="res://addons/jam_launch/editor_plugin/ProjectSelect.tscn" id="3_mfkr3"]
+[ext_resource type="PackedScene" uid="uid://dtyeqsjc7ytwj" path="res://addons/jam_launch/editor_plugin/NewProject.tscn" id="4_xw32o"]
+[ext_resource type="PackedScene" uid="uid://dwbbc305p213v" path="res://addons/jam_launch/editor_plugin/Project.tscn" id="5_0x6ps"]
+[ext_resource type="Script" path="res://addons/jam_launch/api/ProjectApi.gd" id="6_21ydx"]
+
+[node name="Dashboard" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+script = ExtResource("1_pqj8q")
+
+[node name="Login" parent="." instance=ExtResource("2_hl1us")]
+visible = false
+layout_mode = 2
+
+[node name="ProjectSelect" parent="." instance=ExtResource("3_mfkr3")]
+layout_mode = 2
+
+[node name="NewProject" parent="." instance=ExtResource("4_xw32o")]
+visible = false
+layout_mode = 2
+
+[node name="Project" parent="." instance=ExtResource("5_0x6ps")]
+visible = false
+layout_mode = 2
+
+[node name="ProjectApi" type="Node" parent="."]
+script = ExtResource("6_21ydx")
+
+[connection signal="new_project" from="ProjectSelect" to="." method="_on_project_select_new_project"]
+[connection signal="open_project" from="ProjectSelect" to="." method="_on_project_select_open_project"]
+[connection signal="cancel" from="NewProject" to="." method="_on_new_project_cancel"]
+[connection signal="create_done" from="NewProject" to="." method="_on_new_project_create_done"]
+[connection signal="go_back" from="Project" to="." method="_on_project_go_back"]

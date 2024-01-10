@@ -1,0 +1,79 @@
+[gd_scene load_steps=3 format=3 uid="uid://gfu0s6x0ss0y"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/ProjectSelect.gd" id="1_yrc6b"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_h247m"]
+font_color = Color(1, 0.490196, 0.454902, 1)
+
+[node name="ProjectSelect" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 24
+script = ExtResource("1_yrc6b")
+
+[node name="HTTPGetProjects" type="HTTPRequest" parent="."]
+
+[node name="VB" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="TopBar" type="HBoxContainer" parent="VB"]
+layout_mode = 2
+
+[node name="NewBtn" type="Button" parent="VB/TopBar"]
+layout_mode = 2
+text = "New Project"
+
+[node name="Label" type="Label" parent="VB/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RefreshBtn" type="Button" parent="VB/TopBar"]
+layout_mode = 2
+text = "Refresh"
+
+[node name="LogOutBtn" type="Button" parent="VB/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+text = "Log Out"
+
+[node name="Title" type="Label" parent="VB"]
+layout_mode = 2
+text = "Projects:"
+
+[node name="Projects" type="ItemList" parent="VB"]
+layout_mode = 2
+auto_height = true
+
+[node name="ErrMsg" type="Label" parent="VB"]
+visible = false
+layout_mode = 2
+text = "Error"
+label_settings = SubResource("LabelSettings_h247m")
+
+[node name="Loading" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Text" type="Label" parent="Loading"]
+layout_mode = 2
+text = "Loading projects..."
+
+[node name="Bar" type="ProgressBar" parent="Loading"]
+layout_mode = 2
+value = 10.0
+allow_greater = true
+show_percentage = false
+
+[connection signal="request_completed" from="HTTPGetProjects" to="." method="_on_http_get_projects_request_completed"]
+[connection signal="pressed" from="VB/TopBar/NewBtn" to="." method="_on_new_btn_pressed"]
+[connection signal="pressed" from="VB/TopBar/RefreshBtn" to="." method="_on_refresh_btn_pressed"]
+[connection signal="pressed" from="VB/TopBar/LogOutBtn" to="." method="_on_log_out_btn_pressed"]
+[connection signal="item_activated" from="VB/Projects" to="." method="_on_projects_item_activated"]

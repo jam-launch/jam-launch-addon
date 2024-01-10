@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtyeqsjc7ytwj"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/NewProject.gd" id="1_y735d"]
+
+[node name="NewProject" type="CenterContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_y735d")
+
+[node name="VB" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="ProjectName" type="LineEdit" parent="VB"]
+layout_mode = 2
+placeholder_text = "Project Name"
+
+[node name="Options" type="HBoxContainer" parent="VB"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 16
+
+[node name="Cancel" type="Button" parent="VB/Options"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="Create" type="Button" parent="VB/Options"]
+layout_mode = 2
+text = "Create
+"
+
+[node name="ErrMsg" type="Label" parent="VB"]
+layout_mode = 2
+
+[connection signal="pressed" from="VB/Options/Cancel" to="." method="_on_cancel_pressed"]
+[connection signal="pressed" from="VB/Options/Create" to="." method="_on_create_pressed"]

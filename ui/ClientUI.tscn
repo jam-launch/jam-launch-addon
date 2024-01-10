@@ -1,0 +1,182 @@
+[gd_scene load_steps=3 format=3 uid="uid://d0a1lv3fh2llm"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/ClientUI.gd" id="1_53hke"]
+[ext_resource type="PackedScene" uid="uid://bdfnxrmorcwij" path="res://addons/jam_launch/ui/LoadingSplash.tscn" id="3_8qfds"]
+
+[node name="ClientUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_53hke")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.266667, 0.333333, 1)
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Sessions" type="MarginContainer" parent="CC"]
+layout_mode = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+
+[node name="VB" type="VBoxContainer" parent="CC/Sessions"]
+layout_mode = 2
+
+[node name="HB" type="HBoxContainer" parent="CC/Sessions/VB"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Session" type="LineEdit" parent="CC/Sessions/VB/HB"]
+layout_mode = 2
+theme_override_constants/minimum_character_width = 3
+theme_override_font_sizes/font_size = 24
+max_length = 4
+expand_to_text_length = true
+
+[node name="Join" type="Button" parent="CC/Sessions/VB/HB"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Join"
+
+[node name="LabelOr" type="Label" parent="CC/Sessions/VB"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "or"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Create" type="Button" parent="CC/Sessions/VB"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Create"
+
+[node name="Lobby" type="MarginContainer" parent="CC"]
+layout_mode = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+
+[node name="VB" type="VBoxContainer" parent="CC/Lobby"]
+layout_mode = 2
+
+[node name="JoinId" type="Label" parent="CC/Lobby/VB"]
+layout_mode = 2
+
+[node name="ServerStatus" type="Label" parent="CC/Lobby/VB"]
+layout_mode = 2
+
+[node name="Players" type="ItemList" parent="CC/Lobby/VB"]
+layout_mode = 2
+allow_search = false
+auto_height = true
+
+[node name="Leave" type="Button" parent="CC/Lobby/VB"]
+layout_mode = 2
+text = "Leave"
+
+[node name="Start" type="Button" parent="CC/Lobby/VB"]
+layout_mode = 2
+text = "Start"
+
+[node name="SessionRefresh" type="Timer" parent="CC/Lobby"]
+wait_time = 2.0
+one_shot = true
+
+[node name="LoadingSplash" parent="CC" instance=ExtResource("3_8qfds")]
+layout_mode = 2
+
+[node name="Menu" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="DevTools" type="MenuButton" parent="Menu"]
+layout_mode = 2
+text = "Dev Tools"
+flat = false
+item_count = 8
+popup/item_0/text = "Host Local"
+popup/item_0/id = 0
+popup/item_1/text = "Join Local"
+popup/item_1/id = 1
+popup/item_2/text = ""
+popup/item_2/id = 2
+popup/item_2/separator = true
+popup/item_3/text = "Test Client 1"
+popup/item_3/checkable = 2
+popup/item_3/checked = true
+popup/item_3/id = 3
+popup/item_4/text = "Test Client 2"
+popup/item_4/checkable = 2
+popup/item_4/id = 4
+popup/item_5/text = "Test Client 3"
+popup/item_5/checkable = 2
+popup/item_5/id = 5
+popup/item_6/text = "Test Client 4"
+popup/item_6/checkable = 2
+popup/item_6/id = 6
+popup/item_7/text = "Test Client 5"
+popup/item_7/checkable = 2
+popup/item_7/id = 7
+
+[node name="Bottom" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Errors" type="VBoxContainer" parent="Bottom"]
+layout_mode = 2
+
+[node name="M" type="MarginContainer" parent="Bottom"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 3
+
+[node name="VersionInfo" type="Label" parent="Bottom/M"]
+self_modulate = Color(1, 1, 1, 0.588235)
+layout_mode = 2
+vertical_alignment = 1
+clip_text = true
+
+[connection signal="text_changed" from="CC/Sessions/VB/HB/Session" to="." method="_on_session_text_changed"]
+[connection signal="text_submitted" from="CC/Sessions/VB/HB/Session" to="." method="_on_session_text_submitted"]
+[connection signal="pressed" from="CC/Sessions/VB/HB/Join" to="." method="_on_join_pressed"]
+[connection signal="pressed" from="CC/Sessions/VB/Create" to="." method="_on_create_pressed"]
+[connection signal="pressed" from="CC/Lobby/VB/Leave" to="." method="_on_leave_pressed"]
+[connection signal="pressed" from="CC/Lobby/VB/Start" to="." method="_on_start_pressed"]
+[connection signal="timeout" from="CC/Lobby/SessionRefresh" to="." method="_on_session_refresh_timeout"]

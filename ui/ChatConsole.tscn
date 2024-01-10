@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3 uid="uid://bp045ebtvh6js"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/ChatConsole.gd" id="1_crj3s"]
+
+[node name="ChatConsole" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_crj3s")
+
+[node name="VB" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="P" type="Panel" parent="VB"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ChatLog" type="RichTextLabel" parent="VB/P"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+scroll_following = true
+
+[node name="MsgHB" type="HBoxContainer" parent="VB"]
+layout_mode = 2
+
+[node name="Msg" type="LineEdit" parent="VB/MsgHB"]
+layout_mode = 2
+size_flags_horizontal = 3
+context_menu_enabled = false
+
+[node name="Send" type="Button" parent="VB/MsgHB"]
+layout_mode = 2
+focus_mode = 0
+text = "Send
+"
+
+[connection signal="text_submitted" from="VB/MsgHB/Msg" to="." method="_on_text_submit" unbinds=1]
+[connection signal="pressed" from="VB/MsgHB/Send" to="." method="_on_text_submit"]

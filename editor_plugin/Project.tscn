@@ -1,0 +1,122 @@
+[gd_scene load_steps=4 format=3 uid="uid://dwbbc305p213v"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Project.gd" id="1_pygq4"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_8c5vt"]
+font_size = 24
+
+[sub_resource type="LabelSettings" id="LabelSettings_xsh1s"]
+font_color = Color(1, 0.490196, 0.454902, 1)
+
+[node name="Project" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+script = ExtResource("1_pygq4")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Project Name"
+label_settings = SubResource("LabelSettings_8c5vt")
+
+[node name="BtnBack" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Back"
+
+[node name="BtnRefresh" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Refresh"
+
+[node name="LogOutBtn" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Log Out"
+
+[node name="ErrMsg" type="Label" parent="."]
+visible = false
+layout_mode = 2
+text = "Error"
+label_settings = SubResource("LabelSettings_xsh1s")
+
+[node name="M" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+
+[node name="VB" type="VBoxContainer" parent="M"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HB" type="HBoxContainer" parent="M/VB"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="BtnDelete" type="Button" parent="M/VB/HB"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
+theme_override_colors/font_hover_color = Color(1, 0.733333, 0.666667, 1)
+theme_override_colors/font_focus_color = Color(1, 0.533333, 0.466667, 1)
+text = "Delete Project"
+
+[node name="HB" type="HBoxContainer" parent="M/VB/HB"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="M/VB/HB/HB"]
+layout_mode = 2
+text = "Network Mode:"
+
+[node name="NetworkMode" type="OptionButton" parent="M/VB/HB/HB"]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "ENet"
+popup/item_0/id = 0
+popup/item_1/text = "WebSocket"
+popup/item_1/id = 1
+
+[node name="BtnDeploy" type="Button" parent="M/VB"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Prepare Release"
+
+[node name="DeploymentsLabel" type="Label" parent="M/VB"]
+layout_mode = 2
+
+[node name="Deployment" type="VBoxContainer" parent="M/VB"]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="AutoRefreshTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="ConfirmDelete" type="ConfirmationDialog" parent="."]
+title = "Confirm Project Delete"
+initial_position = 4
+size = Vector2i(400, 135)
+ok_button_text = "Yes, Delete Project"
+dialog_text = "Are you sure you want to permanently delete this project from your account?"
+dialog_autowrap = true
+cancel_button_text = "No, Cancel"
+
+[connection signal="pressed" from="TopBar/BtnBack" to="." method="_on_btn_back_pressed"]
+[connection signal="pressed" from="TopBar/BtnRefresh" to="." method="_on_btn_refresh_pressed"]
+[connection signal="pressed" from="TopBar/LogOutBtn" to="." method="_on_log_out_btn_pressed"]
+[connection signal="pressed" from="M/VB/HB/BtnDelete" to="." method="_on_btn_delete_pressed"]
+[connection signal="item_selected" from="M/VB/HB/HB/NetworkMode" to="." method="_on_option_button_item_selected"]
+[connection signal="pressed" from="M/VB/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
+[connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
+[connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]
