@@ -23,8 +23,7 @@ early 2024.
 
 ## Deploy with a Jam Launch Developer account
 
-With a Jam Launch developer account, you can deploy and test projects with this
-addon with one click from the addon's editor plugin:
+With a Jam Launch developer account, you can deploy and test projects with one click from the addon's editor plugin:
 
 [![watch demo video](https://img.youtube.com/vi/apw_38sqIZ8/0.jpg)](https://youtu.be/apw_38sqIZ8)
 
