@@ -15,7 +15,7 @@ There is an example project that uses this addon
 ### Try out a deployed version
 
 With a regular Jam Launch account, you can play a deployed version of
-the example project [here](https://app.jamlaunch.com/g/FP8XMOFFKp/x12).
+the example project [here](https://app.jamlaunch.com/g/FP8XMOFFKp/x14).
 
 The current hosting servers are in eastern North America, so you may encounter
 high latency in other regions. More hosting regions will be coming online in
