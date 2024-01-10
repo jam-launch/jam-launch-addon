@@ -20,9 +20,10 @@ jobs:
       - name: Update version in repo 
         working-directory: addons/jam_launch
         run: |
-          sed 's/^version\s*=.*/version="'${{ env.addon_version }}'"/' settings.cfg > settings.cfg
-          sed 's/^version\s*=.*/version="'${{ env.addon_version }}'"/' editor_plugin/plugin.cfg > editor_plugin/plugin.cfg
-
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' settings.cfg > settings.cfg
+          sed 's/^version\s*=.*/version="${{ env.addon_version }}"/' editor_plugin/plugin.cfg > editor_plugin/plugin.cfg
+          [[ -s settings.cfg ]]
+          [[ -s editor_plugin/plugin.cfg ]]
           git config --global user.name 'Jam Launch GitHub Bot'
           git config --global user.email 'github-bot@jamlaunch.com'
           git commit -am "automated release updates for ${{ env.addon_version }}"
