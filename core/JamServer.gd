@@ -129,8 +129,7 @@ func verify_player(join_token: String):
 		
 		for already_here in accepted_peers.values():
 			if already_here["name"] == pinfo["name"]:
-				print("Player '%s' is already joined, booting duplicate pid %d..." % [pinfo["name"], pid])
-				multiplayer.multiplayer_peer.disconnect_peer(pid, true)
+				print("Player '%s' is already joined, removing duplicate pid %d from pending peers..." % [pinfo["name"], pid])
 				pending_peers.erase(pid)
 				return
 		
