@@ -4,6 +4,7 @@ class_name ClientUI
 @onready var session_text: LineEdit = $CC/Sessions/VB/HB/Session
 @onready var page_root: Control = $CC
 @onready var sessions: Control = $CC/Sessions
+@onready var region_select: OptionButton = $CC/Sessions/VB/RegionSelect
 
 @onready var lobby = $CC/Lobby
 @onready var join_id_label = $CC/Lobby/VB/JoinId
@@ -61,7 +62,7 @@ var active_session_data :
 		for p in active_session_data["players"]:
 			player_list.add_item(p["user_id"])
 
-signal connect_to_session(ip: String, port: int, token: String)
+signal connect_to_session(ip: String, port: int, token: String, domain: Variant)
 
 
 func _ready():
@@ -69,7 +70,7 @@ func _ready():
 	var gid_parts = game_id.split("-")
 	var version_number = gid_parts[len(gid_parts) - 1]
 	version_info.text = "version %s" % version_number
-	
+	version_info.text += " - jam launch %s" % client_api.addon_version
 	if OS.is_debug_build():
 		$Menu/DevTools.get_popup().id_pressed.connect(_on_devtools_pressed)
 		version_info.text += " (debug)"
@@ -129,10 +130,20 @@ func exit_lobby():
 func _on_create_pressed():
 	var h := LoadingHandle.new(self)
 	loading_splash.set_operation_text("creating game session...")
-	var res := await client_api.create_game_session()
+	var region = "us-east-2"
+	var region_id = region_select.get_item_id(region_select.selected)
+	print("region ID: ", region_id)
+	if region_id == 0:
+		region = "us-east-2"
+	elif region_id == 1:
+		region = "eu-west-2"
+	print("Attempting to start game session in '%s'..." % region)
+	var res := await client_api.create_game_session(region)
 	if res.errored:
 		show_error(res.error_msg)
 		return
+	
+	print("result: ", res.data)
 	
 	loading_splash.set_operation_text("entering lobby...")
 	if not await enter_lobby(res.data["id"] as String, res.data["join_token"] as String, h):
@@ -156,7 +167,7 @@ func _on_start_pressed():
 	
 	var address = active_session_data["addresses"][0]
 	
-	connect_to_session.emit(address["ip"], address["port"], session_token)
+	connect_to_session.emit(address["ip"], address["port"], session_token, address.get("domain", null))
 
 func join_session(join_id: String) -> bool:
 	var h := LoadingHandle.new(self)
@@ -223,7 +234,7 @@ func _on_devtools_pressed(id: int):
 	if id == 0:
 		jam_client.jc.start_as_dev_server.call_deferred()
 	elif id == 1:
-		jam_client.client_session_request("127.0.0.1", 7437, "localdev")
+		jam_client.client_session_request("127.0.0.1", 7437, "localdev", "localhost")
 	elif id >= 3 and id <= 7:
 		var client_num = id - 2
 		jam_client.test_client_number = client_num

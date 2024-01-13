@@ -33,27 +33,35 @@ func server_start(args: Dictionary):
 		listen_port = (args["port"] as String).to_int()
 	
 	dev_mode = "dev" in args and args["dev"]
+	var dev_ws = jc.network_mode == "websocket" and OS.is_debug_build()
 	
 	var peer
 	var err
-	if OS.has_feature("websocket"):
+	if OS.has_feature("websocket") or dev_ws:
 		peer = WebSocketMultiplayerPeer.new()
-		var cert_base = "certs"
-		var key_path = cert_base.path_join("private.key")
-		var crt_path = cert_base.path_join("certificate.crt")
-		printerr("cert base files: ", DirAccess.get_files_at(cert_base))
-		var key = CryptoKey.new()
-		err = key.load(key_path)
-		if err != OK:
-			push_error("FATAL: Failed to load server key at %s" % key_path)
-			get_tree().quit(1)
-			return
-		var cert = X509Certificate.new()
-		err = cert.load(crt_path)
-		if err != OK:
-			push_error("FATAL: Failed to load server cert at %s" % crt_path)
-			get_tree().quit(1)
-			return
+		var key: CryptoKey
+		var cert: X509Certificate
+		if OS.is_debug_build():
+			var crypto = Crypto.new()
+			key = crypto.generate_rsa(2048)
+			cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
+		else:
+			var cert_base = "certs"
+			var key_path = cert_base.path_join("private.key")
+			var crt_path = cert_base.path_join("certificate.crt")
+			printerr("cert base files: ", DirAccess.get_files_at(cert_base))
+			key = CryptoKey.new()
+			err = key.load(key_path)
+			if err != OK:
+				push_error("FATAL: Failed to load server key at %s" % key_path)
+				get_tree().quit(1)
+				return
+			cert = X509Certificate.new()
+			err = cert.load(crt_path)
+			if err != OK:
+				push_error("FATAL: Failed to load server cert at %s" % crt_path)
+				get_tree().quit(1)
+				return
 		err = peer.create_server(listen_port, "*", TLSOptions.server(key, cert))
 	else:
 		peer = ENetMultiplayerPeer.new()

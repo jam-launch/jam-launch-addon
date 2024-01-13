@@ -2,6 +2,7 @@
 extends Node
 class_name HttpBase
 
+var addon_version: String = "unknown"
 var api_url: String
 var jwt: Jwt
 
@@ -21,6 +22,8 @@ func _ready():
 		printerr("Failed to load api settings")
 		return
 	api_url = "https://%s" % settings.get_value("api", "domain")
+	
+	addon_version = settings.get_value("info", "version", "unknown")
 	
 	pool = HttpRequestPool.new()
 	add_child(pool)

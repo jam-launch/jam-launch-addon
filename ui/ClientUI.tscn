@@ -38,6 +38,7 @@ theme_override_constants/margin_bottom = 25
 
 [node name="VB" type="VBoxContainer" parent="CC/Sessions"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="HB" type="HBoxContainer" parent="CC/Sessions/VB"]
 custom_minimum_size = Vector2(0, 50)
@@ -69,6 +70,15 @@ custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Create"
+
+[node name="RegionSelect" type="OptionButton" parent="CC/Sessions/VB"]
+layout_mode = 2
+item_count = 2
+selected = 0
+popup/item_0/text = "North America - East"
+popup/item_0/id = 0
+popup/item_1/text = "Europe - West"
+popup/item_1/id = 1
 
 [node name="Lobby" type="MarginContainer" parent="CC"]
 layout_mode = 2

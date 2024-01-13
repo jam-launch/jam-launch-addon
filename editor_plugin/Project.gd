@@ -70,6 +70,7 @@ func setup_project_data(p):
 	elif net_mode == "websocket":
 		net_mode_box.select(1)
 	else:
+		net_mode = "enet"
 		net_mode_box.select(-1)
 	
 	if "releases" in active_project and len(active_project["releases"]) > 0:
@@ -125,6 +126,7 @@ func setup_project_data(p):
 			var dir = self.get_script().get_path().get_base_dir()
 			var deployment_cfg = ConfigFile.new()
 			deployment_cfg.set_value("game", "id", r["game_id"])
+			deployment_cfg.set_value("game", "network_mode", net_mode)
 			var err = deployment_cfg.save(dir + "/../deployment.cfg")
 			if err != OK:
 				error_msg = "Failed to save current deployment configuration"

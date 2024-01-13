@@ -4,11 +4,13 @@ class_name ClientApi
 
 var game_id: String
 
-func create_game_session() -> Result:
+func create_game_session(region: String = "us-east-2") -> Result:
 	return await _json_http(
 		"/sessions/%s" % game_id,
 		HTTPClient.METHOD_POST,
-		{}
+		{
+			"region": region
+		}
 	)
 
 func join_game_session(join_id: String) -> Result:

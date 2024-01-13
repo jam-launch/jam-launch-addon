@@ -11,8 +11,7 @@ var test_client_number: int = 1:
 		if val != test_client_number and OS.is_debug_build():
 			test_client_number = val
 			await _setup_test_gjwt()
-			
-var game_id: String
+
 var session_id: String = ""
 var api: ClientApi
 var keys: ClientKeys
@@ -26,24 +25,13 @@ func _init():
 	
 	keys = ClientKeys.new()
 	add_child(keys)
-	
-	api = ClientApi.new()
-	
-	var dir := (self.get_script() as Script).get_path().get_base_dir()
-	var deployment_info = ConfigFile.new()
-	var err = deployment_info.load(dir + "/../deployment.cfg")
-	if err != OK:
-		print("Game deployment settings could not be located - only the local hosting features will be available...")
-		game_id = "init-undeployed"
-	else:
-		game_id = deployment_info.get_value("game", "id")
-		
-	api.game_id = game_id
-	api.jwt = jwt
-	
-	add_child(api)
 
 func _ready():
+	api = ClientApi.new()
+	api.game_id = jc.game_id
+	api.jwt = jwt
+	add_child(api)
+	
 	var gjwt = keys.get_included_gjwt()
 	if gjwt == null:
 		if OS.is_debug_build():
@@ -54,7 +42,7 @@ func _ready():
 		_set_gjwt(gjwt as String)
 
 func _setup_test_gjwt():
-	var gjwt = await keys.get_test_gjwt(game_id, test_client_number)
+	var gjwt = await keys.get_test_gjwt(jc.game_id, test_client_number)
 	if gjwt != null:
 		_set_gjwt(gjwt as String)
 	else:
@@ -75,24 +63,30 @@ func client_start():
 	client_ui.connect_to_session.connect(client_session_request)
 	add_child(client_ui)
 
-func client_session_request(ip: String, port: int, token: String):
+func client_session_request(ip: String, port: int, token: String, domain: Variant):
 	current_client_token = token
 	client_ui.visible = false
 	
-	if OS.has_feature("websocket"):
-		ip = "wss://jamserve.net"
+	var dev_ws = jc.network_mode == "websocket" and OS.is_debug_build()
+	
+	if OS.has_feature("websocket") or dev_ws:
+		if domain == null:
+			domain = "jamserve.net"
+		ip = "wss://%s" % domain
 	
 	jc.log_event.emit("Attempting to connect to %s:%d..." % [ip, port])
+	print("Attempting to connect to %s:%d..." % [ip, port])
 	
 	var peer
 	var err
-	if OS.has_feature("websocket"):
+	if OS.has_feature("websocket") or dev_ws:
 		peer = WebSocketMultiplayerPeer.new()
 		err = peer.create_client("%s:%d" % [ip, port], TLSOptions.client_unsafe())
 	else:
 		peer = ENetMultiplayerPeer.new()
 		err = peer.create_client(ip, port)
 	if err != OK:
+		printerr("Server connection error: ", err)
 		jc.log_event.emit("Error: %d" % err)
 		client_ui.visible = true
 		return
@@ -106,6 +100,7 @@ func leave_game():
 
 func _on_client_connect_fail():
 	jc.log_event.emit("Connection to server failed")
+	printerr("connection to server failed")
 	client_ui.visible = true
 
 func _on_client_connect():

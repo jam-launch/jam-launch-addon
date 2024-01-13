@@ -14,8 +14,21 @@ signal game_files_async_result(key, error)
 var client: JamClient
 var server: JamServer
 
+var game_id: String
+var network_mode: String = "enet"
+
 func _init():
 	print("Creating game node...")
+	
+	var dir := (self.get_script() as Script).get_path().get_base_dir()
+	var deployment_info = ConfigFile.new()
+	var err = deployment_info.load(dir + "/../deployment.cfg")
+	if err != OK:
+		print("Game deployment settings could not be located - only the local hosting features will be available...")
+		game_id = "init-undeployed"
+	else:
+		game_id = deployment_info.get_value("game", "id")
+		network_mode = deployment_info.get_value("game", "network_mode", "enet")
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
