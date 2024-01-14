@@ -39,6 +39,7 @@ jobs:
       
       - name: Package the addon files
         run: |
+          rm -rf addons/jam_launch/.git
           rm -rf addons/jam_launch/.github
           rm -rf addons/jam_launch/.gitattributes
           zip -r jam-launch-godot-addon.zip addons
