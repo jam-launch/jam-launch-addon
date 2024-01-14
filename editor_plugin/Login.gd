@@ -18,7 +18,7 @@ func initialize():
 		return
 	var res = jwt.set_token(key)
 	if res.errored:
-		ui_error.text = "Error with cached key: %s" % res.error
+		_err("Error with cached key: %s" % res.error)
 
 func _on_paste_button_pressed():
 	ui_error.text = ""
@@ -26,16 +26,20 @@ func _on_paste_button_pressed():
 	var clipped = DisplayServer.clipboard_get()
 	
 	if not clipped or len(clipped) < 1:
-		ui_error.text = "No string available to paste"
+		_err("No string available to paste")
 		return
 	
 	var res = jwt.set_token(clipped)
 	if res.errored:
-		ui_error.text = res.error
+		_err(res.error)
 		return
 	
-	print(res.header)
-	print(res.claims)
+	print(res.data.header)
+	print(res.data.claims)
 
 func _on_token_changed(tkn: String):
 	cache.store(jwt_cache_idx, tkn)
+
+func _err(msg: String):
+	ui_error.text = msg
+	printerr(msg)

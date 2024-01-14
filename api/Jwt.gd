@@ -57,19 +57,21 @@ static func parse_token(token: String) -> TokenParseResult:
 	
 	var header_b64 := b64url_to_b64(parts[0])
 	var header_json := Marshalls.base64_to_utf8(header_b64)
-	tkn.header = JSON.parse_string(header_json)
-	if not tkn.header:
+	var header = JSON.parse_string(header_json)
+	if header == null:
 		result.errored = true
 		result.error = "Failed to parse JWT header"
 		return result
+	tkn.header = header
 	
 	var claims_b64 := b64url_to_b64(parts[1])
 	var claims_json := Marshalls.base64_to_utf8(claims_b64)
-	tkn.claims = JSON.parse_string(claims_json)
-	if not tkn.claims:
+	var claims = JSON.parse_string(claims_json)
+	if claims == null:
 		result.errored = true
 		result.error = "Failed to parse JWT claims"
 		return result
+	tkn.claims = claims
 	
 	var sig_b64 := b64url_to_b64(parts[2])
 	var raw_sig := Marshalls.base64_to_raw(sig_b64)

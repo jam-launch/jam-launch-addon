@@ -6,13 +6,18 @@ var cache_path: String = "user://jamlaunchcache.json"
 func store(key: String, val: String):
 	var c := get_cache()
 	if c.errored:
-		return false
+		if not c.no_file:
+			printerr("error storing key in cache: %s" % c.error_msg)
+			return false
+		c = CacheResult.result({})
 	c.cache[key] = val
 	return write_cache(c.cache)
 
 func clear(key: String):
 	var c := get_cache()
 	if c.errored:
+		if not c.no_file:
+			printerr("error clearing key in cache: %s" % c.error_msg)
 		return false
 	if c.cache.erase(key):
 		return write_cache(c.cache)
@@ -29,6 +34,7 @@ class CacheResult:
 	var cache: Dictionary = {}
 	var errored: bool = false
 	var error_msg: String = ""
+	var no_file: bool = false
 	
 	static func err(msg: String) -> CacheResult:
 		var r := CacheResult.new()
@@ -43,7 +49,9 @@ class CacheResult:
 
 func get_cache() -> CacheResult:
 	if !FileAccess.file_exists(cache_path):
-		return CacheResult.err("cache file '%s' does not exist" % cache_path)
+		var e = CacheResult.err("cache file '%s' does not exist" % cache_path)
+		e.no_file = true
+		return e
 	var cache_string := FileAccess.get_file_as_string(cache_path)
 	var data = JSON.parse_string(cache_string)
 	if data == null:
