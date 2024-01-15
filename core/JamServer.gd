@@ -46,9 +46,9 @@ func server_start(args: Dictionary):
 			key = crypto.generate_rsa(2048)
 			cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
 		else:
-			var cert_base = "certs"
-			var key_path = cert_base.path_join("private.key")
-			var crt_path = cert_base.path_join("certificate.crt")
+			var cert_base := "certs"
+			var key_path := cert_base.path_join("private.key")
+			var crt_path := cert_base.path_join("certificate.crt")
 			printerr("cert base files: ", DirAccess.get_files_at(cert_base))
 			key = CryptoKey.new()
 			err = key.load(key_path)

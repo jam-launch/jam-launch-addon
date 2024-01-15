@@ -55,6 +55,7 @@ expand_to_text_length = true
 [node name="Join" type="Button" parent="CC/Sessions/VB/HB"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "Join"
 
@@ -79,6 +80,12 @@ popup/item_0/text = "North America - East"
 popup/item_0/id = 0
 popup/item_1/text = "Europe - West"
 popup/item_1/id = 1
+
+[node name="Message" type="Label" parent="CC/Sessions/VB"]
+visible = false
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+autowrap_mode = 2
 
 [node name="Lobby" type="MarginContainer" parent="CC"]
 layout_mode = 2

@@ -16,6 +16,7 @@ var server: JamServer
 
 var game_id: String
 var network_mode: String = "enet"
+var has_deployment: bool = false
 
 func _init():
 	print("Creating game node...")
@@ -29,6 +30,7 @@ func _init():
 	else:
 		game_id = deployment_info.get_value("game", "id")
 		network_mode = deployment_info.get_value("game", "network_mode", "enet")
+		has_deployment = true
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:

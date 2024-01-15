@@ -78,6 +78,19 @@ func _ready():
 		$Menu/DevTools.visible = false
 	
 	show_child(sessions)
+	
+	if not jam_client.jc.has_deployment:
+		set_enable_deployments(false)
+
+func set_enable_deployments(enable: bool):
+	$CC/Sessions/VB/HB/Join.disabled = !enable
+	$CC/Sessions/VB/HB/Session.editable = enable
+	$CC/Sessions/VB/Create.disabled = !enable
+	$CC/Sessions/VB/RegionSelect.disabled = !enable
+	
+	$CC/Sessions/VB/Message.visible = !enable
+	if !enable:
+		$CC/Sessions/VB/Message.text = "No deployable configuration was found for this project - features will be limited to local hosting. Jam Launch developer access is required to make deployable projects."
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -130,7 +143,7 @@ func exit_lobby():
 func _on_create_pressed():
 	var h := LoadingHandle.new(self)
 	loading_splash.set_operation_text("creating game session...")
-	var region = "us-east-2"
+	var region := "us-east-2"
 	var region_id = region_select.get_item_id(region_select.selected)
 	print("region ID: ", region_id)
 	if region_id == 0:

@@ -49,12 +49,12 @@ class CacheResult:
 		return r
 
 func get_cache(path_override: String = "") -> CacheResult:
-	var path = cache_path
+	var path := cache_path
 	if not path_override.is_empty():
 		path = path_override
 	if !FileAccess.file_exists(path):
 		if FileAccess.file_exists(old_default_cache_path) and path_override.is_empty():
-			var res = get_cache(old_default_cache_path)
+			var res := get_cache(old_default_cache_path)
 			if not res.errored:
 				write_cache(res.cache, cache_path)
 				return res
@@ -73,7 +73,7 @@ func write_cache(cache: Dictionary, path_override: String = ""):
 		
 	var s := JSON.stringify(cache)
 	
-	var base_dir = path_override.get_base_dir()
+	var base_dir := path_override.get_base_dir()
 	if not FileAccess.file_exists(base_dir):
 		var err = DirAccess.make_dir_recursive_absolute(base_dir)
 		if err != OK:
