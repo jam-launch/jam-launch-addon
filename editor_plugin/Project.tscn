@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://dwbbc305p213v"]
+[gd_scene load_steps=5 format=3 uid="uid://dwbbc305p213v"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Project.gd" id="1_pygq4"]
 
@@ -7,6 +7,9 @@ font_size = 24
 
 [sub_resource type="LabelSettings" id="LabelSettings_xsh1s"]
 font_color = Color(1, 0.490196, 0.454902, 1)
+
+[sub_resource type="SystemFont" id="SystemFont_s3gwr"]
+font_names = PackedStringArray("Monospace")
 
 [node name="Project" type="VBoxContainer"]
 anchors_preset = 15
@@ -111,6 +114,23 @@ ok_button_text = "Yes, Delete Project"
 dialog_text = "Are you sure you want to permanently delete this project from your account?"
 dialog_autowrap = true
 cancel_button_text = "No, Cancel"
+
+[node name="LogPopup" type="Popup" parent="."]
+title = "Build Log"
+position = Vector2i(100, 100)
+size = Vector2i(640, 480)
+unresizable = false
+borderless = false
+
+[node name="Logs" type="TextEdit" parent="LogPopup"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = SubResource("SystemFont_s3gwr")
+theme_override_font_sizes/font_size = 10
+editable = false
 
 [connection signal="pressed" from="TopBar/BtnBack" to="." method="_on_btn_back_pressed"]
 [connection signal="pressed" from="TopBar/BtnRefresh" to="." method="_on_btn_refresh_pressed"]

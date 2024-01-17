@@ -7,6 +7,9 @@ extends VBoxContainer
 
 @onready var net_mode_box: OptionButton = $M/VB/HB/HB/NetworkMode
 
+@onready var log_popup: Popup = $LogPopup
+@onready var log_display: TextEdit = $LogPopup/Logs
+
 signal request_projects_update()
 signal go_back()
 
@@ -32,6 +35,7 @@ func _plugin() -> EditorPlugin:
 	return _dashboard().plugin
 
 func initialize():
+	log_popup.visible = false
 	project_api = _dashboard().project_api
 
 func show_project(project_id: String, project_name: String = "..."):
@@ -115,9 +119,21 @@ func setup_project_data(p):
 		deployment.add_child(btn)
 		
 		for j in r["jobs"]:
+			var hb = HBoxContainer.new()
+			
+			hb.add_theme_constant_override("separation", 6)
 			var n = Label.new()
 			n.text = "%s: %s" % [j["job_name"], j.get("status")]
-			deployment.add_child(n)
+			hb.add_child(n)
+			
+			var log_btn = Button.new()
+			log_btn.text = "Logs"
+			log_btn.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Script", "EditorIcons")
+			log_btn.pressed.connect(_show_logs.bind(active_id, r["release_id"], j["job_name"]))
+			hb.add_child(log_btn)
+			
+			deployment.add_child(hb)
+			
 			if j.get("status") not in ["SUCCEEDED", "FAILED"]:
 				$AutoRefreshTimer.start(3.0)
 				
@@ -145,6 +161,19 @@ func _update_release(btn: BaseButton, project_id: String, release_id: String, pr
 
 func _on_btn_upload_pressed() -> void:
 	error_msg = null
+
+func _show_logs(p, r, log_id) -> void:
+	log_popup.popup_centered_ratio(0.8)
+	log_display.text = "loading logs..."
+	var res = await project_api.get_build_logs(p, r, log_id)
+	if res.errored:
+		log_display.text = "Error fetching logs: %s" % res.error_msg
+	else:
+		var log_text = ""
+		for e in res.data["events"]:
+			log_text += Time.get_datetime_string_from_unix_time(e["t"])
+			log_text += " " + e["msg"] + "\n"
+		log_display.text = log_text
 
 func _on_btn_deploy_pressed() -> void:
 	error_msg = null

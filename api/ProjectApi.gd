@@ -89,3 +89,11 @@ func post_config(project_id: String, cfg: Dictionary) -> Result:
 		HTTPClient.METHOD_POST,
 		cfg
 	)
+
+func get_build_logs(project_id: String, release_id: String, log_id: String) -> Result:
+	return await _json_http(
+		"/projects/%s/releases/%s/buildlogs/%s" % [
+			project_id,
+			release_id,
+			log_id,
+		])

@@ -49,7 +49,6 @@ func server_start(args: Dictionary):
 			var cert_base := "certs"
 			var key_path := cert_base.path_join("private.key")
 			var crt_path := cert_base.path_join("certificate.crt")
-			printerr("cert base files: ", DirAccess.get_files_at(cert_base))
 			key = CryptoKey.new()
 			err = key.load(key_path)
 			if err != OK:
