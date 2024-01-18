@@ -1,0 +1,103 @@
+[gd_scene load_steps=6 format=3 uid="uid://c6y6dgxhoqjjv"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Sessions.gd" id="1_t8s3g"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="2_v6g1a"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_wnaxu"]
+font_size = 24
+
+[sub_resource type="SystemFont" id="SystemFont_endui"]
+font_names = PackedStringArray("Monospace")
+
+[sub_resource type="SystemFont" id="SystemFont_din1w"]
+font_names = PackedStringArray("Monospace")
+
+[node name="Sessions" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_t8s3g")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Game"
+label_settings = SubResource("LabelSettings_wnaxu")
+
+[node name="BtnBack" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Back"
+
+[node name="BtnRefresh" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Refresh"
+
+[node name="LogOutBtn" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Log Out"
+
+[node name="M" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+
+[node name="HB" type="HBoxContainer" parent="M"]
+layout_mode = 2
+
+[node name="SC" type="ScrollContainer" parent="M/HB"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="Sessions" type="VBoxContainer" parent="M/HB/SC"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Details" type="VBoxContainer" parent="M/HB"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SessionData" type="TextEdit" parent="M/HB/Details"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/font = SubResource("SystemFont_endui")
+editable = false
+
+[node name="Errors" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="LogPopup" type="Popup" parent="."]
+title = "Session Log"
+position = Vector2i(100, 100)
+size = Vector2i(640, 480)
+unresizable = false
+borderless = false
+
+[node name="Logs" type="TextEdit" parent="LogPopup"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = SubResource("SystemFont_din1w")
+theme_override_font_sizes/font_size = 10
+editable = false
+
+[node name="LoadLocker" type="Node" parent="."]
+script = ExtResource("2_v6g1a")
+
+[connection signal="pressed" from="TopBar/BtnBack" to="." method="_on_btn_back_pressed"]
+[connection signal="pressed" from="TopBar/BtnRefresh" to="." method="_on_btn_refresh_pressed"]
+[connection signal="pressed" from="TopBar/LogOutBtn" to="." method="_on_log_out_btn_pressed"]
+[connection signal="lock_changed" from="LoadLocker" to="." method="_on_load_locker_lock_changed"]

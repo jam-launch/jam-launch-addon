@@ -12,6 +12,7 @@ func show_page(p: Control):
 	$ProjectSelect.visible = false
 	$Project.visible = false
 	$NewProject.visible = false
+	$Sessions.visible = false
 	
 	p.visible = true
 
@@ -27,6 +28,7 @@ func _ready() -> void:
 	$NewProject.initialize()
 	$ProjectSelect.initialize()
 	$Login.initialize()
+	$Sessions.initialize()
 
 func _plugin() -> EditorPlugin:
 	return plugin
@@ -56,3 +58,10 @@ func _on_new_project_cancel() -> void:
 func _on_new_project_create_done(project_id: String, project_name: String) -> void:
 	show_page($Project)
 	$Project.show_project(project_id, project_name)
+
+func _on_sessions_go_back():
+	show_page($Project)
+
+func _on_project_session_page_selected(project_id: String, project_name: String, release_id: String):
+	show_page($Sessions)
+	$Sessions.show_game(project_id, project_name, release_id)

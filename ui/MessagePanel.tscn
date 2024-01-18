@@ -47,6 +47,7 @@ layout_mode = 2
 text = "Dismiss"
 
 [node name="ProgressBar" type="ProgressBar" parent="PC/MC/HB/VB"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 4
 value = 50.0

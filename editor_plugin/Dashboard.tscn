@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b1on16edsk3a6"]
+[gd_scene load_steps=8 format=3 uid="uid://b1on16edsk3a6"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Dashboard.gd" id="1_pqj8q"]
 [ext_resource type="PackedScene" uid="uid://dvpd3fdw8nehb" path="res://addons/jam_launch/editor_plugin/Login.tscn" id="2_hl1us"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dtyeqsjc7ytwj" path="res://addons/jam_launch/editor_plugin/NewProject.tscn" id="4_xw32o"]
 [ext_resource type="PackedScene" uid="uid://dwbbc305p213v" path="res://addons/jam_launch/editor_plugin/Project.tscn" id="5_0x6ps"]
 [ext_resource type="Script" path="res://addons/jam_launch/api/ProjectApi.gd" id="6_21ydx"]
+[ext_resource type="PackedScene" uid="uid://c6y6dgxhoqjjv" path="res://addons/jam_launch/editor_plugin/Sessions.tscn" id="6_dow21"]
 
 [node name="Dashboard" type="MarginContainer"]
 anchors_preset = 15
@@ -36,6 +37,9 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 
+[node name="Sessions" parent="." instance=ExtResource("6_dow21")]
+layout_mode = 2
+
 [node name="ProjectApi" type="Node" parent="."]
 script = ExtResource("6_21ydx")
 
@@ -44,3 +48,5 @@ script = ExtResource("6_21ydx")
 [connection signal="cancel" from="NewProject" to="." method="_on_new_project_cancel"]
 [connection signal="create_done" from="NewProject" to="." method="_on_new_project_create_done"]
 [connection signal="go_back" from="Project" to="." method="_on_project_go_back"]
+[connection signal="session_page_selected" from="Project" to="." method="_on_project_session_page_selected"]
+[connection signal="go_back" from="Sessions" to="." method="_on_sessions_go_back"]

@@ -12,6 +12,7 @@ extends VBoxContainer
 
 signal request_projects_update()
 signal go_back()
+signal session_page_selected(project_id: String, project_name: String, release_id: String)
 
 var project_data = []
 var project_api: ProjectApi
@@ -136,7 +137,11 @@ func setup_project_data(p):
 			
 			if j.get("status") not in ["SUCCEEDED", "FAILED"]:
 				$AutoRefreshTimer.start(3.0)
-				
+		
+		var sess_btn = Button.new()
+		sess_btn.text = "View Sessions"
+		sess_btn.pressed.connect(func(): session_page_selected.emit(active_id, title.text, r["release_id"]))
+		deployment.add_child(sess_btn)
 				
 		if r["game_id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
@@ -165,10 +170,12 @@ func _on_btn_upload_pressed() -> void:
 func _show_logs(p, r, log_id) -> void:
 	log_popup.popup_centered_ratio(0.8)
 	log_display.text = "loading logs..."
+	print("loading %s logs for %s-%s" % [log_id, p, r])
 	var res = await project_api.get_build_logs(p, r, log_id)
 	if res.errored:
 		log_display.text = "Error fetching logs: %s" % res.error_msg
 	else:
+		print("got %d log events..." % len(res.data["events"]))
 		var log_text = ""
 		for e in res.data["events"]:
 			log_text += Time.get_datetime_string_from_unix_time(e["t"])

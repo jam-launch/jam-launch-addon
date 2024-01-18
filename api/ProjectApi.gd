@@ -97,3 +97,29 @@ func get_build_logs(project_id: String, release_id: String, log_id: String) -> R
 			release_id,
 			log_id,
 		])
+
+func get_sessions(project_id: String, active: bool) -> Result:
+	var state = "up"
+	if not active:
+		state = "down"
+	return await _json_http(
+		"/projects/%s/sessions/%s" % [
+			project_id,
+			state,
+		])
+
+func get_session(project_id: String, release_id: String, session_id: String) -> Result:
+	return await _json_http(
+		"/projects/%s/releases/%s/sessions/%s" % [
+			project_id,
+			release_id,
+			session_id,
+		])
+
+func get_session_logs(project_id: String, release_id: String, session_id: String) -> Result:
+	return await _json_http(
+		"/projects/%s/releases/%s/sessions/%s/logs" % [
+			project_id,
+			release_id,
+			session_id,
+		])
