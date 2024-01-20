@@ -1,10 +1,15 @@
 extends CanvasLayer
 class_name JamClient
+## A [CanvasLayer] that provides client-specific multiplayer capabilities as the
+## child of a [JamConnect] Node
 
-var client_ui_scn = preload("res://addons/jam_launch/ui/ClientUI.tscn")
+var _client_ui_scn = preload("res://addons/jam_launch/ui/ClientUI.tscn")
+
+## The client UI used to configure and initiate sessions
 var client_ui: ClientUI
+## The client token for the active session. The token is used to verify
+## identity with the server.
 var current_client_token: String
-var jwt: Jwt = Jwt.new()
 
 var test_client_number: int = 1:
 	set(val):
@@ -13,10 +18,15 @@ var test_client_number: int = 1:
 			await _setup_test_gjwt()
 
 var session_id: String = ""
+
+## The Game JWT for this client - used to authenticate with the Jam Launch API
+var jwt: Jwt = Jwt.new()
+## Interface for calling the Jam Launch session API
 var api: ClientApi
+## Helper object for acquiring a Game JWT for authentication
 var keys: ClientKeys
 
-var jc: JamConnect:
+var _jc: JamConnect:
 	get:
 		return get_parent()
 
@@ -28,7 +38,7 @@ func _init():
 
 func _ready():
 	api = ClientApi.new()
-	api.game_id = jc.game_id
+	api.game_id = _jc.game_id
 	api.jwt = jwt
 	add_child(api)
 	
@@ -42,7 +52,7 @@ func _ready():
 		_set_gjwt(gjwt as String)
 
 func _setup_test_gjwt():
-	var gjwt = await keys.get_test_gjwt(jc.game_id, test_client_number)
+	var gjwt = await keys.get_test_gjwt(_jc.game_id, test_client_number)
 	if gjwt != null:
 		_set_gjwt(gjwt as String)
 	else:
@@ -53,28 +63,30 @@ func _set_gjwt(gjwt: String):
 	if gjwtRes.errored:
 		push_error(gjwtRes.error)
 
+## Configures and starts client functionality
 func client_start():
 	print("Starting as client...")
 	multiplayer.connected_to_server.connect(_on_client_connect)
 	multiplayer.connection_failed.connect(_on_client_connect_fail)
 	multiplayer.server_disconnected.connect(_on_server_disconnect)
-	client_ui = client_ui_scn.instantiate()
+	client_ui = _client_ui_scn.instantiate()
 	client_ui.client_api = api
 	client_ui.connect_to_session.connect(client_session_request)
 	add_child(client_ui)
 
+## Initiates a connection to a provisioned server
 func client_session_request(ip: String, port: int, token: String, domain: Variant):
 	current_client_token = token
 	client_ui.visible = false
 	
-	var dev_ws = jc.network_mode == "websocket" and OS.is_debug_build()
+	var dev_ws = _jc.network_mode == "websocket" and OS.is_debug_build()
 	
 	if OS.has_feature("websocket") or dev_ws:
 		if domain == null:
 			domain = "jamserve.net"
 		ip = "wss://%s" % domain
 	
-	jc.log_event.emit("Attempting to connect to %s:%d..." % [ip, port])
+	_jc.log_event.emit("Attempting to connect to %s:%d..." % [ip, port])
 	print("Attempting to connect to %s:%d..." % [ip, port])
 	
 	var peer
@@ -87,11 +99,13 @@ func client_session_request(ip: String, port: int, token: String, domain: Varian
 		err = peer.create_client(ip, port)
 	if err != OK:
 		printerr("Server connection error: ", err)
-		jc.log_event.emit("Error: %d" % err)
+		_jc.log_event.emit("Error: %d" % err)
 		client_ui.visible = true
 		return
 	multiplayer.multiplayer_peer = peer
 
+## Elegantly leaves the game by disconnecting from the server and notifying the
+## Jam Launch API
 func leave_game():
 	client_ui.visible = true
 	if client_ui.active_session != null: # i.e. not a dev mode local client
@@ -99,14 +113,14 @@ func leave_game():
 	multiplayer.multiplayer_peer.close()
 
 func _on_client_connect_fail():
-	jc.log_event.emit("Connection to server failed")
+	_jc.log_event.emit("Connection to server failed")
 	printerr("connection to server failed")
 	client_ui.visible = true
 
 func _on_client_connect():
-	jc.log_event.emit("Connected, verifying...")
-	jc.verify_player.rpc_id(1, current_client_token)
+	_jc.log_event.emit("Connected, verifying...")
+	_jc.verify_player.rpc_id(1, current_client_token)
 
 func _on_server_disconnect():
-	jc.log_event.emit("Server disconnected")
+	_jc.log_event.emit("Server disconnected")
 	client_ui.visible = true

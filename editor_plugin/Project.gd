@@ -10,9 +10,11 @@ extends VBoxContainer
 @onready var log_popup: Popup = $LogPopup
 @onready var log_display: TextEdit = $LogPopup/Logs
 
+@onready var btn_deploy: Button = $M/VB/HB/BtnDeploy
+
 signal request_projects_update()
 signal go_back()
-signal session_page_selected(project_id: String, project_name: String, release_id: String)
+signal session_page_selected(project_id: String, project_name: String)
 
 var project_data = []
 var project_api: ProjectApi
@@ -43,7 +45,7 @@ func show_project(project_id: String, project_name: String = "..."):
 	active_id = project_id
 	$TopBar/BtnBack.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Back", "EditorIcons")
 	$TopBar/BtnRefresh.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Reload", "EditorIcons")
-	$M/VB/BtnDeploy.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("ArrowUp", "EditorIcons")
+	btn_deploy.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("ArrowUp", "EditorIcons")
 	title.text = project_name
 	refresh_project()
 
@@ -119,29 +121,27 @@ func setup_project_data(p):
 		btn.pressed.connect((func(url): DisplayServer.clipboard_set(url)).bind(download_link))
 		deployment.add_child(btn)
 		
+		var job_grid := GridContainer.new()
+		deployment.add_child(job_grid)
+		job_grid.columns = 3
+		job_grid.add_theme_constant_override("separation", 8)
 		for j in r["jobs"]:
-			var hb = HBoxContainer.new()
+			var name_lbl = Label.new()
+			name_lbl.text = j["job_name"]
+			job_grid.add_child(name_lbl)
 			
-			hb.add_theme_constant_override("separation", 6)
-			var n = Label.new()
-			n.text = "%s: %s" % [j["job_name"], j.get("status")]
-			hb.add_child(n)
+			var status_lbl = Label.new()
+			status_lbl.text = j["status"]
+			job_grid.add_child(status_lbl)
 			
 			var log_btn = Button.new()
 			log_btn.text = "Logs"
 			log_btn.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Script", "EditorIcons")
 			log_btn.pressed.connect(_show_logs.bind(active_id, r["release_id"], j["job_name"]))
-			hb.add_child(log_btn)
-			
-			deployment.add_child(hb)
+			job_grid.add_child(log_btn)
 			
 			if j.get("status") not in ["SUCCEEDED", "FAILED"]:
 				$AutoRefreshTimer.start(3.0)
-		
-		var sess_btn = Button.new()
-		sess_btn.text = "View Sessions"
-		sess_btn.pressed.connect(func(): session_page_selected.emit(active_id, title.text, r["release_id"]))
-		deployment.add_child(sess_btn)
 				
 		if r["game_id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
@@ -178,18 +178,18 @@ func _show_logs(p, r, log_id) -> void:
 		print("got %d log events..." % len(res.data["events"]))
 		var log_text = ""
 		for e in res.data["events"]:
-			log_text += Time.get_datetime_string_from_unix_time(e["t"])
+			log_text += Time.get_datetime_string_from_unix_time(e["t"] / 1000.0)
 			log_text += " " + e["msg"] + "\n"
 		log_display.text = log_text
 
 func _on_btn_deploy_pressed() -> void:
 	error_msg = null
 	net_mode_box.disabled = true
-	$M/VB/BtnDeploy.disabled = true
+	btn_deploy.disabled = true
 	var project_dir = _plugin().get_editor_interface().get_resource_filesystem().get_filesystem()
 	var res = await project_api.build_project(active_id, project_dir)
 	net_mode_box.disabled = false
-	$M/VB/BtnDeploy.disabled = false
+	btn_deploy.disabled = false
 	if res.errored:
 		error_msg = res.error_msg
 		return
@@ -239,12 +239,15 @@ func _on_option_button_item_selected(index):
 	else:
 		return
 	
-	$M/VB/BtnDeploy.disabled = true
+	btn_deploy.disabled = true
 	net_mode_box.disabled = true
 	var res = await project_api.post_config(active_id, cfg)
 	net_mode_box.disabled = false
-	$M/VB/BtnDeploy.disabled = false
+	btn_deploy.disabled = false
 	
 	if res.errored:
 		error_msg = res.error_msg
 		return
+
+func _on_btn_sessions_pressed():
+	session_page_selected.emit(active_id, title.text)

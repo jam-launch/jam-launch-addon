@@ -123,3 +123,14 @@ func get_session_logs(project_id: String, release_id: String, session_id: String
 			release_id,
 			session_id,
 		])
+
+func terminate_session(project_id: String, release_id: String, session_id: String) -> Result:
+	return await _json_http(
+		"/projects/%s/releases/%s/sessions/%s/terminate" % [
+			project_id,
+			release_id,
+			session_id,
+		],
+		HTTPClient.METHOD_POST,
+		{}
+	)

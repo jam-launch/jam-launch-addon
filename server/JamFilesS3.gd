@@ -9,7 +9,7 @@ func _init(jam_connect: JamConnect, s3_client):
 	s3.async_result.connect(_relay_result)
 
 func _relay_result(key, err):
-	jc.game_files_async_result.emit(key, err)
+	_jc.game_files_async_result.emit(key, err)
 
 func get_file(key: String, file_name: String) -> bool:
 	return s3.get_file(

@@ -1,22 +1,35 @@
 extends Node
 class_name JamServer
+## A [Node] that provides server-specific multiplayer capabilities as the child
+## of a [JamConnect] Node
 
 const MAX_CLIENTS = 100
 const DEFAULT_PORT = 7437
 
-# APIs for saving and loading game data
+## Interface for saving and loading project-scoped data in the Jam Launch
+## database. The implementation may vary based on whether the server is in the
+## Jam Launch cloud or being run locally.
 var db: JamDB
+## Interface for saving and loading project-scoped files in the Jam Launch
+## file bucket. The implementation may vary based on whether the server is in the
+## Jam Launch cloud or being run locally.
 var files: JamFiles
+# Client implementations for AWS services (only available when deployed)
+var _ddb
+var _s3
 
-# Reusable clients for AWS services (only available when deployed)
-var ddb
-var s3
+## The list of connected client peer IDs that have not verified their identity
+## yet
+var pending_peers := []
+## A dictionary of verified client information. The keys are the peer ID and the
+## value is a dictionary of client information.
+var accepted_peers := {}
+## True if the server is in developer mode. In developer mode, the clients are
+## not verified and dummy API implementations are used instead of the AWS-driven
+## implementations.
+var dev_mode := false
 
-var pending_peers = []
-var accepted_peers = {}
-var dev_mode = false
-
-var jc: JamConnect:
+var _jc: JamConnect:
 	get:
 		return get_parent()
 
@@ -25,6 +38,7 @@ func _notification(what):
 		printerr("server got quit notification")
 		shut_down()
 
+## Configures and starts server functionality
 func server_start(args: Dictionary):
 	print("Starting as server...")
 	
@@ -33,7 +47,7 @@ func server_start(args: Dictionary):
 		listen_port = (args["port"] as String).to_int()
 	
 	dev_mode = "dev" in args and args["dev"]
-	var dev_ws = jc.network_mode == "websocket" and OS.is_debug_build()
+	var dev_ws = _jc.network_mode == "websocket" and OS.is_debug_build()
 	
 	var peer
 	var err
@@ -83,10 +97,10 @@ func server_start(args: Dictionary):
 	
 	if dev_mode:
 		# TODO: mock/local DB and file API using files in user://... ?
-		db = JamDB.new(jc)
-		files = JamFiles.new(jc)
-		jc.server_pre_ready.emit()
-		jc.server_post_ready.emit()
+		db = JamDB.new(_jc)
+		files = JamFiles.new(_jc)
+		_jc.server_pre_ready.emit()
+		_jc.server_post_ready.emit()
 	else:
 		if not ClassDB.can_instantiate("DynamoDbClient"):
 			printerr("FATAL: Cannot instantiate DynamoDbClient. Is the Jam Launch extension missing?")
@@ -96,22 +110,25 @@ func server_start(args: Dictionary):
 			printerr("FATAL: Cannot instantiate S3Client. Is the Jam Launch extension missing?")
 			get_tree().quit()
 			
-		ddb = ClassDB.instantiate("DynamoDbClient")
+		_ddb = ClassDB.instantiate("DynamoDbClient")
 		@warning_ignore("unsafe_call_argument")
-		db = JamDBDynamo.new(jc, ddb)
-		s3 = ClassDB.instantiate("S3Client")
+		db = JamDBDynamo.new(_jc, _ddb)
+		_s3 = ClassDB.instantiate("S3Client")
 		@warning_ignore("unsafe_call_argument")
-		files = JamFilesS3.new(jc, s3)
+		files = JamFilesS3.new(_jc, _s3)
 		
-		jc.server_pre_ready.emit()
+		_jc.server_pre_ready.emit()
 		var res = db.put_session_data("status", {
 			"status": "READY"
 		})
 		if not res:
 			printerr("FATAL: Failed to set READY status in database - aborting...")
 			get_tree().quit()
-		jc.server_post_ready.emit()
+		_jc.server_post_ready.emit()
 
+## Verifies a player by correlating the provided [code]join_token[/code] with
+## the token in the database. In developer mode, a token with the value
+## [code]"localdev"[/code] will always verify successfully. 
 func verify_player(join_token: String):	
 	var pid: int = multiplayer.get_remote_sender_id()
 	if pid not in pending_peers:
@@ -147,9 +164,12 @@ func verify_player(join_token: String):
 	accepted_peers[pid] = pinfo
 	
 	print("Accepted player %d as %s!" % [pid, pinfo["name"]])
-	jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
-	jc.player_verified.emit(pid, pinfo)
+	_jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
+	_jc.player_verified.emit(pid, pinfo)
 
+## Triggers the provided RPC-enabled Callable on all verified peers if the
+## [code]origin_pid[/code] is from a peer that has also been verified. Useful
+## for limiting client-triggered broadcasts to only include verified peers.
 func rpc_relay(rpc_call: Callable, origin_pid: int, args: Array):
 	var pinfo = accepted_peers.get(origin_pid)
 	if pinfo == null:
@@ -165,18 +185,19 @@ func _on_peer_disconnect(pid: int):
 	if pid in accepted_peers:
 		var pinfo = accepted_peers[pid]
 		accepted_peers.erase(pid)
-		jc.notify_players.rpc("Player '%s' has disconnected" % pinfo.get("name", "<>"))
-		jc.player_disconnected.emit(pid, pinfo)
+		_jc.notify_players.rpc("Player '%s' has disconnected" % pinfo.get("name", "<>"))
+		_jc.player_disconnected.emit(pid, pinfo)
 	pending_peers.erase(pid)
 	
 	if pending_peers.is_empty() and accepted_peers.is_empty():
 		print("All peers disconnected - shutting down...")
 		shut_down(false)
 
+## Shuts down the server elegantly
 func shut_down(do_disconnect: bool = true):
 	if do_disconnect:
 		var all_pids = pending_peers + accepted_peers.keys()
 		for pid in all_pids:
 			multiplayer.multiplayer_peer.disconnect_peer(pid as int, true)
-	jc.server_shutting_down.emit()
+	_jc.server_shutting_down.emit()
 	get_tree().quit()

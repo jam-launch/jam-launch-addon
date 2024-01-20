@@ -62,6 +62,6 @@ func _on_new_project_create_done(project_id: String, project_name: String) -> vo
 func _on_sessions_go_back():
 	show_page($Project)
 
-func _on_project_session_page_selected(project_id: String, project_name: String, release_id: String):
+func _on_project_session_page_selected(project_id: String, project_name: String):
 	show_page($Sessions)
-	$Sessions.show_game(project_id, project_name, release_id)
+	$Sessions.show_game(project_id, project_name)

@@ -45,6 +45,10 @@ var msg_scn = preload("res://addons/jam_launch/ui/MessagePanel.tscn")
 var jam_client:
 	get:
 		return get_parent()
+		
+var jc:
+	get:
+		return jam_client.get_parent()
 
 var id_token: String
 var client_api: ClientApi
@@ -79,7 +83,7 @@ func _ready():
 	
 	show_child(sessions)
 	
-	if not jam_client.jc.has_deployment:
+	if not jc.has_deployment:
 		set_enable_deployments(false)
 
 func set_enable_deployments(enable: bool):
@@ -245,7 +249,7 @@ func clear_errors():
 
 func _on_devtools_pressed(id: int):
 	if id == 0:
-		jam_client.jc.start_as_dev_server.call_deferred()
+		jc.start_as_dev_server.call_deferred()
 	elif id == 1:
 		jam_client.client_session_request("127.0.0.1", 7437, "localdev", "localhost")
 	elif id >= 3 and id <= 7:

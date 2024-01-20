@@ -9,7 +9,7 @@ func _init(jam_connect: JamConnect, ddb_client):
 	ddb.async_result.connect(_relay_result)
 
 func _relay_result(result, err):
-	jc.game_db_async_result.emit(result, err)
+	_jc.game_db_async_result.emit(result, err)
 
 func get_db_data(key_1: String, key_2: String):
 	return ddb.get_item(
