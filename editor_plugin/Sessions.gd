@@ -15,6 +15,7 @@ extends VBoxContainer
 @onready var session_data: TextEdit = $M/HB/Details/SessionData
 
 @onready var terminate_btn: Button = $M/HB/Details/HB/BtnDelete
+var disable_terminate := false
 
 @onready var err_stack: VBoxContainer = $Errors
 var msg_scn = preload("res://addons/jam_launch/ui/MessagePanel.tscn")
@@ -131,6 +132,9 @@ func _get_session_details(p, r, s):
 	
 	session_details = res.data
 	session_data.text = JSON.stringify(res.data, "  ")
+	
+	disable_terminate = session_details.get("force_terminated", false)
+	terminate_btn.disabled = disable_terminate
 
 func _show_logs(p, r, s) -> void:
 	log_popup.popup_centered_ratio(0.8)
@@ -173,7 +177,7 @@ func show_error(msg: String, auto_dismiss: float = 0.0):
 func _on_load_locker_lock_changed(locked: bool):
 	$TopBar/BtnRefresh.disabled = locked
 	$M/HB/Details/HB/BtnLogs.disabled = locked
-	$M/HB/Details/HB/BtnDelete.disabled = locked
+	terminate_btn.disabled = locked or disable_terminate
 
 func _on_btn_logs_pressed():
 	var session_id = session_details.get("id")
@@ -199,7 +203,7 @@ func _on_confirm_delete_confirmed():
 		return
 	
 	session_details = {}
-
+	_get_session_details(project_id, release_id, session_id)
 
 func _on_session_list_item_selected(index):
 	if len(sessions) <= index or index < 0:
