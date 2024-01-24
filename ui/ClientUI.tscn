@@ -136,7 +136,10 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="DevTools" type="MenuButton" parent="Menu"]
+[node name="VB" type="VBoxContainer" parent="Menu"]
+layout_mode = 2
+
+[node name="DevTools" type="MenuButton" parent="Menu/VB"]
 layout_mode = 2
 text = "Dev Tools"
 flat = false

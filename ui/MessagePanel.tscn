@@ -38,6 +38,11 @@ text = "This is the message it aaaaaaaaaaaaa"
 fit_content = true
 scroll_active = false
 
+[node name="ShowAll" type="Button" parent="PC/MC/HB"]
+visible = false
+layout_mode = 2
+text = "Show All"
+
 [node name="VB" type="VBoxContainer" parent="PC/MC/HB"]
 layout_mode = 2
 theme_override_constants/separation = 0
@@ -56,5 +61,26 @@ show_percentage = false
 [node name="DismissTimer" type="Timer" parent="."]
 one_shot = true
 
+[node name="Full" type="Popup" parent="."]
+title = "Full Message"
+size = Vector2i(100, 230)
+
+[node name="M" type="MarginContainer" parent="Full"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 10
+
+[node name="FullMessage" type="RichTextLabel" parent="Full/M"]
+layout_mode = 2
+bbcode_enabled = true
+text = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+[connection signal="pressed" from="PC/MC/HB/ShowAll" to="." method="_on_show_all_pressed"]
 [connection signal="pressed" from="PC/MC/HB/VB/Dismiss" to="." method="_on_dismiss_pressed"]
 [connection signal="timeout" from="DismissTimer" to="." method="_on_dismiss_timer_timeout"]

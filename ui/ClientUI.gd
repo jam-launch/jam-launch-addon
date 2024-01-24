@@ -17,6 +17,8 @@ class_name ClientUI
 
 @onready var version_info = $Bottom/M/VersionInfo
 
+@onready var dev_tools = $Menu/VB/DevTools
+
 class LoadingHandle:
 	extends RefCounted
 	
@@ -76,10 +78,10 @@ func _ready():
 	version_info.text = "version %s" % version_number
 	version_info.text += " - jam launch %s" % client_api.addon_version
 	if OS.is_debug_build():
-		$Menu/DevTools.get_popup().id_pressed.connect(_on_devtools_pressed)
+		dev_tools.get_popup().id_pressed.connect(_on_devtools_pressed)
 		version_info.text += " (debug)"
 	else:
-		$Menu/DevTools.visible = false
+		dev_tools.visible = false
 	
 	show_child(sessions)
 	
@@ -256,6 +258,6 @@ func _on_devtools_pressed(id: int):
 		var client_num = id - 2
 		jam_client.test_client_number = client_num
 		
-		var pop = $Menu/DevTools.get_popup()
+		var pop = dev_tools.get_popup()
 		for x in range(3, 8):
 			pop.set_item_checked(pop.get_item_index(x), x == id)
