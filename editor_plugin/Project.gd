@@ -5,7 +5,8 @@ extends VBoxContainer
 @onready var err_label: Label = $ErrMsg
 @onready var deployment: VBoxContainer = $M/VB/Deployment
 
-@onready var net_mode_box: OptionButton = $M/VB/HB/HB/NetworkMode
+@onready var net_mode_box: OptionButton = $M/VB/Config/HB/NetworkMode
+@onready var env_box: OptionButton = $M/VB/Config/HB2/Environment
 
 @onready var log_popup: Popup = $LogPopup
 @onready var log_display: TextEdit = $LogPopup/Logs
@@ -53,10 +54,13 @@ func refresh_project() -> bool:
 	$AutoRefreshTimer.stop()
 	
 	net_mode_box.disabled = true
+	env_box.disabled = true
 	$TopBar/BtnRefresh.disabled = true
 	var res = await project_api.get_project(active_id)
 	$TopBar/BtnRefresh.disabled = false
 	net_mode_box.disabled = false
+	env_box.disabled = false
+	
 	if res.errored:
 		error_msg = res.error_msg
 		return false
@@ -79,6 +83,15 @@ func setup_project_data(p):
 	else:
 		net_mode = "enet"
 		net_mode_box.select(-1)
+	
+	#var env_variant = active_project["configs"][0].get("env_variant", "base")
+	#if env_variant == "base":
+		#env_box.select(0)
+	#elif env_variant == "dotnet":
+		#env_box.select(1)
+	#else:
+		#env_variant = "base"
+		#env_box.select(-1)
 	
 	if "releases" in active_project and len(active_project["releases"]) > 0:
 		$M/VB/DeploymentsLabel.text = ""
@@ -186,8 +199,10 @@ func _on_btn_deploy_pressed() -> void:
 	error_msg = null
 	net_mode_box.disabled = true
 	btn_deploy.disabled = true
+	env_box.disabled = true
 	var project_dir = _plugin().get_editor_interface().get_resource_filesystem().get_filesystem()
 	var res = await project_api.build_project(active_id, project_dir)
+	env_box.disabled = false
 	net_mode_box.disabled = false
 	btn_deploy.disabled = false
 	if res.errored:
@@ -226,28 +241,37 @@ func _on_confirm_delete_confirmed():
 		return
 	go_back.emit()
 
-func _on_option_button_item_selected(index):
-	
+func _on_btn_sessions_pressed():
+	session_page_selected.emit(active_id, title.text)
+
+func _on_config_item_selected(_index):
 	if not active_project:
 		return
 	
 	var cfg = {}
-	if index == 0:
+	if net_mode_box.get_selected_id() == 0:
 		cfg["network_mode"] = "enet"
-	elif index == 1:
+	elif net_mode_box.get_selected_id() == 1:
 		cfg["network_mode"] = "websocket"
 	else:
 		return
 	
+	cfg["env_variant"] = "base"
+	#if env_box.get_selected_id() == 0:
+		#cfg["env_variant"] = "base"
+	#elif env_box.get_selected_id() == 1:
+		#cfg["env_variant"] = "dotnet"
+	#else:
+		#return
+	
 	btn_deploy.disabled = true
 	net_mode_box.disabled = true
+	env_box.disabled = true
 	var res = await project_api.post_config(active_id, cfg)
+	env_box.disabled = false
 	net_mode_box.disabled = false
 	btn_deploy.disabled = false
 	
 	if res.errored:
 		error_msg = res.error_msg
 		return
-
-func _on_btn_sessions_pressed():
-	session_page_selected.emit(active_id, title.text)

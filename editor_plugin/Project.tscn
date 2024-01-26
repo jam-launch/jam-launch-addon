@@ -64,7 +64,7 @@ theme_override_constants/separation = 16
 
 [node name="HB" type="HBoxContainer" parent="M/VB"]
 layout_mode = 2
-theme_override_constants/separation = 50
+theme_override_constants/separation = 40
 
 [node name="BtnDeploy" type="Button" parent="M/VB/HB"]
 layout_mode = 2
@@ -75,21 +75,6 @@ text = "Prepare Release"
 layout_mode = 2
 text = "View Sessions"
 
-[node name="HB" type="HBoxContainer" parent="M/VB/HB"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="M/VB/HB/HB"]
-layout_mode = 2
-text = "Network Mode:"
-
-[node name="NetworkMode" type="OptionButton" parent="M/VB/HB/HB"]
-layout_mode = 2
-item_count = 2
-popup/item_0/text = "ENet"
-popup/item_0/id = 0
-popup/item_1/text = "WebSocket"
-popup/item_1/id = 1
-
 [node name="BtnDelete" type="Button" parent="M/VB/HB"]
 layout_mode = 2
 size_flags_horizontal = 0
@@ -99,6 +84,42 @@ theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
 theme_override_colors/font_hover_color = Color(1, 0.733333, 0.666667, 1)
 theme_override_colors/font_focus_color = Color(1, 0.533333, 0.466667, 1)
 text = "Delete Project"
+
+[node name="Config" type="HBoxContainer" parent="M/VB"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="HB" type="HBoxContainer" parent="M/VB/Config"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="M/VB/Config/HB"]
+layout_mode = 2
+text = "Network Mode:"
+
+[node name="NetworkMode" type="OptionButton" parent="M/VB/Config/HB"]
+layout_mode = 2
+item_count = 2
+fit_to_longest_item = false
+popup/item_0/text = "ENet"
+popup/item_0/id = 0
+popup/item_1/text = "WebSocket"
+popup/item_1/id = 1
+
+[node name="HB2" type="HBoxContainer" parent="M/VB/Config"]
+visible = false
+layout_mode = 2
+
+[node name="Label" type="Label" parent="M/VB/Config/HB2"]
+layout_mode = 2
+text = "Environment:"
+
+[node name="Environment" type="OptionButton" parent="M/VB/Config/HB2"]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Base"
+popup/item_0/id = 0
+popup/item_1/text = ".NET"
+popup/item_1/id = 1
 
 [node name="DeploymentsLabel" type="Label" parent="M/VB"]
 layout_mode = 2
@@ -141,7 +162,8 @@ editable = false
 [connection signal="pressed" from="TopBar/LogOutBtn" to="." method="_on_log_out_btn_pressed"]
 [connection signal="pressed" from="M/VB/HB/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
 [connection signal="pressed" from="M/VB/HB/BtnSessions" to="." method="_on_btn_sessions_pressed"]
-[connection signal="item_selected" from="M/VB/HB/HB/NetworkMode" to="." method="_on_option_button_item_selected"]
 [connection signal="pressed" from="M/VB/HB/BtnDelete" to="." method="_on_btn_delete_pressed"]
+[connection signal="item_selected" from="M/VB/Config/HB/NetworkMode" to="." method="_on_config_item_selected"]
+[connection signal="item_selected" from="M/VB/Config/HB2/Environment" to="." method="_on_config_item_selected"]
 [connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
 [connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]
