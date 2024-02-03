@@ -106,7 +106,6 @@ popup/item_1/text = "WebSocket"
 popup/item_1/id = 1
 
 [node name="HB2" type="HBoxContainer" parent="M/VB/Config"]
-visible = false
 layout_mode = 2
 
 [node name="Label" type="Label" parent="M/VB/Config/HB2"]

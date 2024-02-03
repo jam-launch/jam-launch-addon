@@ -84,14 +84,14 @@ func setup_project_data(p):
 		net_mode = "enet"
 		net_mode_box.select(-1)
 	
-	#var env_variant = active_project["configs"][0].get("env_variant", "base")
-	#if env_variant == "base":
-		#env_box.select(0)
-	#elif env_variant == "dotnet":
-		#env_box.select(1)
-	#else:
-		#env_variant = "base"
-		#env_box.select(-1)
+	var env_variant = active_project["configs"][0].get("env_variant", "base")
+	if env_variant == "base":
+		env_box.select(0)
+	elif env_variant == "dotnet":
+		env_box.select(1)
+	else:
+		env_variant = "base"
+		env_box.select(-1)
 	
 	if "releases" in active_project and len(active_project["releases"]) > 0:
 		$M/VB/DeploymentsLabel.text = ""
@@ -256,13 +256,12 @@ func _on_config_item_selected(_index):
 	else:
 		return
 	
-	cfg["env_variant"] = "base"
-	#if env_box.get_selected_id() == 0:
-		#cfg["env_variant"] = "base"
-	#elif env_box.get_selected_id() == 1:
-		#cfg["env_variant"] = "dotnet"
-	#else:
-		#return
+	if env_box.get_selected_id() == 0:
+		cfg["env_variant"] = "base"
+	elif env_box.get_selected_id() == 1:
+		cfg["env_variant"] = "dotnet"
+	else:
+		return
 	
 	btn_deploy.disabled = true
 	net_mode_box.disabled = true
