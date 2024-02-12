@@ -33,6 +33,7 @@ layout_mode = 2
 [node name="Msg" type="LineEdit" parent="VB/MsgHB"]
 layout_mode = 2
 size_flags_horizontal = 3
+max_length = 500
 context_menu_enabled = false
 
 [node name="Send" type="Button" parent="VB/MsgHB"]

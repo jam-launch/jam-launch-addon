@@ -22,15 +22,23 @@ func give_chat_focus():
 	msg_line.grab_focus()
 
 func _on_text_submit():
-	var msg = msg_line.text
+	var msg := sanitize(msg_line.text)
 	msg_line.clear()
 	msg_line.release_focus()
 	if len(msg) > 0:
 		_send_chat_msg.rpc_id(1, msg)
 
 @rpc("any_peer")
-func _send_chat_msg(msg):
+func _send_chat_msg(msg: String):
+	msg = sanitize(msg)
 	jam_connect.server_relay(_print_chat_msg, [msg])
+
+func sanitize(msg: String) -> String:
+	msg = msg.substr(0, 500)
+	# prevent bbcode tags from clients
+	msg = msg.replace("[", "(")
+	msg = msg.replace("]", ")")
+	return msg
 
 @rpc
 func _print_chat_msg(_sender_pid: int, sender_name: String, msg: String):
