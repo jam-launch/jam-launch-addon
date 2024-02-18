@@ -1,5 +1,5 @@
-extends CanvasLayer
 class_name JamClient
+extends CanvasLayer
 ## A [CanvasLayer] that provides client-specific multiplayer capabilities as the
 ## child of a [JamConnect] Node
 
