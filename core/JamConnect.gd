@@ -1,5 +1,5 @@
-extends Node
 class_name JamConnect
+extends Node
 ## A [Node] that simplifies integration with the Jam Launch API.
 ##
 ## The JamConnect Node serves as an all-in-one Jam Launch integration that

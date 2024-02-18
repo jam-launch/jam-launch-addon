@@ -1,5 +1,5 @@
-extends Node
 class_name JamServer
+extends Node
 ## A [Node] that provides server-specific multiplayer capabilities as the child
 ## of a [JamConnect] Node
 
