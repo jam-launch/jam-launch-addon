@@ -27,13 +27,20 @@ offset_right = 125.0
 offset_bottom = 33.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 12
 
 [node name="PasteButton" type="Button" parent="VB"]
 layout_mode = 2
 text = "Paste Key from Clipboard"
 
-[node name="ErrorMsg" type="Label" parent="VB"]
+[node name="Notes" type="RichTextLabel" parent="VB"]
 layout_mode = 2
-autowrap_mode = 2
+bbcode_enabled = true
+text = "[center][color=gray][bgcolor=#00000000]Your developer key can be found in the Jam Launch dashboard:
+[url]https://app.jamlaunch.com[/url][/bgcolor][/color][/center]"
+fit_content = true
 
 [connection signal="pressed" from="VB/PasteButton" to="." method="_on_paste_button_pressed"]
+[connection signal="meta_clicked" from="VB/Notes" to="." method="_on_notes_meta_clicked"]
+[connection signal="meta_hover_ended" from="VB/Notes" to="." method="_on_notes_meta_hover_ended"]
+[connection signal="meta_hover_started" from="VB/Notes" to="." method="_on_notes_meta_hover_started"]

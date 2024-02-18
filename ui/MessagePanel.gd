@@ -2,9 +2,9 @@
 extends MarginContainer
 class_name MessagePanel
 
-@onready var dismiss_progress = $PC/MC/HB/VB/ProgressBar
-@onready var msg_txt = $PC/MC/HB/Message
-@onready var show_all = $PC/MC/HB/ShowAll
+@onready var dismiss_progress = $MC/HB/VB/ProgressBar
+@onready var msg_txt = $MC/HB/Message
+@onready var show_all = $MC/HB/ShowAll
 @onready var full_message = $Full/M/FullMessage
 @onready var full_popup = $Full
 
@@ -25,7 +25,7 @@ var _auto_dismiss_delay: float = 10.0
 var elapsed: float = 0.0
 
 func _ready():
-	$PC/MC/HB/VB/ProgressBar.visible = false
+	$MC/HB/VB/ProgressBar.visible = false
 
 func _process(delta):
 	if not _auto_dismissed:

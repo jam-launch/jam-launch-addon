@@ -1,78 +1,82 @@
 @tool
-extends VBoxContainer
+extends JamEditorPluginPage
 
-@onready var title: Label = $TopBar/Title
-@onready var err_label: Label = $ErrMsg
-@onready var deployment: VBoxContainer = $M/VB/Deployment
-
-@onready var net_mode_box: OptionButton = $M/VB/Config/HB/NetworkMode
-@onready var env_box: OptionButton = $M/VB/Config/HB2/Environment
+@onready var net_mode_box: OptionButton = $HB/Config/NetworkMode
+@onready var env_box: OptionButton = $HB/Config/Environment
 
 @onready var log_popup: Popup = $LogPopup
 @onready var log_display: TextEdit = $LogPopup/Logs
 
-@onready var btn_deploy: Button = $M/VB/HB/BtnDeploy
+@onready var btn_deploy: Button = $HB/Config/BtnDeploy
+@onready var btn_delete: Button = $HB/Config/BtnDelete
+@onready var btn_sessions: Button = $HB/Config/BtnSessions
+
+@onready var latest_release: Control = $HB/Releases/VB/ReleaseSummary
+
+@onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
 
 signal request_projects_update()
 signal go_back()
 signal session_page_selected(project_id: String, project_name: String)
 
 var project_data = []
-var project_api: ProjectApi
 
 var refresh_retries = 0
 
 var active_project
 var active_id = ""
-var error_msg = null :
-	set(value):
-		if value == null:
-			err_label.visible = false
-		else:
-			err_label.text = value
-			err_label.visible = true
 
-func _dashboard():
-	return get_parent()
-
-func _plugin() -> EditorPlugin:
-	return _dashboard().plugin
-
-func initialize():
+func _page_init():
 	log_popup.visible = false
-	project_api = _dashboard().project_api
+	btn_deploy.icon = dashboard.editor_icon("ArrowUp")
+	btn_sessions.icon = dashboard.editor_icon("GuiVisibilityVisible")
+	
+	latest_release.dashboard = dashboard
+	dashboard.load_locker.lock_changed.connect(_load_lock_changed)
+
+func show_init():
+	if active_project:
+		dashboard.toolbar_title.text = active_project["project_name"]
+
+func _load_lock_changed(locked: bool):
+	btn_deploy.disabled = locked
+	net_mode_box.disabled = locked
+	env_box.disabled = locked
+	btn_delete.disabled = locked
+
+func refresh_page():
+	refresh_project()
 
 func show_project(project_id: String, project_name: String = "..."):
 	active_id = project_id
-	$TopBar/BtnBack.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Back", "EditorIcons")
-	$TopBar/BtnRefresh.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Reload", "EditorIcons")
-	btn_deploy.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("ArrowUp", "EditorIcons")
-	title.text = project_name
+	dashboard.toolbar_title.text = project_name
+	latest_release.visible = false
 	refresh_project()
 
 func refresh_project() -> bool:
 	$AutoRefreshTimer.stop()
+	no_deployments.visible = false
 	
-	net_mode_box.disabled = true
-	env_box.disabled = true
-	$TopBar/BtnRefresh.disabled = true
+	if len(active_id) < 1:
+		return false
+	
+	if dashboard.load_locker.is_locked():
+		return false
+	var lock = dashboard.load_locker.get_lock()
+	
 	var res = await project_api.get_project(active_id)
-	$TopBar/BtnRefresh.disabled = false
-	net_mode_box.disabled = false
-	env_box.disabled = false
 	
 	if res.errored:
-		error_msg = res.error_msg
+		dashboard.show_error(res.error_msg)
 		return false
+		
 	setup_project_data(res.data)
 	return true
 
 func setup_project_data(p):
-	while deployment.get_child_count() > 0:
-		deployment.remove_child(deployment.get_child(0))
 	
 	active_project = p
-	title.text = p["project_name"]
+	dashboard.toolbar_title.text = p["project_name"]
 	
 	var net_mode = active_project["configs"][0]["network_mode"]
 	net_mode_box.disabled = false
@@ -94,65 +98,12 @@ func setup_project_data(p):
 		env_box.select(-1)
 	
 	if "releases" in active_project and len(active_project["releases"]) > 0:
-		$M/VB/DeploymentsLabel.text = ""
+		latest_release.visible = true
 		var r = active_project["releases"][len(active_project["releases"]) - 1]
 		
-		var l = Label.new()
-		l.text = "Latest Release - %s" % r["release_id"]
-		deployment.add_child(l)
+		latest_release.set_release(active_id, r)
 		
-		l = Label.new()
-		var rt = Time.get_datetime_dict_from_datetime_string(r["start_time"], false)
-		l.text = "%s-%s-%s %s:%s" % [
-			rt["year"],
-			rt["month"],
-			rt["day"],
-			rt["hour"],
-			rt["minute"],
-		]
-		deployment.add_child(l)
-		
-		var plab = Label.new()
-		var pbtn = Button.new()
-		var phb = HBoxContainer.new()
-		phb.add_child(plab)
-		phb.add_child(pbtn)
-		deployment.add_child(phb)
-		if r["public"]:
-			plab.text = "Release is Public"
-			pbtn.text = "Make Private"
-			pbtn.pressed.connect(_update_release.bind(pbtn, p["id"], r["release_id"], {"public": false}))
-		else:
-			plab.text = "Release is Private"
-			pbtn.text = "Make Public"
-			pbtn.pressed.connect(_update_release.bind(pbtn, p["id"], r["release_id"], {"public": true}))
-		
-		var btn = Button.new()
-		btn.text = "Download Link"
-		var download_link = "https://app.jamlaunch.com/g/%s/%s" % [p["id"], r["release_id"]]
-		btn.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("ActionCopy", "EditorIcons")
-		btn.pressed.connect((func(url): DisplayServer.clipboard_set(url)).bind(download_link))
-		deployment.add_child(btn)
-		
-		var job_grid := GridContainer.new()
-		deployment.add_child(job_grid)
-		job_grid.columns = 3
-		job_grid.add_theme_constant_override("separation", 8)
 		for j in r["jobs"]:
-			var name_lbl = Label.new()
-			name_lbl.text = j["job_name"]
-			job_grid.add_child(name_lbl)
-			
-			var status_lbl = Label.new()
-			status_lbl.text = j["status"]
-			job_grid.add_child(status_lbl)
-			
-			var log_btn = Button.new()
-			log_btn.text = "Logs"
-			log_btn.icon = _plugin().get_editor_interface().get_base_control().get_theme_icon("Script", "EditorIcons")
-			log_btn.pressed.connect(_show_logs.bind(active_id, r["release_id"], j["job_name"]))
-			job_grid.add_child(log_btn)
-			
 			if j.get("status") not in ["SUCCEEDED", "FAILED"]:
 				$AutoRefreshTimer.start(3.0)
 				
@@ -163,22 +114,27 @@ func setup_project_data(p):
 			deployment_cfg.set_value("game", "network_mode", net_mode)
 			var err = deployment_cfg.save(dir + "/../deployment.cfg")
 			if err != OK:
-				error_msg = "Failed to save current deployment configuration"
+				dashboard.show_error("Failed to save current deployment configuration")
 				return
 	else:
-		$M/VB/DeploymentsLabel.text = "No active deployments..."
+		no_deployments.visible = true
 
-func _update_release(btn: BaseButton, project_id: String, release_id: String, props: Dictionary):
-	btn.disabled = true
-	var res = await project_api.update_release(project_id, release_id, props)
-	btn.disabled = false
-	if res.errored:
-		error_msg = res.error_msg
+func _update_release(release_id: String, props: Dictionary):
+	if len(active_id) < 1:
+		return false
+	
+	if dashboard.load_locker.is_locked():
+		dashboard.show_error("cannot update release while handling another request")
 		return
-	refresh_project()
-
-func _on_btn_upload_pressed() -> void:
-	error_msg = null
+	var lock = dashboard.load_locker.get_lock()
+	
+	var res = await project_api.update_release(active_id, release_id, props)
+	
+	if res.errored:
+		dashboard.show_error(res.error_msg)
+		return
+	
+	refresh_project.call_deferred()
 
 func _show_logs(p, r, log_id) -> void:
 	log_popup.popup_centered_ratio(0.8)
@@ -196,30 +152,18 @@ func _show_logs(p, r, log_id) -> void:
 		log_display.text = log_text
 
 func _on_btn_deploy_pressed() -> void:
-	error_msg = null
-	net_mode_box.disabled = true
-	btn_deploy.disabled = true
-	env_box.disabled = true
-	var project_dir = _plugin().get_editor_interface().get_resource_filesystem().get_filesystem()
+	if dashboard.load_locker.is_locked():
+		dashboard.show_error("cannot deploy while handling another request")
+		return
+	var lock = dashboard.load_locker.get_lock()
+	
+	var project_dir = dashboard.plugin.get_editor_interface().get_resource_filesystem().get_filesystem()
 	var res = await project_api.build_project(active_id, project_dir)
-	env_box.disabled = false
-	net_mode_box.disabled = false
-	btn_deploy.disabled = false
 	if res.errored:
-		error_msg = res.error_msg
+		dashboard.show_error(res.error_msg)
 		return
 	refresh_retries = 2
 	$AutoRefreshTimer.start(4.0)
-
-func _on_btn_refresh_pressed() -> void:
-	error_msg = null
-	refresh_project()
-
-func _on_btn_back_pressed() -> void:
-	go_back.emit()
-
-func _on_log_out_btn_pressed() -> void:
-	_dashboard().jwt().clear()
 
 func _on_auto_refresh_timer_timeout():
 	$AutoRefreshTimer.stop()
@@ -235,18 +179,28 @@ func _on_btn_delete_pressed():
 	$ConfirmDelete.popup()
 
 func _on_confirm_delete_confirmed():
+	if dashboard.load_locker.is_locked():
+		dashboard.show_error("cannot delete while handling another request")
+		return
+	var lock = dashboard.load_locker.get_lock()
+	
 	var res = await project_api.delete_project(active_id)
 	if res.errored:
-		error_msg = res.error_msg
+		dashboard.show_error(res.error_msg)
 		return
-	go_back.emit()
+	dashboard.pages.go_back()
 
 func _on_btn_sessions_pressed():
-	session_page_selected.emit(active_id, title.text)
+	session_page_selected.emit(active_id, active_project["project_name"])
 
 func _on_config_item_selected(_index):
 	if not active_project:
 		return
+	
+	if dashboard.load_locker.is_locked():
+		dashboard.show_error("cannot submit config while handling another request")
+		return
+	var lock = dashboard.load_locker.get_lock()
 	
 	var cfg = {}
 	if net_mode_box.get_selected_id() == 0:
@@ -263,14 +217,8 @@ func _on_config_item_selected(_index):
 	else:
 		return
 	
-	btn_deploy.disabled = true
-	net_mode_box.disabled = true
-	env_box.disabled = true
 	var res = await project_api.post_config(active_id, cfg)
-	env_box.disabled = false
-	net_mode_box.disabled = false
-	btn_deploy.disabled = false
 	
 	if res.errored:
-		error_msg = res.error_msg
+		dashboard.show_error(res.error_msg)
 		return

@@ -1,102 +1,39 @@
 [gd_scene load_steps=5 format=3 uid="uid://dwbbc305p213v"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Project.gd" id="1_pygq4"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_8c5vt"]
-font_size = 24
-
-[sub_resource type="LabelSettings" id="LabelSettings_xsh1s"]
-font_color = Color(1, 0.490196, 0.454902, 1)
+[ext_resource type="Texture2D" uid="uid://gaqcgtvl36u7" path="res://addons/jam_launch/assets/icons/cancel.svg" id="2_36hr7"]
+[ext_resource type="PackedScene" uid="uid://x8bepljs2sfy" path="res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn" id="2_x4il8"]
 
 [sub_resource type="SystemFont" id="SystemFont_s3gwr"]
 font_names = PackedStringArray("Monospace")
 
-[node name="Project" type="VBoxContainer"]
+[node name="Project" type="MarginContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_bottom = 8
 script = ExtResource("1_pygq4")
 
-[node name="TopBar" type="HBoxContainer" parent="."]
+[node name="HB" type="HBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 
-[node name="Title" type="Label" parent="TopBar"]
+[node name="Config" type="VBoxContainer" parent="HB"]
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Project Name"
-label_settings = SubResource("LabelSettings_8c5vt")
 
-[node name="BtnBack" type="Button" parent="TopBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "Back"
-
-[node name="BtnRefresh" type="Button" parent="TopBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "Refresh"
-
-[node name="LogOutBtn" type="Button" parent="TopBar"]
-layout_mode = 2
-size_flags_vertical = 4
-text = "Log Out"
-
-[node name="ErrMsg" type="Label" parent="."]
-visible = false
-layout_mode = 2
-text = "Error"
-label_settings = SubResource("LabelSettings_xsh1s")
-
-[node name="M" type="MarginContainer" parent="."]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 6
-
-[node name="VB" type="VBoxContainer" parent="M"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="HB" type="HBoxContainer" parent="M/VB"]
-layout_mode = 2
-theme_override_constants/separation = 40
-
-[node name="BtnDeploy" type="Button" parent="M/VB/HB"]
+[node name="BtnDeploy" type="Button" parent="HB/Config"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Prepare Release"
 
-[node name="BtnSessions" type="Button" parent="M/VB/HB"]
+[node name="OptLabel" type="Label" parent="HB/Config"]
 layout_mode = 2
-text = "View Sessions"
+text = "Release Options:"
 
-[node name="BtnDelete" type="Button" parent="M/VB/HB"]
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-theme_override_colors/font_color = Color(1, 0.533333, 0.466667, 1)
-theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
-theme_override_colors/font_hover_color = Color(1, 0.733333, 0.666667, 1)
-theme_override_colors/font_focus_color = Color(1, 0.533333, 0.466667, 1)
-text = "Delete Project"
-
-[node name="Config" type="HBoxContainer" parent="M/VB"]
-layout_mode = 2
-theme_override_constants/separation = 40
-
-[node name="HB" type="HBoxContainer" parent="M/VB/Config"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="M/VB/Config/HB"]
-layout_mode = 2
-text = "Network Mode:"
-
-[node name="NetworkMode" type="OptionButton" parent="M/VB/Config/HB"]
+[node name="NetworkMode" type="OptionButton" parent="HB/Config"]
 layout_mode = 2
 item_count = 2
 fit_to_longest_item = false
@@ -105,25 +42,52 @@ popup/item_0/id = 0
 popup/item_1/text = "WebSocket"
 popup/item_1/id = 1
 
-[node name="HB2" type="HBoxContainer" parent="M/VB/Config"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="M/VB/Config/HB2"]
-layout_mode = 2
-text = "Environment:"
-
-[node name="Environment" type="OptionButton" parent="M/VB/Config/HB2"]
+[node name="Environment" type="OptionButton" parent="HB/Config"]
 layout_mode = 2
 item_count = 2
+fit_to_longest_item = false
 popup/item_0/text = "Base"
 popup/item_0/id = 0
 popup/item_1/text = ".NET"
 popup/item_1/id = 1
 
-[node name="DeploymentsLabel" type="Label" parent="M/VB"]
+[node name="Space" type="Label" parent="HB/Config"]
+layout_mode = 2
+text = "
+"
+
+[node name="BtnSessions" type="Button" parent="HB/Config"]
+layout_mode = 2
+text = "View Sessions"
+
+[node name="BtnDelete" type="Button" parent="HB/Config"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
+theme_override_colors/font_hover_color = Color(1, 0.733333, 0.666667, 1)
+theme_override_colors/font_focus_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/icon_normal_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/icon_pressed_color = Color(1, 0.866667, 0.8, 1)
+theme_override_colors/icon_hover_color = Color(1, 0.733333, 0.666667, 1)
+theme_override_colors/icon_focus_color = Color(1, 0.533333, 0.466667, 1)
+text = "Delete Project"
+icon = ExtResource("2_36hr7")
+
+[node name="Releases" type="VBoxContainer" parent="HB"]
 layout_mode = 2
 
-[node name="Deployment" type="VBoxContainer" parent="M/VB"]
+[node name="VB" type="VBoxContainer" parent="HB/Releases"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 16
+
+[node name="NoDeployments" type="Label" parent="HB/Releases/VB"]
+visible = false
+layout_mode = 2
+text = "No active deployments..."
+
+[node name="ReleaseSummary" parent="HB/Releases/VB" instance=ExtResource("2_x4il8")]
 layout_mode = 2
 size_flags_horizontal = 0
 
@@ -156,13 +120,12 @@ theme_override_fonts/font = SubResource("SystemFont_s3gwr")
 theme_override_font_sizes/font_size = 10
 editable = false
 
-[connection signal="pressed" from="TopBar/BtnBack" to="." method="_on_btn_back_pressed"]
-[connection signal="pressed" from="TopBar/BtnRefresh" to="." method="_on_btn_refresh_pressed"]
-[connection signal="pressed" from="TopBar/LogOutBtn" to="." method="_on_log_out_btn_pressed"]
-[connection signal="pressed" from="M/VB/HB/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
-[connection signal="pressed" from="M/VB/HB/BtnSessions" to="." method="_on_btn_sessions_pressed"]
-[connection signal="pressed" from="M/VB/HB/BtnDelete" to="." method="_on_btn_delete_pressed"]
-[connection signal="item_selected" from="M/VB/Config/HB/NetworkMode" to="." method="_on_config_item_selected"]
-[connection signal="item_selected" from="M/VB/Config/HB2/Environment" to="." method="_on_config_item_selected"]
+[connection signal="pressed" from="HB/Config/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
+[connection signal="item_selected" from="HB/Config/NetworkMode" to="." method="_on_config_item_selected"]
+[connection signal="item_selected" from="HB/Config/Environment" to="." method="_on_config_item_selected"]
+[connection signal="pressed" from="HB/Config/BtnSessions" to="." method="_on_btn_sessions_pressed"]
+[connection signal="pressed" from="HB/Config/BtnDelete" to="." method="_on_btn_delete_pressed"]
+[connection signal="show_logs" from="HB/Releases/VB/ReleaseSummary" to="." method="_show_logs"]
+[connection signal="update_release" from="HB/Releases/VB/ReleaseSummary" to="." method="_update_release"]
 [connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
 [connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]

@@ -1,0 +1,16 @@
+[gd_resource type="Theme" load_steps=6 format=3 uid="uid://ei4p7e7xwi5w"]
+
+[ext_resource type="FontFile" uid="uid://6dn4y3t50f1v" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Bold.ttf" id="1_8bpkk"]
+[ext_resource type="FontFile" uid="uid://3kktte34hw4m" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-BoldItalic.ttf" id="2_mv5xo"]
+[ext_resource type="FontFile" uid="uid://dl7bgaolujosi" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Italic.ttf" id="3_qcxy5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ktnxh"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_o3tdn"]
+
+[resource]
+RichTextLabel/fonts/bold_font = ExtResource("1_8bpkk")
+RichTextLabel/fonts/bold_italics_font = ExtResource("2_mv5xo")
+RichTextLabel/fonts/italics_font = ExtResource("3_qcxy5")
+RichTextLabel/styles/focus = SubResource("StyleBoxEmpty_ktnxh")
+RichTextLabel/styles/normal = SubResource("StyleBoxEmpty_o3tdn")

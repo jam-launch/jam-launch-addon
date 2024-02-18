@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://c3p82rkol0m5w"]
+
+[ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="1_dmoy8"]
+[ext_resource type="Texture2D" uid="uid://d1a2bv2537d74" path="res://addons/jam_launch/assets/icons/progress_16x16.svg" id="2_3t5r1"]
+
+[node name="BusyBadge" instance=ExtResource("1_dmoy8")]
+modulate = Color(1, 0.733333, 0.266667, 1)
+custom_minimum_size = Vector2(16, 0)
+offset_right = -1136.0
+offset_bottom = -632.0
+padding_ratio = 0.3
+
+[node name="Circle" parent="C" index="0"]
+rotation = 5508.01
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("2_3t5r1")

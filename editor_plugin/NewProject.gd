@@ -1,13 +1,16 @@
 @tool
-extends CenterContainer
+extends JamEditorPluginPage
 
 signal cancel()
 signal create_done(project_id: String, project_name: String)
 
 @onready var name_edit = $VB/ProjectName
-@onready var err_label = $VB/ErrMsg
 
-var project_api: ProjectApi
+func _page_init():
+	$VB/Options/Create.icon = dashboard.editor_icon("Add")
+
+func show_init():
+	dashboard.toolbar_title.text = "Create a new Project"
 	
 var waiting = false:
 	set(v):
@@ -15,27 +18,16 @@ var waiting = false:
 		$VB/Options/Create.disabled = v
 		name_edit.editable = not v
 
-var error_msg = null :
-	set(value):
-		if value == null:
-			err_label.visible = false
-		else:
-			err_label.text = value
-			err_label.visible = false
-			waiting = false
-
 func initialize():
 	project_api = get_parent().project_api
 
 func _on_cancel_pressed() -> void:
 	name_edit.clear()
-	error_msg = null
 	cancel.emit()
 
 func _on_create_pressed() -> void:
-	error_msg = null
 	if name_edit.text == "":
-		error_msg = "project name must be non-empty"
+		dashboard.show_error("project name must be non-empty", 5.0)
 		return
 	
 	var pending_name = name_edit.text
@@ -43,7 +35,10 @@ func _on_create_pressed() -> void:
 	var res = await project_api.create_project(pending_name)
 	waiting = false
 	if res.errored:
-		error_msg = res.error_msg
+		dashboard.show_error(res.error_msg)
 		return
 	name_edit.clear()
 	create_done.emit(res.data["id"], pending_name)
+
+func _on_project_name_text_submitted(_new_text):
+	_on_create_pressed()

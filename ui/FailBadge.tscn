@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6a26a166gsi0"]
+
+[ext_resource type="Texture2D" uid="uid://gaqcgtvl36u7" path="res://addons/jam_launch/assets/icons/cancel.svg" id="1_bjok2"]
+
+[node name="FailBadge" type="TextureRect"]
+modulate = Color(0.866667, 0.133333, 0.266667, 1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_bjok2")
+stretch_mode = 3

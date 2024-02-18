@@ -1,18 +1,14 @@
 @tool
-extends Control
+extends JamEditorPluginPage
 
 var jwt: Jwt = Jwt.new()
 var cache: KeyValCache = KeyValCache.new()
 const jwt_cache_idx = "editor_jwt_dev_key"
 
-@onready var ui_error = $VB/ErrorMsg
-
 func _ready():
 	jwt.token_changed.connect(_on_token_changed)
 
-func initialize():
-	ui_error.text = ""
-	
+func _page_init():
 	var key = cache.get_val(jwt_cache_idx)
 	if key == null or key == "":
 		return
@@ -20,11 +16,11 @@ func initialize():
 	if res.errored:
 		_err("Error with cached key: %s" % res.error)
 
+func show_init():
+	dashboard.toolbar.visible = false
+
 func _on_paste_button_pressed():
-	ui_error.text = ""
-	
 	var clipped = DisplayServer.clipboard_get()
-	
 	if not clipped or len(clipped) < 1:
 		_err("No string available to paste")
 		return
@@ -33,13 +29,18 @@ func _on_paste_button_pressed():
 	if res.errored:
 		_err(res.error)
 		return
-	
-	print(res.data.header)
-	print(res.data.claims)
 
 func _on_token_changed(tkn: String):
 	cache.store(jwt_cache_idx, tkn)
 
 func _err(msg: String):
-	ui_error.text = msg
-	printerr(msg)
+	dashboard.show_error(msg)
+
+func _on_notes_meta_hover_started(meta):
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+func _on_notes_meta_hover_ended(meta):
+	mouse_default_cursor_shape = Control.CURSOR_ARROW
+
+func _on_notes_meta_clicked(meta):
+	OS.shell_open(meta)

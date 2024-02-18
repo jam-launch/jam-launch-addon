@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://d1rvdodn3tw7w"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/BusyCircle.gd" id="2_1sn87"]
+[ext_resource type="Texture2D" uid="uid://dbqdw1j4ceihl" path="res://addons/jam_launch/assets/icons/progress_96x96.svg" id="2_l4y07"]
+
+[node name="BusyCircle" type="CenterContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_1sn87")
+
+[node name="C" type="Control" parent="."]
+layout_mode = 2
+
+[node name="Circle" type="Sprite2D" parent="C"]
+rotation = 3534.61
+texture = ExtResource("2_l4y07")
+
+[connection signal="resized" from="." to="." method="_on_resized"]

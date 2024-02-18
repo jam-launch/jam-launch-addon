@@ -1,0 +1,115 @@
+[gd_scene load_steps=4 format=3 uid="uid://x8bepljs2sfy"]
+
+[ext_resource type="Theme" uid="uid://cw4h2pbqj113b" path="res://addons/jam_launch/themes/sub_panel.tres" id="1_8d8ru"]
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/ReleaseSummary.gd" id="1_equt3"]
+[ext_resource type="Texture2D" uid="uid://ds0nr8tqtmbp2" path="res://addons/jam_launch/assets/icons/lock.svg" id="3_l4yxb"]
+
+[node name="ReleaseSummary" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_equt3")
+
+[node name="P" type="Panel" parent="."]
+layout_mode = 2
+
+[node name="M" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="HB" type="HBoxContainer" parent="M"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VB" type="VBoxContainer" parent="M/HB"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="RichTextLabel" parent="M/HB/VB"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[b]1[/b]
+[color=#888]10/10/2024
+12:00:00[/color]"
+fit_content = true
+scroll_active = false
+
+[node name="Config" type="PanelContainer" parent="M/HB/VB"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("1_8d8ru")
+
+[node name="MC" type="MarginContainer" parent="M/HB/VB/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VB" type="VBoxContainer" parent="M/HB/VB/Config/MC"]
+layout_mode = 2
+
+[node name="HB" type="HBoxContainer" parent="M/HB/VB/Config/MC/VB"]
+layout_mode = 2
+
+[node name="PageLink" type="Button" parent="M/HB/VB/Config/MC/VB/HB"]
+layout_mode = 2
+text = "Download Page"
+
+[node name="Copy" type="Button" parent="M/HB/VB/Config/MC/VB/HB"]
+layout_mode = 2
+
+[node name="Access" type="HBoxContainer" parent="M/HB/VB/Config/MC/VB"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="AccessIcon" type="TextureRect" parent="M/HB/VB/Config/MC/VB/Access"]
+layout_mode = 2
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+texture = ExtResource("3_l4yxb")
+stretch_mode = 5
+
+[node name="CheckPublic" type="CheckButton" parent="M/HB/VB/Config/MC/VB/Access"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+focus_mode = 0
+text = "Private"
+
+[node name="M" type="MarginContainer" parent="M/HB"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_top = 4
+
+[node name="PC" type="PanelContainer" parent="M/HB/M"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_8d8ru")
+
+[node name="MC" type="MarginContainer" parent="M/HB/M/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VB" type="VBoxContainer" parent="M/HB/M/PC/MC"]
+layout_mode = 2
+
+[node name="Jobs" type="GridContainer" parent="M/HB/M/PC/MC/VB"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+columns = 3
+
+[connection signal="pressed" from="M/HB/VB/Config/MC/VB/HB/PageLink" to="." method="_on_page_link_pressed"]
+[connection signal="pressed" from="M/HB/VB/Config/MC/VB/HB/Copy" to="." method="_on_copy_pressed"]
+[connection signal="toggled" from="M/HB/VB/Config/MC/VB/Access/CheckPublic" to="." method="_on_check_public_toggled"]

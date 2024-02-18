@@ -1,14 +1,17 @@
-[gd_scene load_steps=8 format=3 uid="uid://b1on16edsk3a6"]
+[gd_scene load_steps=11 format=3 uid="uid://b1on16edsk3a6"]
 
+[ext_resource type="Theme" uid="uid://ei4p7e7xwi5w" path="res://addons/jam_launch/themes/jam_launch_launch_theme.tres" id="1_lvjb2"]
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Dashboard.gd" id="1_pqj8q"]
 [ext_resource type="PackedScene" uid="uid://dvpd3fdw8nehb" path="res://addons/jam_launch/editor_plugin/Login.tscn" id="2_hl1us"]
+[ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/PageStack.tscn" id="3_1xk07"]
 [ext_resource type="PackedScene" uid="uid://gfu0s6x0ss0y" path="res://addons/jam_launch/editor_plugin/ProjectSelect.tscn" id="3_mfkr3"]
 [ext_resource type="PackedScene" uid="uid://dtyeqsjc7ytwj" path="res://addons/jam_launch/editor_plugin/NewProject.tscn" id="4_xw32o"]
 [ext_resource type="PackedScene" uid="uid://dwbbc305p213v" path="res://addons/jam_launch/editor_plugin/Project.tscn" id="5_0x6ps"]
 [ext_resource type="Script" path="res://addons/jam_launch/api/ProjectApi.gd" id="6_21ydx"]
 [ext_resource type="PackedScene" uid="uid://c6y6dgxhoqjjv" path="res://addons/jam_launch/editor_plugin/Sessions.tscn" id="6_dow21"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="9_ucv5t"]
 
-[node name="Dashboard" type="MarginContainer"]
+[node name="Dashboard" type="MarginContainer" groups=["jam_launch_dashboard"]]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -16,37 +19,83 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme = ExtResource("1_lvjb2")
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 6
 script = ExtResource("1_pqj8q")
 
-[node name="Login" parent="." instance=ExtResource("2_hl1us")]
+[node name="VB" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ToolBar" type="HBoxContainer" parent="VB"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VB/ToolBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Page Title"
+
+[node name="Back" type="Button" parent="VB/ToolBar"]
+layout_mode = 2
+text = "Back
+"
+
+[node name="Refresh" type="Button" parent="VB/ToolBar"]
+layout_mode = 2
+text = "Refresh"
+
+[node name="LogOut" type="Button" parent="VB/ToolBar"]
+layout_mode = 2
+text = "Logout"
+
+[node name="PageStack" parent="VB" instance=ExtResource("3_1xk07")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Login" parent="VB/PageStack" instance=ExtResource("2_hl1us")]
+layout_mode = 2
+
+[node name="ProjectSelect" parent="VB/PageStack" instance=ExtResource("3_mfkr3")]
 visible = false
 layout_mode = 2
 
-[node name="ProjectSelect" parent="." instance=ExtResource("3_mfkr3")]
-layout_mode = 2
-
-[node name="NewProject" parent="." instance=ExtResource("4_xw32o")]
+[node name="NewProject" parent="VB/PageStack" instance=ExtResource("4_xw32o")]
 visible = false
 layout_mode = 2
 
-[node name="Project" parent="." instance=ExtResource("5_0x6ps")]
+[node name="Project" parent="VB/PageStack" instance=ExtResource("5_0x6ps")]
 visible = false
 layout_mode = 2
 
-[node name="Sessions" parent="." instance=ExtResource("6_dow21")]
+[node name="Sessions" parent="VB/PageStack" instance=ExtResource("6_dow21")]
+visible = false
 layout_mode = 2
+
+[node name="Errors" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_constants/separation = 0
+alignment = 2
 
 [node name="ProjectApi" type="Node" parent="."]
 script = ExtResource("6_21ydx")
 
-[connection signal="new_project" from="ProjectSelect" to="." method="_on_project_select_new_project"]
-[connection signal="open_project" from="ProjectSelect" to="." method="_on_project_select_open_project"]
-[connection signal="cancel" from="NewProject" to="." method="_on_new_project_cancel"]
-[connection signal="create_done" from="NewProject" to="." method="_on_new_project_create_done"]
-[connection signal="go_back" from="Project" to="." method="_on_project_go_back"]
-[connection signal="session_page_selected" from="Project" to="." method="_on_project_session_page_selected"]
-[connection signal="go_back" from="Sessions" to="." method="_on_sessions_go_back"]
+[node name="LoadLocker" type="Node" parent="."]
+script = ExtResource("9_ucv5t")
+
+[connection signal="pressed" from="VB/ToolBar/Back" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="VB/ToolBar/Refresh" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="VB/ToolBar/LogOut" to="." method="_on_log_out_pressed"]
+[connection signal="tab_changed" from="VB/PageStack" to="." method="_on_page_stack_tab_changed"]
+[connection signal="new_project" from="VB/PageStack/ProjectSelect" to="." method="_on_project_select_new_project"]
+[connection signal="open_project" from="VB/PageStack/ProjectSelect" to="." method="_on_project_select_open_project"]
+[connection signal="cancel" from="VB/PageStack/NewProject" to="." method="_on_new_project_cancel"]
+[connection signal="create_done" from="VB/PageStack/NewProject" to="." method="_on_new_project_create_done"]
+[connection signal="go_back" from="VB/PageStack/Project" to="." method="_on_project_go_back"]
+[connection signal="session_page_selected" from="VB/PageStack/Project" to="." method="_on_project_session_page_selected"]
+[connection signal="lock_changed" from="LoadLocker" to="." method="_on_load_locker_lock_changed"]
