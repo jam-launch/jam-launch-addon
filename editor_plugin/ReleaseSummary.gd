@@ -26,6 +26,7 @@ signal update_release(release_id: String, data: Dictionary)
 signal show_logs(project_id: String, release_id: String, job_name: String)
 
 func set_release(proj_id: String, r: Dictionary):
+	
 	project_id = proj_id
 	release_id = r["release_id"]
 	release_data = r
@@ -98,6 +99,7 @@ func set_release(proj_id: String, r: Dictionary):
 		var log_btn = Button.new()
 		log_btn.icon = dashboard.editor_icon("Script")
 		log_btn.pressed.connect(_show_logs.bind(j["job_name"]))
+		log_btn.flat = true
 		log_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		jobs.add_child(log_btn)
 
@@ -108,6 +110,9 @@ func _on_copy_pressed():
 	DisplayServer.clipboard_set(release_page_uri())
 
 func _on_check_public_toggled(toggled_on: bool):
+	if check_public.disabled:
+		# ignore check state changes that happen during an update
+		return
 	update_release.emit(release_id, {"public": toggled_on})
 
 func _show_logs(job_name: String):

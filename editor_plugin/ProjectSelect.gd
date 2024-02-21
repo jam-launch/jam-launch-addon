@@ -26,6 +26,10 @@ func refresh_page():
 	get_projects()
 
 func get_projects():
+	if dashboard.load_locker.is_locked():
+		return
+	var lock = dashboard.load_locker.get_lock()
+	
 	projects.clear()
 	loading = true
 	var res = await project_api.list_projects()
