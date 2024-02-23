@@ -1,0 +1,52 @@
+[gd_resource type="Theme" load_steps=9 format=3 uid="uid://k50541hp21mg"]
+
+[ext_resource type="StyleBox" uid="uid://cdqm5rgj36nd0" path="res://addons/jam_launch/themes/client_ui/big_button_box_disabled.tres" id="1_7lkho"]
+[ext_resource type="StyleBox" uid="uid://cwl25ykbr1feo" path="res://addons/jam_launch/themes/client_ui/big_button_box_focus.tres" id="2_wlve1"]
+[ext_resource type="StyleBox" uid="uid://bbboctp778j8i" path="res://addons/jam_launch/themes/client_ui/big_button_box_hover.tres" id="3_yqs5l"]
+[ext_resource type="StyleBox" uid="uid://uvmuwlqhe2og" path="res://addons/jam_launch/themes/client_ui/big_button_box_normal.tres" id="4_lrblf"]
+[ext_resource type="StyleBox" uid="uid://j8okpa2poi3" path="res://addons/jam_launch/themes/client_ui/big_button_box_pressed.tres" id="5_sv8p8"]
+[ext_resource type="StyleBox" uid="uid://igknvvwg6f3d" path="res://addons/jam_launch/themes/client_ui/big_box_empty.tres" id="6_r3iyj"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lsm7y"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.156863, 0.156863, 0.156863, 1)
+border_width_bottom = 2
+border_color = Color(0.0823529, 0.0823529, 0.0823529, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_br4rj"]
+bg_color = Color(0.219608, 0.219608, 0.219608, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[resource]
+Button/font_sizes/font_size = 24
+Button/styles/disabled = ExtResource("1_7lkho")
+Button/styles/focus = ExtResource("2_wlve1")
+Button/styles/hover = ExtResource("3_yqs5l")
+Button/styles/normal = ExtResource("4_lrblf")
+Button/styles/pressed = ExtResource("5_sv8p8")
+CheckBox/styles/disabled = ExtResource("6_r3iyj")
+CheckBox/styles/hover = ExtResource("6_r3iyj")
+CheckBox/styles/hover_pressed = ExtResource("6_r3iyj")
+CheckBox/styles/normal = ExtResource("6_r3iyj")
+CheckBox/styles/pressed = ExtResource("6_r3iyj")
+CheckButton/styles/disabled = ExtResource("6_r3iyj")
+CheckButton/styles/hover = ExtResource("6_r3iyj")
+CheckButton/styles/hover_pressed = ExtResource("6_r3iyj")
+CheckButton/styles/normal = ExtResource("6_r3iyj")
+CheckButton/styles/pressed = ExtResource("6_r3iyj")
+Label/font_sizes/font_size = 24
+LineEdit/font_sizes/font_size = 24
+LineEdit/styles/normal = SubResource("StyleBoxFlat_lsm7y")
+OptionButton/constants/arrow_margin = 16
+OptionButton/constants/h_separation = 16
+Panel/styles/panel = SubResource("StyleBoxFlat_br4rj")

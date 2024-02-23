@@ -47,6 +47,13 @@ signal server_post_ready()
 ## logging or Data API interactions.
 signal server_shutting_down()
 
+## Emitted in the client when it starts trying to connect to the server
+signal local_player_joining()
+## Emitted in the client when it has been verified
+signal local_player_joined()
+## Emitted in the client when it has been disconnected or fails to connect
+signal local_player_left()
+
 ## Emitted in the server when an asynchronous DB operation has completed or
 ## errored out
 signal game_db_async_result(result, error)
@@ -82,6 +89,8 @@ var network_mode: String = "enet"
 ## only local testing functionality can be provided.
 var has_deployment: bool = false
 
+@export var client_ui_scene: PackedScene
+
 func _init():
 	print("Creating game node...")
 	
@@ -104,6 +113,8 @@ func _notification(what):
 
 func _ready():
 	print("JamConnect node ready, deferring auto start-up...")
+	if not client_ui_scene:
+		client_ui_scene = preload("../ui/client/ExampleClientUI.tscn")
 	start_up.call_deferred()
 
 ## Start the JamConnect functionality including client/server determination and 
@@ -126,6 +137,7 @@ func start_up():
 		server.server_start(args)
 	else:
 		client = JamClient.new()
+		client.client_ui = client_ui_scene.instantiate()
 		add_child(client)
 		client.client_start()
 

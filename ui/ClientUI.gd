@@ -53,7 +53,7 @@ var jc:
 		return jam_client.get_parent()
 
 var id_token: String
-var client_api: ClientApi
+var client_api: JamClientApi
 var active_session = null
 var session_token
 var active_session_data :

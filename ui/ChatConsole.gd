@@ -22,7 +22,7 @@ func give_chat_focus():
 	msg_line.grab_focus()
 
 func _on_text_submit():
-	var msg := sanitize(msg_line.text)
+	var msg := sanitize(msg_line.text as String)
 	msg_line.clear()
 	msg_line.release_focus()
 	if len(msg) > 0:

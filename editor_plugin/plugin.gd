@@ -18,8 +18,11 @@ func _enter_tree():
 	dashboard.hide()
 	
 	add_custom_type("JamConnect", "Node", preload("../core/JamConnect.gd"), preload("../assets/star-jar-outlined_16x16.png"))
+	add_custom_type("ScopeLocker", "Node", preload("../util/ScopeLocker.gd"), editor_interface.get_base_control().get_theme_icon("Lock", "EditorIcons"))
 
 func _exit_tree():
+	remove_custom_type("JamConnect")
+	remove_custom_type("ScopeLocker")
 	if dashboard:
 		dashboard.free()
 		dashboard = null

@@ -47,7 +47,7 @@ theme_override_constants/separation = 8
 
 [node name="Session" type="LineEdit" parent="CC/Sessions/VB/HB"]
 layout_mode = 2
-theme_override_constants/minimum_character_width = 3
+theme_override_constants/minimum_character_width = 4
 theme_override_font_sizes/font_size = 24
 max_length = 4
 expand_to_text_length = true
@@ -88,6 +88,7 @@ layout_mode = 2
 autowrap_mode = 2
 
 [node name="Lobby" type="MarginContainer" parent="CC"]
+visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 25
 theme_override_constants/margin_top = 25
@@ -121,6 +122,7 @@ wait_time = 2.0
 one_shot = true
 
 [node name="LoadingSplash" parent="CC" instance=ExtResource("3_8qfds")]
+visible = false
 layout_mode = 2
 
 [node name="Menu" type="MarginContainer" parent="."]

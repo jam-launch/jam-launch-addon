@@ -13,7 +13,8 @@ func _ready():
 	_on_resized()
 
 func _process(delta):
-	circle.rotate(delta * speed * 2.0 * PI)
+	var amount: float = delta * speed * 2.0 * PI
+	circle.rotate(amount)
 
 func _on_resized():
 	if not circle:
@@ -34,5 +35,5 @@ func _on_resized():
 	if bounds > circle_bounds:
 		circle.scale = Vector2(1.0, 1.0)
 	else:
-		var ratio = bounds / circle_bounds
+		var ratio: float = bounds / circle_bounds
 		circle.scale = Vector2(ratio, ratio)

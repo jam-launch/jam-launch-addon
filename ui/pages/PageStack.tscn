@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://c5d8u6hwivonk"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/pages/PageStack.gd" id="1_ctavd"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_86rpi"]
+
+[node name="PageStack" type="TabContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_86rpi")
+tabs_visible = false
+script = ExtResource("1_ctavd")
+
+[connection signal="tab_changed" from="." to="." method="_on_tab_changed"]

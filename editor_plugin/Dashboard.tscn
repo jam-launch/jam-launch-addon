@@ -3,8 +3,8 @@
 [ext_resource type="Theme" uid="uid://ei4p7e7xwi5w" path="res://addons/jam_launch/themes/jam_launch_launch_theme.tres" id="1_lvjb2"]
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Dashboard.gd" id="1_pqj8q"]
 [ext_resource type="PackedScene" uid="uid://dvpd3fdw8nehb" path="res://addons/jam_launch/editor_plugin/Login.tscn" id="2_hl1us"]
-[ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/PageStack.tscn" id="3_1xk07"]
 [ext_resource type="PackedScene" uid="uid://gfu0s6x0ss0y" path="res://addons/jam_launch/editor_plugin/ProjectSelect.tscn" id="3_mfkr3"]
+[ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/pages/PageStack.tscn" id="3_nlwbh"]
 [ext_resource type="PackedScene" uid="uid://dtyeqsjc7ytwj" path="res://addons/jam_launch/editor_plugin/NewProject.tscn" id="4_xw32o"]
 [ext_resource type="PackedScene" uid="uid://dwbbc305p213v" path="res://addons/jam_launch/editor_plugin/Project.tscn" id="5_0x6ps"]
 [ext_resource type="Script" path="res://addons/jam_launch/api/ProjectApi.gd" id="6_21ydx"]
@@ -53,7 +53,7 @@ text = "Refresh"
 layout_mode = 2
 text = "Logout"
 
-[node name="PageStack" parent="VB" instance=ExtResource("3_1xk07")]
+[node name="PageStack" parent="VB" instance=ExtResource("3_nlwbh")]
 layout_mode = 2
 size_flags_vertical = 3
 

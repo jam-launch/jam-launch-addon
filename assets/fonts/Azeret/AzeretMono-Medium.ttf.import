@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dl7bgaolujosi"
-path="res://.godot/imported/OpenSans-Italic.ttf-a32cda78fdfa1f384f63cba993f8c6cb.fontdata"
+uid="uid://drcgski530d27"
+path="res://.godot/imported/AzeretMono-Medium.ttf-33bc4aea5f47bd8f65c4accd381ce778.fontdata"
 
 [deps]
 
-source_file="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Italic.ttf"
-dest_files=["res://.godot/imported/OpenSans-Italic.ttf-a32cda78fdfa1f384f63cba993f8c6cb.fontdata"]
+source_file="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf"
+dest_files=["res://.godot/imported/AzeretMono-Medium.ttf-33bc4aea5f47bd8f65c4accd381ce778.fontdata"]
 
 [params]
 

@@ -3,10 +3,8 @@ extends CanvasLayer
 ## A [CanvasLayer] that provides client-specific multiplayer capabilities as the
 ## child of a [JamConnect] Node
 
-var _client_ui_scn = preload("res://addons/jam_launch/ui/ClientUI.tscn")
-
 ## The client UI used to configure and initiate sessions
-var client_ui: ClientUI
+var client_ui: JamClientUI
 ## The client token for the active session. The token is used to verify
 ## identity with the server.
 var current_client_token: String
@@ -22,7 +20,7 @@ var session_id: String = ""
 ## The Game JWT for this client - used to authenticate with the Jam Launch API
 var jwt: Jwt = Jwt.new()
 ## Interface for calling the Jam Launch session API
-var api: ClientApi
+var api: JamClientApi
 ## Helper object for acquiring a Game JWT for authentication
 var keys: ClientKeys
 
@@ -37,7 +35,7 @@ func _init():
 	add_child(keys)
 
 func _ready():
-	api = ClientApi.new()
+	api = JamClientApi.new()
 	api.game_id = _jc.game_id
 	api.jwt = jwt
 	add_child(api)
@@ -69,9 +67,7 @@ func client_start():
 	multiplayer.connected_to_server.connect(_on_client_connect)
 	multiplayer.connection_failed.connect(_on_client_connect_fail)
 	multiplayer.server_disconnected.connect(_on_server_disconnect)
-	client_ui = _client_ui_scn.instantiate()
-	client_ui.client_api = api
-	client_ui.connect_to_session.connect(client_session_request)
+	client_ui.client_ui_initialization(_jc)
 	add_child(client_ui)
 
 ## Initiates a connection to a provisioned server
@@ -101,19 +97,21 @@ func client_session_request(ip: String, port: int, token: String, domain: Varian
 		printerr("Server connection error: ", err)
 		_jc.log_event.emit("Error: %d" % err)
 		client_ui.visible = true
+		client_ui.show_error(("Server connection error: %d" % err) as String)
 		return
 	multiplayer.multiplayer_peer = peer
+	_jc.local_player_joining.emit()
 
 ## Elegantly leaves the game by disconnecting from the server and notifying the
 ## Jam Launch API
 func leave_game():
 	client_ui.visible = true
-	if client_ui.active_session != null: # i.e. not a dev mode local client
-		await client_ui.exit_lobby()
+	await client_ui.leave_game_session()
 	multiplayer.multiplayer_peer.close()
 
 func _on_client_connect_fail():
 	_jc.log_event.emit("Connection to server failed")
+	_jc.local_player_left.emit()
 	printerr("connection to server failed")
 	client_ui.visible = true
 
@@ -123,4 +121,5 @@ func _on_client_connect():
 
 func _on_server_disconnect():
 	_jc.log_event.emit("Server disconnected")
+	_jc.local_player_left.emit()
 	client_ui.visible = true

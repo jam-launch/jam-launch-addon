@@ -1,0 +1,372 @@
+[gd_scene load_steps=13 format=3 uid="uid://budt7j02akqui"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/client/ExampleClientUI.gd" id="1_8fen7"]
+[ext_resource type="Theme" uid="uid://k50541hp21mg" path="res://addons/jam_launch/themes/client_ui/big_theme.tres" id="1_onvdi"]
+[ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/pages/PageStack.tscn" id="2_s1vno"]
+[ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="4_lbmx5"]
+[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="4_uf2si"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="6_ielux"]
+[ext_resource type="Texture2D" uid="uid://bk2lmycbke4cr" path="res://addons/jam_launch/assets/icons/content_copy.svg" id="7_3gepc"]
+[ext_resource type="Texture2D" uid="uid://bivswta38sedp" path="res://addons/jam_launch/assets/icons/content_paste_go.svg" id="7_gr1xc"]
+[ext_resource type="Texture2D" uid="uid://na8vvk6ggh0k" path="res://addons/jam_launch/assets/icons/arrow_back.svg" id="8_qxrcb"]
+[ext_resource type="Texture2D" uid="uid://tqvfnj22uuq1" path="res://addons/jam_launch/assets/icons/settings.svg" id="9_2myoa"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gtpr0"]
+bg_color = Color(0, 0, 0, 0.156863)
+
+[sub_resource type="Theme" id="Theme_it7rs"]
+
+[node name="ExampleClientUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_onvdi")
+script = ExtResource("1_8fen7")
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="M" type="MarginContainer" parent="CC"]
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="CC/M"]
+layout_mode = 2
+
+[node name="M" type="MarginContainer" parent="CC/M"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="PageStack" parent="CC/M/M" instance=ExtResource("2_s1vno")]
+layout_mode = 2
+current_tab = 2
+
+[node name="Home" type="VBoxContainer" parent="CC/M/M/PageStack"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="VB" type="VBoxContainer" parent="CC/M/M/PageStack/Home"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 16
+
+[node name="StartJoin" type="Button" parent="CC/M/M/PageStack/Home/VB"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Join Game"
+
+[node name="StartHost" type="Button" parent="CC/M/M/PageStack/Home/VB"]
+layout_mode = 2
+text = "Host Game"
+
+[node name="DevTools" type="MenuButton" parent="CC/M/M/PageStack/Home/VB"]
+layout_mode = 2
+text = "Dev Tools"
+flat = false
+item_count = 8
+popup/item_0/text = "Host Local"
+popup/item_0/id = 0
+popup/item_1/text = "Join Local"
+popup/item_1/id = 1
+popup/item_2/text = ""
+popup/item_2/id = 2
+popup/item_2/separator = true
+popup/item_3/text = "Test Client 1"
+popup/item_3/checkable = 2
+popup/item_3/checked = true
+popup/item_3/id = 3
+popup/item_4/text = "Test Client 2"
+popup/item_4/checkable = 2
+popup/item_4/id = 4
+popup/item_5/text = "Test Client 3"
+popup/item_5/checkable = 2
+popup/item_5/id = 5
+popup/item_6/text = "Test Client 4"
+popup/item_6/checkable = 2
+popup/item_6/id = 6
+popup/item_7/text = "Test Client 5"
+popup/item_7/checkable = 2
+popup/item_7/id = 7
+
+[node name="NoDeployment" type="Label" parent="CC/M/M/PageStack/Home"]
+visible = false
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "No deployable configuration was found for this project - features will be limited to local hosting.
+
+Jam Launch developer access is required to make deployable projects."
+autowrap_mode = 2
+
+[node name="HostGame" type="VBoxContainer" parent="CC/M/M/PageStack"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Busy" type="VBoxContainer" parent="CC/M/M/PageStack/HostGame"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BusyCircle" parent="CC/M/M/PageStack/HostGame/Busy" instance=ExtResource("4_lbmx5")]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/HostGame/Busy"]
+layout_mode = 2
+text = "Creating Session..."
+horizontal_alignment = 1
+
+[node name="G" type="GridContainer" parent="CC/M/M/PageStack/HostGame"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/HostGame/G"]
+layout_mode = 2
+text = "Server Region:"
+
+[node name="RegionSelect" type="OptionButton" parent="CC/M/M/PageStack/HostGame/G"]
+layout_mode = 2
+item_count = 2
+selected = 0
+popup/item_0/text = "North America - East"
+popup/item_0/id = 0
+popup/item_1/text = "Europe - West"
+popup/item_1/id = 1
+
+[node name="HB" type="HBoxContainer" parent="CC/M/M/PageStack/HostGame"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HostBack" type="Button" parent="CC/M/M/PageStack/HostGame/HB"]
+layout_mode = 2
+icon = ExtResource("8_qxrcb")
+
+[node name="Host" type="Button" parent="CC/M/M/PageStack/HostGame/HB"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Host Game"
+
+[node name="HostBusy" type="Node" parent="CC/M/M/PageStack/HostGame"]
+script = ExtResource("6_ielux")
+
+[node name="JoinGameCode" type="VBoxContainer" parent="CC/M/M/PageStack"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Busy" type="VBoxContainer" parent="CC/M/M/PageStack/JoinGameCode"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BusyCircle" parent="CC/M/M/PageStack/JoinGameCode/Busy" instance=ExtResource("4_lbmx5")]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/JoinGameCode/Busy"]
+layout_mode = 2
+text = "Joining Session..."
+horizontal_alignment = 1
+
+[node name="Entry" type="VBoxContainer" parent="CC/M/M/PageStack/JoinGameCode"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PasteCode" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
+layout_mode = 2
+text = "Paste Join Code"
+icon = ExtResource("7_gr1xc")
+icon_alignment = 2
+
+[node name="Or" type="Label" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
+layout_mode = 2
+text = "or"
+horizontal_alignment = 1
+
+[node name="EnterCode" type="HBoxContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode"]
+layout_mode = 2
+text = "Enter Code:"
+
+[node name="JoinCode" type="LineEdit" parent="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode"]
+layout_mode = 2
+theme_override_constants/minimum_character_width = 4
+theme_override_fonts/font = ExtResource("4_uf2si")
+max_length = 4
+
+[node name="JoinWithCode" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Join
+"
+
+[node name="Misc" type="HBoxContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="JoinCodeBack" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/Misc"]
+layout_mode = 2
+icon = ExtResource("8_qxrcb")
+
+[node name="JoinBusy" type="Node" parent="CC/M/M/PageStack/JoinGameCode"]
+script = ExtResource("6_ielux")
+
+[node name="Session" type="MarginContainer" parent="CC/M/M/PageStack"]
+visible = false
+layout_mode = 2
+
+[node name="SessionRefresh" type="Timer" parent="CC/M/M/PageStack/Session"]
+one_shot = true
+
+[node name="M" type="MarginContainer" parent="CC/M/M/PageStack/Session"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="VB" type="VBoxContainer" parent="CC/M/M/PageStack/Session/M"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="JoinInfo" type="HBoxContainer" parent="CC/M/M/PageStack/Session/M/VB"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/Session/M/VB/JoinInfo"]
+layout_mode = 2
+text = "Join Code:"
+
+[node name="JoinCodeCopy" type="Button" parent="CC/M/M/PageStack/Session/M/VB/JoinInfo"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_fonts/font = ExtResource("4_uf2si")
+icon = ExtResource("7_3gepc")
+icon_alignment = 2
+
+[node name="Players" type="ScrollContainer" parent="CC/M/M/PageStack/Session/M/VB"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gtpr0")
+
+[node name="M" type="MarginContainer" parent="CC/M/M/PageStack/Session/M/VB/Players"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VB" type="VBoxContainer" parent="CC/M/M/PageStack/Session/M/VB/Players/M"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Grid" type="GridContainer" parent="CC/M/M/PageStack/Session/M/VB/Players/M/VB"]
+layout_mode = 2
+theme = SubResource("Theme_it7rs")
+
+[node name="StartBox" type="MarginContainer" parent="CC/M/M/PageStack/Session/M/VB"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="StartGame" type="Button" parent="CC/M/M/PageStack/Session/M/VB/StartBox"]
+visible = false
+layout_mode = 2
+text = "Start Game"
+
+[node name="Busy" type="MarginContainer" parent="CC/M/M/PageStack/Session/M/VB/StartBox"]
+layout_mode = 2
+
+[node name="ProgressBar" type="ProgressBar" parent="CC/M/M/PageStack/Session/M/VB/StartBox/Busy"]
+custom_minimum_size = Vector2(200, 5)
+layout_mode = 2
+size_flags_vertical = 1
+show_percentage = false
+
+[node name="BusyCircle" parent="CC/M/M/PageStack/Session/M/VB/StartBox/Busy" instance=ExtResource("4_lbmx5")]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+padding_ratio = 0.15
+
+[node name="HB" type="HBoxContainer" parent="CC/M/M/PageStack/Session/M/VB"]
+layout_mode = 2
+
+[node name="LeaveSession" type="Button" parent="CC/M/M/PageStack/Session/M/VB/HB"]
+layout_mode = 2
+size_flags_horizontal = 0
+icon = ExtResource("8_qxrcb")
+
+[node name="Control" type="Control" parent="CC/M/M/PageStack/Session/M/VB/HB"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Settings" type="Button" parent="CC/M/M/PageStack/Session/M/VB/HB"]
+layout_mode = 2
+disabled = true
+icon = ExtResource("9_2myoa")
+
+[node name="Bottom" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="ErrorArea" type="MarginContainer" parent="Bottom"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 16
+
+[node name="Errors" type="VBoxContainer" parent="Bottom/ErrorArea"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="M" type="MarginContainer" parent="Bottom"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VersionInfo" type="Label" parent="Bottom/M"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.733333, 0.733333, 0.733333, 1)
+theme_override_font_sizes/font_size = 16
+
+[connection signal="tab_changed" from="CC/M/M/PageStack" to="." method="_on_page_stack_tab_changed"]
+[connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartJoin" to="." method="_on_start_join_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartHost" to="." method="_on_start_host_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/HostBack" to="." method="_on_host_back_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/Host" to="." method="_on_host_pressed"]
+[connection signal="lock_changed" from="CC/M/M/PageStack/HostGame/HostBusy" to="." method="_on_host_busy_lock_changed"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/PasteCode" to="." method="_on_paste_code_pressed"]
+[connection signal="text_changed" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinCode" to="." method="_on_join_code_text_changed"]
+[connection signal="text_submitted" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinCode" to="." method="_on_join_code_text_submitted"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinWithCode" to="." method="_on_join_with_code_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/Misc/JoinCodeBack" to="." method="_on_join_code_back_pressed"]
+[connection signal="lock_changed" from="CC/M/M/PageStack/JoinGameCode/JoinBusy" to="." method="_on_join_busy_lock_changed"]
+[connection signal="timeout" from="CC/M/M/PageStack/Session/SessionRefresh" to="." method="_on_session_refresh_timeout"]
+[connection signal="pressed" from="CC/M/M/PageStack/Session/M/VB/JoinInfo/JoinCodeCopy" to="." method="_on_join_code_copy_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/Session/M/VB/StartBox/StartGame" to="." method="_on_start_game_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/Session/M/VB/HB/LeaveSession" to="." method="_on_leave_session_pressed"]
