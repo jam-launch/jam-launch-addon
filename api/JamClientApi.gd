@@ -1,5 +1,5 @@
 @tool
-extends HttpBase
+extends JamHttpBase
 class_name JamClientApi
 
 var game_id: String
@@ -19,7 +19,7 @@ class PlayerInfo:
 	var user_id: String
 
 class GameSessionResult:
-	extends HttpBase.Result
+	extends JamHttpBase.Result
 	var session_id: String = ""
 	var status: SessionStatus = SessionStatus.UNKNOWN
 	var region: String = ""

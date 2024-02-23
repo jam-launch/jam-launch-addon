@@ -1,5 +1,5 @@
 extends RefCounted
-class_name Jwt
+class_name JamJwt
 
 signal token_changed(String)
 
@@ -18,7 +18,7 @@ class TokenParseResult:
 var jwt_token: String = ""
 
 func set_token(jwt: String) -> TokenParseResult:
-	var result = Jwt.parse_token(jwt)
+	var result = JamJwt.parse_token(jwt)
 	if result.errored:
 		return result
 	jwt_token = jwt

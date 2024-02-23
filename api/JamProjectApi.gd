@@ -1,6 +1,6 @@
 @tool
-extends HttpBase
-class_name ProjectApi
+extends JamHttpBase
+class_name JamProjectApi
 
 func create_project(project_name: String) -> Result:
 	return await _json_http(

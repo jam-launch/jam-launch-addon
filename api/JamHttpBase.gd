@@ -1,12 +1,12 @@
 @tool
 extends Node
-class_name HttpBase
+class_name JamHttpBase
 
 var addon_version: String = "unknown"
 var api_url: String
-var jwt: Jwt
+var jwt: JamJwt
 
-var pool: HttpRequestPool
+var pool: JamHttpRequestPool
 
 class Result:
 	var data: Dictionary = {}
@@ -25,7 +25,7 @@ func _ready():
 	
 	addon_version = settings.get_value("info", "version", "unknown")
 	
-	pool = HttpRequestPool.new()
+	pool = JamHttpRequestPool.new()
 	add_child(pool)
 
 func _auth_headers() -> Array:

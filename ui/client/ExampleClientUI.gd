@@ -73,10 +73,22 @@ func _ready():
 	else:
 		dev_tools.visible = false
 	
-	pages.show_page_node(home_page)
+	pages.show_page_node(home_page, false)
 	
 	if not jam_connect.has_deployment:
 		set_enable_deployments(false)
+	
+	jam_connect.local_player_joining.connect(_on_joining_game)
+	jam_connect.local_player_left.connect(_on_leaving_game)
+
+func _on_joining_game():
+	start_game_btn.disabled = true
+
+func _on_leaving_game():
+	start_game_btn.disabled = false
+	session_result = null
+	session_token = ""
+	pages.show_page_node(home_page, false)
 
 func _on_devtools_pressed(id: int):
 	if id == 0:

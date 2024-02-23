@@ -3,13 +3,13 @@ class_name ClientKeys
 
 const jwt_cache_idx = "editor_jwt_dev_key"
 var cache = KeyValCache.new()
-var dev_mode_api: DevModeApi
+var dev_mode_api: JamDevModeApi
 
-var dev_jwt: Jwt
+var dev_jwt: JamJwt
 
 func _init():
 	if OS.is_debug_build():
-		dev_mode_api = DevModeApi.new()
+		dev_mode_api = JamDevModeApi.new()
 		add_child(dev_mode_api)
 
 func _get_web_gjwt() -> Variant:
@@ -44,7 +44,7 @@ func _load_dev_jwt() -> Variant:
 		push_error("no developer key available for fetching test keys")
 		return null
 		
-	var jwt = Jwt.new()
+	var jwt = JamJwt.new()
 	var jwt_res = jwt.set_token(dev_key as String)
 	if jwt_res.errored:
 		push_error("invalid developer key in cache: %s" % jwt_res.error)

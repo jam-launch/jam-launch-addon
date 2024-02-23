@@ -18,7 +18,7 @@ var test_client_number: int = 1:
 var session_id: String = ""
 
 ## The Game JWT for this client - used to authenticate with the Jam Launch API
-var jwt: Jwt = Jwt.new()
+var jwt: JamJwt = JamJwt.new()
 ## Interface for calling the Jam Launch session API
 var api: JamClientApi
 ## Helper object for acquiring a Game JWT for authentication

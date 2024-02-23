@@ -1,5 +1,5 @@
-extends HttpBase
-class_name DevModeApi
+extends JamHttpBase
+class_name JamDevModeApi
 
 func get_test_key(project_id: String, release: String, test_num: int) -> Result:
 	return await _json_http(

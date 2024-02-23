@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/pages/PageStack.tscn" id="3_nlwbh"]
 [ext_resource type="PackedScene" uid="uid://dtyeqsjc7ytwj" path="res://addons/jam_launch/editor_plugin/NewProject.tscn" id="4_xw32o"]
 [ext_resource type="PackedScene" uid="uid://dwbbc305p213v" path="res://addons/jam_launch/editor_plugin/Project.tscn" id="5_0x6ps"]
-[ext_resource type="Script" path="res://addons/jam_launch/api/ProjectApi.gd" id="6_21ydx"]
+[ext_resource type="Script" path="res://addons/jam_launch/api/JamProjectApi.gd" id="6_21ydx"]
 [ext_resource type="PackedScene" uid="uid://c6y6dgxhoqjjv" path="res://addons/jam_launch/editor_plugin/Sessions.tscn" id="6_dow21"]
 [ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="9_ucv5t"]
 

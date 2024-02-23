@@ -3,7 +3,7 @@ extends Control
 class_name JamEditorPluginPage
 
 var dashboard: JamEditorPluginDashboard
-var project_api: ProjectApi
+var project_api: JamProjectApi
 var plugin: EditorPlugin
 
 func page_init():

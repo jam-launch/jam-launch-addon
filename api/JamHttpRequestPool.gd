@@ -1,6 +1,6 @@
 @tool
 extends Node
-class_name HttpRequestPool
+class_name JamHttpRequestPool
 
 class HttpHolder:
 	extends HTTPRequest

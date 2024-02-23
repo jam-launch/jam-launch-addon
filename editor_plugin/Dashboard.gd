@@ -4,7 +4,7 @@ class_name JamEditorPluginDashboard
 
 var msg_scn = preload("res://addons/jam_launch/ui/MessagePanel.tscn")
 var plugin: EditorPlugin
-@onready var project_api: ProjectApi = $ProjectApi
+@onready var project_api: JamProjectApi = $ProjectApi
 
 @onready var load_locker: ScopeLocker = $LoadLocker
 

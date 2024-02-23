@@ -1,7 +1,7 @@
 @tool
 extends JamEditorPluginPage
 
-var jwt: Jwt = Jwt.new()
+var jwt: JamJwt = JamJwt.new()
 var cache: KeyValCache = KeyValCache.new()
 const jwt_cache_idx = "editor_jwt_dev_key"
 
