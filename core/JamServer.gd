@@ -166,6 +166,7 @@ func verify_player(join_token: String):
 	print("Accepted player %d as %s!" % [pid, pinfo["name"]])
 	_jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
 	_jc.player_verified.emit(pid, pinfo)
+	_jc._verification_notification.rpc_id(pid, pinfo)
 
 ## Triggers the provided RPC-enabled Callable on all verified peers if the
 ## [code]origin_pid[/code] is from a peer that has also been verified. Useful

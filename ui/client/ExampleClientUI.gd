@@ -47,12 +47,12 @@ var session_result: JamClientApi.GameSessionResult = null:
 			pages.show_page_node(home_page, false)
 		else:
 			while player_grid.get_child_count() > 0:
-				var c = player_grid.get_child(0)
+				var c := player_grid.get_child(0)
 				player_grid.remove_child(c)
 				c.queue_free()
 			
 			for p in session_result.players:
-				var plbl = Label.new()
+				var plbl := Label.new()
 				plbl.text = p.user_id
 				player_grid.add_child(plbl)
 			

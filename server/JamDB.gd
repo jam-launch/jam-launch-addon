@@ -10,7 +10,7 @@ class_name JamDB
 
 var _jc: JamConnect
 
-func _init(jam_connect):
+func _init(jam_connect: JamConnect):
 	_jc = jam_connect
 
 @warning_ignore("unused_parameter")
