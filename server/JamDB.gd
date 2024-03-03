@@ -23,7 +23,7 @@ func get_game_data(key_2: String):
 	
 ## Gets the release-scoped data row for the provided key
 func get_release_data(key_2: String):
-	return get_db_data(_jc.get_release_id(), key_2)
+	return get_db_data(_jc.get_game_id(), key_2)
 
 ## Gets the session-scoped data row for the provided key
 func get_session_data(key_2: String):
@@ -39,7 +39,7 @@ func put_game_data(key_2: String, data: Dictionary):
 
 ## Puts a release-scoped data row in the database
 func put_release_data(key_2: String, data: Dictionary):
-	return put_db_data(_jc.get_release_id(), key_2, data)
+	return put_db_data(_jc.get_game_id(), key_2, data)
 
 ## Puts a session-scoped data row in the database
 func put_session_data(key_2: String, data: Dictionary):
@@ -66,7 +66,7 @@ func get_game_data_async(key_2: String):
 ## Asynchronously gets the release-scoped data row for the provided key.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
 func get_release_data_async(key_2: String):
-	return get_db_data_async(_jc.get_release_id(), key_2)
+	return get_db_data_async(_jc.get_game_id(), key_2)
 
 ## Asynchronously gets the session-scoped data row for the provided key.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
@@ -85,7 +85,7 @@ func put_game_data_async(key_2: String, data: Dictionary):
 ## Asynchronously puts a release-scoped data row in the database. Triggers
 ## [signal JamConnect.game_db_async_result] upon completion.
 func put_release_data_async(key_2: String, data: Dictionary):
-	return put_db_data_async(_jc.get_release_id(), key_2, data)
+	return put_db_data_async(_jc.get_game_id(), key_2, data)
 
 ## Asynchronously puts a session-scoped data row in the database. Triggers
 ## [signal JamConnect.game_db_async_result] upon completion.

@@ -81,7 +81,56 @@ class GameSessionResult:
 		else:
 			return 0.0
 
-func create_game_session(region: String = "us-east-2") -> Result:
+class P2pGameSessionResult:
+	extends JamHttpBase.Result
+	var session_id: String = ""
+	var join_id: String = ""
+	var created_at: String = ""
+	var sealed: bool = false
+	var players: Array[PlayerInfo] = []
+
+	static func from_result(res: Result) -> P2pGameSessionResult:
+		var gres = P2pGameSessionResult.new()
+		gres.data = res.data
+		gres.errored = res.errored
+		gres.error_msg = res.error_msg
+		
+		if res.errored:
+			return gres
+		
+		gres.session_id = res.data["id"]
+		gres.join_id = res.data["join_id"]
+		gres.created_at = res.data["created_at"]
+		gres.sealed = res.data["sealed"]
+		for p in res.data["players"]:
+			var pinfo = PlayerInfo.new()
+			pinfo.user_id = p["user_id"]
+			gres.players.push_back(pinfo)
+		
+		return gres
+
+class P2pJoinResult:
+	extends JamHttpBase.Result
+	var session_id: String = ""
+	var join_id: String = ""
+	var join_token: String = ""
+
+	static func from_result(res: Result) -> P2pJoinResult:
+		var jres = P2pJoinResult.new()
+		jres.data = res.data
+		jres.errored = res.errored
+		jres.error_msg = res.error_msg
+		
+		if res.errored:
+			return jres
+		
+		jres.session_id = res.data["session_id"]
+		jres.join_id = res.data.get("join_id", "")
+		jres.join_token = res.data["join_token"]
+		
+		return jres
+
+func create_game_session(region: String="us-east-2") -> Result:
 	return await _json_http(
 		"/sessions/%s" % game_id,
 		HTTPClient.METHOD_POST,
@@ -105,6 +154,33 @@ func get_game_session(session_id: String) -> GameSessionResult:
 func leave_game_session(session_id: String) -> Result:
 	return await _json_http(
 		"/sessions/%s/%s/leave" % [game_id, session_id],
+		HTTPClient.METHOD_POST,
+		{}
+	)
+
+func create_p2p_game_session() -> P2pJoinResult:
+	return P2pJoinResult.from_result(await _json_http(
+		"/p2p/%s" % game_id,
+		HTTPClient.METHOD_POST,
+		{
+		}
+	))
+
+func join_p2p_game_session(join_id: String) -> P2pJoinResult:
+	return P2pJoinResult.from_result(await _json_http(
+		"/p2p/%s/%s/join" % [game_id, join_id],
+		HTTPClient.METHOD_POST,
+		{}
+	))
+
+func get_p2p_game_session(session_id: String) -> P2pGameSessionResult:
+	return P2pGameSessionResult.from_result(
+		await _json_http("/p2p/%s/%s" % [game_id, session_id])
+	)
+
+func leave_p2p_game_session(session_id: String) -> Result:
+	return await _json_http(
+		"/p2p/%s/%s/leave" % [game_id, session_id],
 		HTTPClient.METHOD_POST,
 		{}
 	)

@@ -49,10 +49,8 @@ theme_override_constants/margin_bottom = 12
 
 [node name="PageStack" parent="CC/M/M" instance=ExtResource("2_s1vno")]
 layout_mode = 2
-current_tab = 2
 
 [node name="Home" type="VBoxContainer" parent="CC/M/M/PageStack"]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 16
 
@@ -109,6 +107,20 @@ text = "No deployable configuration was found for this project - features will b
 Jam Launch developer access is required to make deployable projects."
 autowrap_mode = 2
 
+[node name="Busy" type="VBoxContainer" parent="CC/M/M/PageStack/Home"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BusyCircle" parent="CC/M/M/PageStack/Home/Busy" instance=ExtResource("4_lbmx5")]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/Home/Busy"]
+layout_mode = 2
+text = "Creating Session..."
+horizontal_alignment = 1
+
 [node name="HostGame" type="VBoxContainer" parent="CC/M/M/PageStack"]
 visible = false
 layout_mode = 2
@@ -164,6 +176,7 @@ text = "Host Game"
 script = ExtResource("6_ielux")
 
 [node name="JoinGameCode" type="VBoxContainer" parent="CC/M/M/PageStack"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 16
 

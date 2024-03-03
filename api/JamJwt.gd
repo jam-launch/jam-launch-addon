@@ -15,13 +15,19 @@ class TokenParseResult:
 	var errored: bool = false
 	var data: TokenData
 
+var username: String:
+	get:
+		return claims.get("username", "")
+
 var jwt_token: String = ""
+var claims: Dictionary = {}
 
 func set_token(jwt: String) -> TokenParseResult:
 	var result = JamJwt.parse_token(jwt)
 	if result.errored:
 		return result
 	jwt_token = jwt
+	claims = result.data.claims
 	token_changed.emit(jwt_token)
 	return result
 
@@ -66,12 +72,12 @@ static func parse_token(token: String) -> TokenParseResult:
 	
 	var claims_b64 := b64url_to_b64(parts[1])
 	var claims_json := Marshalls.base64_to_utf8(claims_b64)
-	var claims = JSON.parse_string(claims_json)
-	if claims == null:
+	var jwt_claims = JSON.parse_string(claims_json)
+	if jwt_claims == null:
 		result.errored = true
 		result.error = "Failed to parse JWT claims"
 		return result
-	tkn.claims = claims
+	tkn.claims = jwt_claims
 	
 	var sig_b64 := b64url_to_b64(parts[2])
 	var raw_sig := Marshalls.base64_to_raw(sig_b64)

@@ -19,6 +19,7 @@ extends JamClientUI
 @onready var join_code_edit: LineEdit = $CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinCode
 @onready var join_btn: Button = $CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinWithCode
 
+@onready var p2p_host_busy: Control = $CC/M/M/PageStack/Home/Busy
 @onready var host_busy: Control = $CC/M/M/PageStack/HostGame/Busy
 @onready var host_busy_lock: ScopeLocker = $CC/M/M/PageStack/HostGame/HostBusy
 @onready var host_region_select: OptionButton = $CC/M/M/PageStack/HostGame/G/RegionSelect
@@ -33,10 +34,16 @@ const REFRESH_SLOW = 5.0
 @onready var session_server_progress: Control = $CC/M/M/PageStack/Session/M/VB/StartBox/Busy/ProgressBar
 @onready var player_grid: GridContainer = $CC/M/M/PageStack/Session/M/VB/Players/M/VB/Grid
 
+var JOIN_ID_MIN_LEN: int = 4
+
+var did_join_game: bool = false
+
 var session_token: String = ""
 var session_result: JamClientApi.GameSessionResult = null:
 	set(val):
 		session_result = val
+		if jam_connect.is_webrtc_mode():
+			return
 		session_server_progress.get_parent().visible = false
 		start_game_btn.visible = false
 		
@@ -62,7 +69,22 @@ var session_result: JamClientApi.GameSessionResult = null:
 			else:
 				start_game_btn.visible = true
 
+var p2p_session_result: JamClientApi.P2pGameSessionResult = null:
+	set(val):
+		p2p_session_result = val
+		if not jam_connect.is_webrtc_mode():
+			return
+		session_server_progress.get_parent().visible = false
+
 func _ready():
+	if jam_connect.network_mode == "webrtc" or OS.has_feature("webrtc"):
+		JOIN_ID_MIN_LEN = 5
+		join_code_edit.max_length = JOIN_ID_MIN_LEN
+		join_code_edit.add_theme_constant_override("minimum_character_width", JOIN_ID_MIN_LEN)
+		
+		jam_connect.player_joined.connect(_on_p2p_player_joined)
+		jam_connect.player_left.connect(_on_p2p_player_left)
+
 	var gid_parts = game_id.split("-")
 	var version_number = gid_parts[len(gid_parts) - 1]
 	version_info.text = "version %s" % version_number
@@ -81,14 +103,39 @@ func _ready():
 	jam_connect.local_player_joining.connect(_on_joining_game)
 	jam_connect.local_player_left.connect(_on_leaving_game)
 
+var joined_players = {}
+
+func update_player_grid():
+	while player_grid.get_child_count() > 0:
+		var c := player_grid.get_child(0)
+		player_grid.remove_child(c)
+		c.queue_free()
+		
+	if p2p_session_result:
+		for pname in joined_players.keys():
+			var plbl := Label.new()
+			plbl.text = pname
+			player_grid.add_child(plbl)
+
+func _on_p2p_player_joined(user_id: String):
+	joined_players[user_id] = true
+	update_player_grid()
+	
+func _on_p2p_player_left(user_id: String):
+	joined_players.erase(user_id)
+	update_player_grid()
+
 func _on_joining_game():
 	start_game_btn.disabled = true
+	did_join_game = true
 
 func _on_leaving_game():
-	start_game_btn.disabled = false
-	session_result = null
-	session_token = ""
-	pages.show_page_node(home_page, false)
+	if did_join_game:
+		start_game_btn.disabled = false
+		session_result = null
+		p2p_session_result = null
+		session_token = ""
+		did_join_game = false
 
 func _on_devtools_pressed(id: int):
 	if id == 0:
@@ -136,22 +183,50 @@ func enter_session(session_id: String, token: String) -> bool:
 	pages.show_page_node(session_page)
 	return true
 
+func enter_p2p_session(session_id: String, token: String) -> bool:
+	var connRes := await jam_client.p2p_session_connect(session_id, client_api.jwt.username, token)
+	if connRes.errored:
+		show_error(connRes.error_msg)
+		return false
+	p2p_session_result = await client_api.get_p2p_game_session(session_id)
+	if p2p_session_result.errored:
+		show_error(p2p_session_result.error_msg)
+		return false
+	if len(p2p_session_result.join_id):
+		join_code_btn.text = p2p_session_result.join_id
+		join_code_btn.get_parent().visible = true
+	else:
+		join_code_btn.get_parent().visible = false
+	
+	session_token = token
+	pages.show_page_node(session_page)
+	return true
+
 func exit_session() -> bool:
 	session_refresh_timer.stop()
 	session_token = ""
-	if session_result == null:
-		return false
-	var res := await client_api.leave_game_session(session_result.session_id)
-	session_result = null
-	if res.errored:
-		show_error(res.error_msg)
-		return false
+
+	if session_result != null:
+		var res := await client_api.leave_game_session(session_result.session_id)
+		session_result = null
+		if res.errored:
+			show_error(res.error_msg)
+			return false
+		else:
+			return true
+	elif p2p_session_result != null:
+		var res := await client_api.leave_p2p_game_session(p2p_session_result.session_id)
+		p2p_session_result = null
+		if res.errored:
+			show_error(res.error_msg)
+			return false
+		else:
+			return true
 	else:
-		return true
+		return false
 
 func leave_game_session():
 	exit_session()
-
 
 func _on_page_stack_tab_changed(_tab):
 	if not pages:
@@ -163,7 +238,22 @@ func _on_start_join_pressed():
 	pages.show_page_node(join_code_page)
 
 func _on_start_host_pressed():
-	pages.show_page_node(host_page)
+	if jam_connect.is_webrtc_mode():
+		joined_players = {}
+		update_player_grid()
+		start_game_btn.visible = true
+		var lock = host_busy_lock.get_lock()
+		var res := await client_api.create_p2p_game_session()
+		if res.errored:
+			show_error(res.error_msg)
+			return
+		
+		if not await enter_p2p_session(res.session_id, res.join_token):
+			res = await client_api.leave_p2p_game_session(res.session_id)
+			if res.errored:
+				show_error("failed to leave game session after failing to enter: %s" % res.error_msg)
+	else:
+		pages.show_page_node(host_page)
 
 func _on_host_pressed():
 	var region := "us-east-2"
@@ -181,7 +271,6 @@ func _on_host_pressed():
 		return
 	
 	if not await enter_session(res.data["id"] as String, res.data["join_token"] as String):
-		print("fail")
 		res = await client_api.leave_game_session(res.data["id"] as String)
 		if res.errored:
 			show_error("failed to leave game session after failing to enter: %s" % res.error_msg)
@@ -190,19 +279,35 @@ func _on_host_busy_lock_changed(locked):
 	host_btn.get_parent().visible = not locked
 	host_region_select.get_parent().visible = not locked
 	host_busy.visible = locked
+	
+	start_host.get_parent().visible = not locked
+	p2p_host_busy.visible = locked
 
 func _on_join_with_code_pressed():
 	if join_busy_lock.is_locked():
 		show_error("cannot trigger join while join is already in progress")
 		return
 	var _lock = join_busy_lock.get_lock()
-	var res := await client_api.join_game_session(join_code_edit.text)
-	if res.errored:
-		show_error(res.error_msg)
-		return
-	if not await enter_session(res.data["session_id"] as String, res.data["join_token"] as String):
-		return
-	join_code_edit.clear()
+
+	if jam_connect.is_webrtc_mode():
+		joined_players = {}
+		update_player_grid()
+		start_game_btn.visible = false
+		var res := await client_api.join_p2p_game_session(join_code_edit.text)
+		if res.errored:
+			show_error(res.error_msg)
+			return
+		if not await enter_p2p_session(res.data["session_id"] as String, res.data["join_token"] as String):
+			return
+		join_code_edit.clear()
+	else:
+		var res := await client_api.join_game_session(join_code_edit.text)
+		if res.errored:
+			show_error(res.error_msg)
+			return
+		if not await enter_session(res.data["session_id"] as String, res.data["join_token"] as String):
+			return
+		join_code_edit.clear()
 
 func _on_paste_code_pressed():
 	join_code_edit.text = DisplayServer.clipboard_get()
@@ -216,31 +321,44 @@ func _on_join_code_text_changed(new_text):
 	if upper != new_text:
 		join_code_edit.text = upper
 		join_code_edit.caret_column = len(upper)
-	join_btn.disabled = len(upper) != 4
+	join_btn.disabled = len(upper) < JOIN_ID_MIN_LEN
 
 func _on_join_busy_lock_changed(locked):
 	join_btn.get_parent().get_parent().visible = not locked
 	join_busy.visible = locked
 
 func _on_session_refresh_timeout():
-	if session_result == null or session_result.has_unusable_status():
-		return
+	if jam_connect.network_mode == "webrtc" or OS.has_feature("webrtc"):
+		if p2p_session_result == null:
+			return
 		
-	var res := await client_api.get_game_session(session_result.session_id)
-	if res.errored:
-		show_error("session refresh error: " + res.error_msg, REFRESH_SLOW)
-		session_refresh_timer.start(REFRESH_SLOW)
-		return
-	
-	if res.busy_progress() == 1.0:
+		var res := await client_api.get_p2p_game_session(p2p_session_result.session_id)
+		if res.errored:
+			show_error("session refresh error: " + res.error_msg, REFRESH_SLOW - 1.0)
+			session_refresh_timer.start(REFRESH_SLOW)
+			return
 		session_refresh_timer.start(REFRESH_NORMAL)
+		p2p_session_result = res
+		
 	else:
-		session_refresh_timer.start(REFRESH_FAST)
-	session_result = res
+		if session_result == null or session_result.has_unusable_status():
+			return
+			
+		var res := await client_api.get_game_session(session_result.session_id)
+		if res.errored:
+			show_error("session refresh error: " + res.error_msg, REFRESH_SLOW)
+			session_refresh_timer.start(REFRESH_SLOW)
+			return
+		
+		if res.busy_progress() == 1.0:
+			session_refresh_timer.start(REFRESH_NORMAL)
+		else:
+			session_refresh_timer.start(REFRESH_FAST)
+		session_result = res
 
-func show_error(msg: String, auto_dismiss_delay: float = 0.0):
+func show_error(msg: String, auto_dismiss_delay: float=0.0):
 	printerr(msg)
-	var msg_panel: MessagePanel = preload("../MessagePanel.tscn").instantiate()
+	var msg_panel: MessagePanel = preload ("../MessagePanel.tscn").instantiate()
 	errors.add_child(msg_panel)
 	errors.move_child(msg_panel, 0)
 	msg_panel.set_error_text(msg)
@@ -264,10 +382,12 @@ func _on_join_code_back_pressed():
 	pages.go_back()
 
 func _on_start_game_pressed():
-	if session_result == null or session_result.busy_progress() < 1.0:
+	if session_result and session_result.busy_progress() == 1.0:
+		session_refresh_timer.stop()
+		var addr := session_result.addresses[0]
+		jam_client.client_session_request(addr.ip, addr.port, session_token, addr.domain)
+	elif p2p_session_result:
+		jam_client.p2p_game_start()
+	else:
 		show_error("cannot start game without a session that is ready", 5.0)
 		return
-	session_refresh_timer.stop()
-	var addr := session_result.addresses[0]
-	jam_client.client_session_request(addr.ip, addr.port, session_token, addr.domain)
-

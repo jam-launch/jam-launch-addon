@@ -35,12 +35,14 @@ text = "Release Options:"
 
 [node name="NetworkMode" type="OptionButton" parent="HB/Config"]
 layout_mode = 2
-item_count = 2
+item_count = 3
 fit_to_longest_item = false
 popup/item_0/text = "ENet"
 popup/item_0/id = 0
 popup/item_1/text = "WebSocket"
 popup/item_1/id = 1
+popup/item_2/text = "WebRTC"
+popup/item_2/id = 2
 
 [node name="Environment" type="OptionButton" parent="HB/Config"]
 layout_mode = 2

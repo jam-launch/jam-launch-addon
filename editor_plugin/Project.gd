@@ -84,6 +84,8 @@ func setup_project_data(p):
 		net_mode_box.select(0)
 	elif net_mode == "websocket":
 		net_mode_box.select(1)
+	elif net_mode == "webrtc":
+		net_mode_box.select(2)
 	else:
 		net_mode = "enet"
 		net_mode_box.select(-1)
@@ -207,6 +209,8 @@ func _on_config_item_selected(_index):
 		cfg["network_mode"] = "enet"
 	elif net_mode_box.get_selected_id() == 1:
 		cfg["network_mode"] = "websocket"
+	elif net_mode_box.get_selected_id() == 2:
+		cfg["network_mode"] = "webrtc"
 	else:
 		return
 	

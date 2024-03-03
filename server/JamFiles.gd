@@ -24,7 +24,7 @@ func get_game_file(key: String, file_name: String):
 	
 ## Gets the release-scoped data file for the provided key
 func get_release_file(key: String, file_name: String):
-	return get_file(_jc.get_release_id() + "/" + key, file_name)
+	return get_file(_jc.get_game_id() + "/" + key, file_name)
 
 ## Gets the session-scoped data file for the provided key
 func get_session_file(key: String, file_name: String):
@@ -40,7 +40,7 @@ func put_game_file(key: String, file_name: String):
 
 ## Persists a release-scoped data file
 func put_release_file(key: String, file_name: String):
-	return put_file(_jc.get_release_id() + "/" + key, file_name)
+	return put_file(_jc.get_game_id() + "/" + key, file_name)
 
 ## Persists a session-scoped data file
 func put_session_file(key: String, file_name: String):
@@ -58,7 +58,7 @@ func get_game_file_async(key: String, file_name: String):
 ## Asynchronously gets the release-scoped data file for the provided key.
 ## Triggers [signal JamConnect.game_files_async_result] upon completion.
 func get_release_file_async(key: String, file_name: String):
-	get_file_async(_jc.get_release_id() + "/" + key, file_name)
+	get_file_async(_jc.get_game_id() + "/" + key, file_name)
 
 ## Asynchronously gets the session-scoped data file for the provided key.
 ## Triggers [signal JamConnect.game_files_async_result] upon completion.
@@ -77,7 +77,7 @@ func put_game_file_async(key: String, file_name: String):
 ## Asynchronously persists a release-scoped data file.
 ## Triggers [signal JamConnect.game_files_async_result] upon completion.
 func put_release_file_async(key: String, file_name: String):
-	put_file_async(_jc.get_release_id() + "/" + key, file_name)
+	put_file_async(_jc.get_game_id() + "/" + key, file_name)
 
 ## Asynchronously persists a session-scoped data file.
 ## Triggers [signal JamConnect.game_files_async_result] upon completion.

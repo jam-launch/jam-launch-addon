@@ -129,7 +129,7 @@ func server_start(args: Dictionary):
 ## Verifies a player by correlating the provided [code]join_token[/code] with
 ## the token in the database. In developer mode, a token with the value
 ## [code]"localdev"[/code] will always verify successfully. 
-func verify_player(join_token: String):	
+func verify_player(join_token: String):
 	var pid: int = multiplayer.get_remote_sender_id()
 	if pid not in pending_peers:
 		print("Ignoring verification request from non-pending peer %d" % pid)
@@ -164,9 +164,15 @@ func verify_player(join_token: String):
 	accepted_peers[pid] = pinfo
 	
 	print("Accepted player %d as %s!" % [pid, pinfo["name"]])
-	_jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
 	_jc.player_verified.emit(pid, pinfo)
 	_jc._verification_notification.rpc_id(pid, pinfo)
+	
+	for other in accepted_peers.values():
+		if other["name"] != pinfo["name"]:
+			_jc._send_player_joined.rpc_id(pid, other["name"])
+			_jc.notify_players.rpc_id(pid, "'%s' is here" % other["name"])
+	_jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
+	_jc._send_player_joined.rpc(pinfo["name"])
 
 ## Triggers the provided RPC-enabled Callable on all verified peers if the
 ## [code]origin_pid[/code] is from a peer that has also been verified. Useful
@@ -188,6 +194,7 @@ func _on_peer_disconnect(pid: int):
 		accepted_peers.erase(pid)
 		_jc.notify_players.rpc("Player '%s' has disconnected" % pinfo.get("name", "<>"))
 		_jc.player_disconnected.emit(pid, pinfo)
+		_jc._send_player_left.rpc(pinfo["name"])
 	pending_peers.erase(pid)
 	
 	if pending_peers.is_empty() and accepted_peers.is_empty():
