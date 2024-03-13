@@ -206,7 +206,10 @@ func _on_config_item_selected(_index):
 	elif net_mode_box.get_selected_id() == 2:
 		cfg["network_mode"] = "webrtc"
 	else:
+		dashboard.show_error("invalid network mode selected")
 		return
+	
+	cfg["additions"] = ["android"]
 	
 	var res = await project_api.post_config(active_id, cfg)
 	

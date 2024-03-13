@@ -126,21 +126,11 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 		return JamResult.err("Export failed to produce desired output target", output)
 	
 	# Archive the export output in a zip file
-	zip_pack_mutex.lock()
-	var zip := ZIPPacker.new()
 	var zip_name = "%s.zip" % config.template_name
 	var zip_path = staging_dir.path_join(zip_name)
-	var err := zip.open(zip_path)
-	if err != OK:
-		zip_pack_mutex.unlock()
-		return JamResult.err("Failed to open zip file for %s export" % config.template_name, output)
-	var out_dir = DirAccess.open(output_base)
-	if out_dir == null:
-		zip_pack_mutex.unlock()
-		return JamResult.err("Failed to open export directory for %s export - error code %d" % [config.template_name, DirAccess.get_open_error()], output)
-	recursive_zip(out_dir, zip)
-	zip.close()
-	zip_pack_mutex.unlock()
+	var zip_err = zip_folder(output_base, zip_path)
+	if zip_err.errored:
+		return JamResult.err("Failed to create zip for %s export - %s" % [config.template_name, zip_err.error_msg])
 	
 	var zip_reader := FileAccess.open(zip_path, FileAccess.READ)
 	if zip_reader == null:
@@ -183,7 +173,7 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 	
 	# Set up StreamPeers
 	var tcp_peer := StreamPeerTCP.new()
-	err = tcp_peer.connect_to_host(host_ip, 443)
+	var err := tcp_peer.connect_to_host(host_ip, 443)
 	if err != OK:
 		return JamResult.err("Failed to connect to upload host for %s export" % config.template_name, output)
 	while true:
@@ -280,12 +270,40 @@ static func recursive_delete(directory: String) -> JamError:
 	return JamError.ok()
 
 
+static func zip_folder(source_root: String, zip_path: String) -> JamError:
+	var output = []
+	var exit_code: int = 0
+	
+	if OS.get_name() == "Windows":
+		exit_code = OS.execute("powershell.exe", ["-Command", "Compress-Archive -Path '%s' -DestinationPath '%s'" % [ProjectSettings.globalize_path(source_root.path_join("*")), ProjectSettings.globalize_path(zip_path)]], output, true)
+	elif OS.get_name() in ["macOS", "Linux", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+		exit_code = OS.execute("sh", ["-c", "cd '%s' && zip -r '%s' ." % [ProjectSettings.globalize_path(source_root), ProjectSettings.globalize_path(zip_path)]], output, true)
+	else:
+		return JamError.err("Failed zip step - unsupported editor platform '%s'" % OS.get_name())
+	
+	if exit_code != 0:
+		return JamError.err("Failed zip file command:\n%s" % "\n".join(output))
+	return JamError.ok()
+	#var zip := ZIPPacker.new()
+	#var err := zip.open(zip_path)
+	#if err != OK:
+		#return JamError.err("Failed to open zip file '%s' (error code %d)" % [zip_path, err])
+	#var out_dir = DirAccess.open(source_root)
+	#if out_dir == null:
+		#return JamError.err("Failed to open zip target directory '%s' (error code %d)" % [out_dir, err])
+	#recursive_zip(out_dir, zip)
+	#err = zip.close()
+	#if err != OK:
+		#return JamError.err("Failed to close zip file (error code %d)" % err)
+	#return JamError.ok()
+
 static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String = ""):
 	dir.include_hidden = true
 	
 	if len(root_folder) == 0:
 		root_folder = dir.get_current_dir()
 	
+	var err: int
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
 	while file_name != "":
@@ -293,7 +311,13 @@ static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String
 		if dir.current_is_dir():
 			recursive_zip(DirAccess.open(abs_file), writer, root_folder)
 		else:
-			writer.start_file(abs_file.right(-1 * len(root_folder)).lstrip("/"))
-			writer.write_file(FileAccess.get_file_as_bytes(abs_file))
-			writer.close_file()
+			err = writer.start_file(abs_file.right(-1 * len(root_folder)).lstrip("/"))
+			if err != OK:
+				printerr("Unexpected error when starting file write: %d" % err)
+			err = writer.write_file(FileAccess.get_file_as_bytes(abs_file))
+			if err != OK:
+				printerr("Unexpected error when performing file write: %d" % err)
+			err = writer.close_file()
+			if err != OK:
+				printerr("Unexpected error when closing file write: %d" % err)
 		file_name = dir.get_next()
