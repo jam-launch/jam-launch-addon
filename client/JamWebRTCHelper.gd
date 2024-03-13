@@ -48,17 +48,20 @@ func stop():
 
 func _add_webrtc_peer(id: int) -> Variant:
 	var peer: WebRTCPeerConnection = WebRTCPeerConnection.new()
-	peer.initialize({
+	var err = peer.initialize({
 		"iceServers": [ {"urls": [
 			"stun:stun1.jamlaunch.com:13478",
 			"stun:stun.l.google.com:19302"
 		] } ]
 	})
+	if err != OK:
+		_err("Failed to initialize peer %d (possibly due to missing WebRTC GDExtension)" % [id], err)
+		return null
 	peer.session_description_created.connect(self._offer_created.bind(id))
 	peer.ice_candidate_created.connect(self._new_ice_candidate.bind(id))
-	var err = rtc_mp.add_peer(peer, id)
+	err = rtc_mp.add_peer(peer, id)
 	if err != OK:
-		_err("Failed to add peer %d" % [id], err)
+		_err("Failed to add peer %d (possibly due to missing WebRTC GDExtension)" % [id], err)
 		return null
 	return peer
 

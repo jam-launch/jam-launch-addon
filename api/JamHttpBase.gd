@@ -12,6 +12,12 @@ class Result:
 	var data: Dictionary = {}
 	var errored: bool = false
 	var error_msg: String = ""
+	
+	static func err(msg: String):
+		var r = Result.new()
+		r.errored = true
+		r.error_msg = msg
+		return r
 
 func _ready():
 	var dir := (self.get_script() as Script).get_path().get_base_dir()

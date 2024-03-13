@@ -96,12 +96,13 @@ func set_release(proj_id: String, r: Dictionary):
 		name_lbl.text = jname
 		jobs.add_child(name_lbl)
 		
-		var log_btn = Button.new()
-		log_btn.icon = dashboard.editor_icon("Script")
-		log_btn.pressed.connect(_show_logs.bind(j["job_name"]))
-		log_btn.flat = true
-		log_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		jobs.add_child(log_btn)
+		# TODO: maybe re-enable these with the local export log?
+		#var log_btn = Button.new()
+		#log_btn.icon = dashboard.editor_icon("Script")
+		#log_btn.pressed.connect(_show_logs.bind(j["job_name"]))
+		#log_btn.flat = true
+		#log_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		#jobs.add_child(log_btn)
 
 func release_page_uri() -> String:
 	return "https://app.jamlaunch.com/g/%s/%s" % [project_id, release_id]

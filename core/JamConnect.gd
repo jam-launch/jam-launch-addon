@@ -200,7 +200,7 @@ func get_game_id() -> String:
 
 ## Gets the session ID (the game ID concatenated with a unique session string)
 func get_session_id() -> String:
-	if is_dedicated_server():
+	if server:
 		return OS.get_environment("SESSION_ID")
 	elif client:
 		return client.session_id

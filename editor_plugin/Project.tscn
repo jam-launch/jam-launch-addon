@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://dwbbc305p213v"]
+[gd_scene load_steps=6 format=3 uid="uid://dwbbc305p213v"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Project.gd" id="1_pygq4"]
 [ext_resource type="Texture2D" uid="uid://gaqcgtvl36u7" path="res://addons/jam_launch/assets/icons/cancel.svg" id="2_36hr7"]
 [ext_resource type="PackedScene" uid="uid://x8bepljs2sfy" path="res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn" id="2_x4il8"]
+[ext_resource type="PackedScene" uid="uid://c3p82rkol0m5w" path="res://addons/jam_launch/ui/BusyBadge.tscn" id="3_232eu"]
 
 [sub_resource type="SystemFont" id="SystemFont_s3gwr"]
 font_names = PackedStringArray("Monospace")
@@ -44,15 +45,6 @@ popup/item_1/id = 1
 popup/item_2/text = "WebRTC"
 popup/item_2/id = 2
 
-[node name="Environment" type="OptionButton" parent="HB/Config"]
-layout_mode = 2
-item_count = 2
-fit_to_longest_item = false
-popup/item_0/text = "Base"
-popup/item_0/id = 0
-popup/item_1/text = ".NET"
-popup/item_1/id = 1
-
 [node name="Space" type="Label" parent="HB/Config"]
 layout_mode = 2
 text = "
@@ -83,6 +75,19 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 16
+
+[node name="PreparingBusy" type="HBoxContainer" parent="HB/Releases/VB"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BusyBadge" parent="HB/Releases/VB/PreparingBusy" instance=ExtResource("3_232eu")]
+layout_mode = 2
+padding_ratio = 0.1
+
+[node name="Label" type="Label" parent="HB/Releases/VB/PreparingBusy"]
+layout_mode = 2
+text = "Preparing next release..."
 
 [node name="NoDeployments" type="Label" parent="HB/Releases/VB"]
 visible = false
@@ -124,7 +129,6 @@ editable = false
 
 [connection signal="pressed" from="HB/Config/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
 [connection signal="item_selected" from="HB/Config/NetworkMode" to="." method="_on_config_item_selected"]
-[connection signal="item_selected" from="HB/Config/Environment" to="." method="_on_config_item_selected"]
 [connection signal="pressed" from="HB/Config/BtnSessions" to="." method="_on_btn_sessions_pressed"]
 [connection signal="pressed" from="HB/Config/BtnDelete" to="." method="_on_btn_delete_pressed"]
 [connection signal="show_logs" from="HB/Releases/VB/ReleaseSummary" to="." method="_show_logs"]

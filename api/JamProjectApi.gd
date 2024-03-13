@@ -2,6 +2,13 @@
 extends JamHttpBase
 class_name JamProjectApi
 
+var auto_export: JamAutoExport
+
+func _ready():
+	super()
+	auto_export = JamAutoExport.new()
+	add_child(auto_export)
+
 func create_project(project_name: String) -> Result:
 	return await _json_http(
 		"/projects",
@@ -74,6 +81,37 @@ func build_project(project_id: String, project_dir: EditorFileSystemDirectory) -
 		return result
 	
 	print("build submitted!")
+	return pre_res
+
+
+func local_build_project(project_id: String, config: Dictionary) -> Result:
+	var export_config = JamAutoExport.ExportConfig.new()
+	export_config.network_mode = config["network_mode"]
+	
+	print("getting upload info...")
+	var pre_res = await _json_http(
+		"/projects/%s/releases" % project_id,
+		HTTPClient.METHOD_POST,
+		config
+	)
+	if pre_res.errored:
+		return pre_res
+	
+	export_config.game_id = "%s-%s" % [project_id, pre_res.data["release_id"]]
+	
+	export_config.template_configs = ([] as Array[JamAutoExport.TemplateConfig])
+	for t in pre_res.data["template_configs"]:
+		var c := JamAutoExport.TemplateConfig.new()
+		c.output_target = t["export_name"]
+		c.template_name = t["template_name"]
+		c.presigned_post = t["upload_target"]
+		export_config.template_configs.append(c)
+	
+	print("starting exports")
+	var res = await auto_export.auto_export(export_config, pool)
+	if res.errored:
+		return Result.err(res.error_msg)
+	print("done with exports")
 	return pre_res
 
 func update_release(project_id: String, release_id: String, props: Dictionary) -> Result:

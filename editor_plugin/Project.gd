@@ -2,7 +2,6 @@
 extends JamEditorPluginPage
 
 @onready var net_mode_box: OptionButton = $HB/Config/NetworkMode
-@onready var env_box: OptionButton = $HB/Config/Environment
 
 @onready var log_popup: Popup = $LogPopup
 @onready var log_display: TextEdit = $LogPopup/Logs
@@ -11,6 +10,7 @@ extends JamEditorPluginPage
 @onready var btn_delete: Button = $HB/Config/BtnDelete
 @onready var btn_sessions: Button = $HB/Config/BtnSessions
 
+@onready var deploy_busy: Control = $HB/Releases/VB/PreparingBusy
 @onready var latest_release: Control = $HB/Releases/VB/ReleaseSummary
 
 @onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
@@ -25,6 +25,7 @@ var refresh_retries = 0
 
 var active_project
 var active_id = ""
+
 
 func _page_init():
 	log_popup.visible = false
@@ -41,7 +42,6 @@ func show_init():
 func _load_lock_changed(locked: bool):
 	btn_deploy.disabled = locked
 	net_mode_box.disabled = locked
-	env_box.disabled = locked
 	btn_delete.disabled = locked
 
 func refresh_page():
@@ -53,8 +53,7 @@ func show_project(project_id: String, project_name: String = "..."):
 	latest_release.visible = false
 	refresh_project()
 
-func refresh_project() -> bool:
-	$AutoRefreshTimer.stop()
+func refresh_project(repeat: float = 0.0) -> bool:
 	no_deployments.visible = false
 	
 	if len(active_id) < 1:
@@ -71,6 +70,8 @@ func refresh_project() -> bool:
 		return false
 		
 	setup_project_data(res.data)
+	if (repeat > 0.0):
+		$AutoRefreshTimer.start(repeat)
 	return true
 
 func setup_project_data(p):
@@ -89,26 +90,13 @@ func setup_project_data(p):
 	else:
 		net_mode = "enet"
 		net_mode_box.select(-1)
-	
-	var env_variant = active_project["configs"][0].get("env_variant", "base")
-	if env_variant == "base":
-		env_box.select(0)
-	elif env_variant == "dotnet":
-		env_box.select(1)
-	else:
-		env_variant = "base"
-		env_box.select(-1)
-	
+
 	if "releases" in active_project and len(active_project["releases"]) > 0:
 		latest_release.visible = true
 		var r = active_project["releases"][len(active_project["releases"]) - 1]
 		
 		latest_release.set_release(active_id, r)
 		
-		for j in r["jobs"]:
-			if j.get("status") not in ["SUCCEEDED", "FAILED"]:
-				$AutoRefreshTimer.start(3.0)
-				
 		if r["game_id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
 			var deployment_cfg = ConfigFile.new()
@@ -159,23 +147,29 @@ func _on_btn_deploy_pressed() -> void:
 		return
 	var lock = dashboard.load_locker.get_lock()
 	
-	var project_dir = dashboard.plugin.get_editor_interface().get_resource_filesystem().get_filesystem()
-	var res = await project_api.build_project(active_id, project_dir)
+	var net_mode
+	if net_mode_box.get_selected_id() == 0:
+		net_mode = "enet"
+	elif net_mode_box.get_selected_id() == 1:
+		net_mode = "websocket"
+	elif net_mode_box.get_selected_id() == 2:
+		net_mode = "webrtc"
+	else:
+		dashboard.show_error("Invalid network mode selection")
+		return
+	
+	deploy_busy.visible = true
+	var res = await project_api.local_build_project(active_id, {"network_mode": net_mode})
 	if res.errored:
 		dashboard.show_error(res.error_msg)
-		return
-	refresh_retries = 2
-	$AutoRefreshTimer.start(4.0)
+	await get_tree().create_timer(1.5)
+	deploy_busy.visible = false
+	refresh_project.call_deferred(2.0)
+	
 
 func _on_auto_refresh_timer_timeout():
 	$AutoRefreshTimer.stop()
 	await refresh_project()
-	if $AutoRefreshTimer.is_stopped():
-		if refresh_retries > 0:
-			refresh_retries -= 1
-			$AutoRefreshTimer.start(3.0)
-	else:
-		refresh_retries = 0
 
 func _on_btn_delete_pressed():
 	$ConfirmDelete.popup()
@@ -211,13 +205,6 @@ func _on_config_item_selected(_index):
 		cfg["network_mode"] = "websocket"
 	elif net_mode_box.get_selected_id() == 2:
 		cfg["network_mode"] = "webrtc"
-	else:
-		return
-	
-	if env_box.get_selected_id() == 0:
-		cfg["env_variant"] = "base"
-	elif env_box.get_selected_id() == 1:
-		cfg["env_variant"] = "dotnet"
 	else:
 		return
 	

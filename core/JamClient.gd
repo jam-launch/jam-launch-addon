@@ -113,7 +113,7 @@ func client_session_request(ip: String, port: int, token: String, domain: Varian
 ## initiates the P2P signalling connection
 func p2p_session_connect(sess_id: String, user_id: String, token: String) -> JamError:
 	current_client_token = token
-	return await webrtc_helper.start("wss://7u4mgakxi4.execute-api.us-east-2.amazonaws.com/prod/?session=%s&user=%s&token=%s" % [sess_id, user_id, token])
+	return await webrtc_helper.start("wss://p2p.jamlaunch.com/?session=%s&user=%s&token=%s" % [sess_id, user_id, token])
 
 func p2p_game_start():
 	if _jc.is_player_server():
