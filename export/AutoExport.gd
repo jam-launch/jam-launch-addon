@@ -16,6 +16,8 @@ class ExportConfig:
 
 var thread_helper: JamThreadHelper
 
+var zip_pack_mutex = Mutex.new()
+
 func _init():
 	thread_helper = JamThreadHelper.new()
 	add_child(thread_helper)
@@ -124,18 +126,21 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 		return JamResult.err("Export failed to produce desired output target", output)
 	
 	# Archive the export output in a zip file
+	zip_pack_mutex.lock()
 	var zip := ZIPPacker.new()
 	var zip_name = "%s.zip" % config.template_name
 	var zip_path = staging_dir.path_join(zip_name)
 	var err := zip.open(zip_path)
 	if err != OK:
+		zip_pack_mutex.unlock()
 		return JamResult.err("Failed to open zip file for %s export" % config.template_name, output)
-	
 	var out_dir = DirAccess.open(output_base)
 	if out_dir == null:
+		zip_pack_mutex.unlock()
 		return JamResult.err("Failed to open export directory for %s export - error code %d" % [config.template_name, DirAccess.get_open_error()], output)
 	recursive_zip(out_dir, zip)
 	zip.close()
+	zip_pack_mutex.unlock()
 	
 	var zip_reader := FileAccess.open(zip_path, FileAccess.READ)
 	if zip_reader == null:
