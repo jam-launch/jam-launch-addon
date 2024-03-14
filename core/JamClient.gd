@@ -17,6 +17,12 @@ var test_client_number: int = 1:
 
 var session_id: String = ""
 
+signal fetching_test_gjwt(busy: bool)
+var gjwt_fetch_busy: bool = false:
+	set(val):
+		gjwt_fetch_busy = val
+		fetching_test_gjwt.emit(val)
+
 ## The Game JWT for this client - used to authenticate with the Jam Launch API
 var jwt: JamJwt = JamJwt.new()
 ## Interface for calling the Jam Launch session API
@@ -45,26 +51,42 @@ func _ready():
 	
 	_jc.game_init_finalized.connect(_on_game_init_finalized)
 	
-	var gjwt = keys.get_included_gjwt()
+	var gjwt = keys.get_included_gjwt(_jc.get_game_id())
 	if gjwt == null:
 		if OS.is_debug_build():
 			_setup_test_gjwt()
 		else:
 			push_error("Failed to load GJWT")
 	else:
-		_set_gjwt(gjwt as String)
+		set_gjwt(gjwt as String)
 
 func _setup_test_gjwt():
+	gjwt_fetch_busy = true
 	var gjwt = await keys.get_test_gjwt(_jc.game_id, test_client_number)
+	gjwt_fetch_busy = false
 	if gjwt != null:
-		_set_gjwt(gjwt as String)
+		set_gjwt(gjwt as String)
 	else:
 		push_error("Failed to load GJWT")
 
-func _set_gjwt(gjwt: String):
+func set_gjwt(gjwt: String):
 	var gjwtRes = jwt.set_token(gjwt)
 	if gjwtRes.errored:
 		push_error(gjwtRes.error)
+	else:
+		_jc.gjwt_acquired.emit()
+
+## Persists the GJWT so that it can be retrieved in the next run. Should only be
+## used when the GJWT was not embedded in the game package (e.g. on mobile)
+func persist_gjwt() -> bool:
+	if not jwt.has_token():
+		return false
+	var gjwt_file = FileAccess.open("user://gjwt-%s" % _jc.get_game_id(), FileAccess.WRITE)
+	if gjwt_file == null:
+		return false
+	gjwt_file.store_string(jwt.get_token())
+	gjwt_file.close()
+	return true
 
 ## Configures and starts client functionality
 func client_start():
@@ -189,6 +211,7 @@ func _p2p_multiplayer_initialized(pid: int, pinfo: Dictionary):
 	if _jc.is_player_server():
 		_jc.log_event.emit("'%s' has joined" % pinfo["name"])
 		_jc.player_verified.emit(pinfo["pid"], pinfo)
+		_jc.local_player_joining.emit()
 		_jc.local_player_joined.emit(pinfo)
 		_jc.player_joined.emit(pinfo["name"])
 		print("server player joined")

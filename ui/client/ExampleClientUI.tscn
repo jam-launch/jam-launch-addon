@@ -50,7 +50,57 @@ theme_override_constants/margin_bottom = 12
 [node name="PageStack" parent="CC/M/M" instance=ExtResource("2_s1vno")]
 layout_mode = 2
 
+[node name="GjwtEntry" type="VBoxContainer" parent="CC/M/M/PageStack"]
+layout_mode = 2
+
+[node name="Entry" type="VBoxContainer" parent="CC/M/M/PageStack/GjwtEntry"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PasteGjwt" type="Button" parent="CC/M/M/PageStack/GjwtEntry/Entry"]
+layout_mode = 2
+text = "Paste Game Token"
+icon = ExtResource("7_gr1xc")
+icon_alignment = 2
+
+[node name="Or" type="Label" parent="CC/M/M/PageStack/GjwtEntry/Entry"]
+layout_mode = 2
+text = "or enter it below:"
+horizontal_alignment = 1
+
+[node name="EnterGjwt" type="HBoxContainer" parent="CC/M/M/PageStack/GjwtEntry/Entry"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GjwtEdit" type="LineEdit" parent="CC/M/M/PageStack/GjwtEntry/Entry/EnterGjwt"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_constants/minimum_character_width = 4
+theme_override_fonts/font = ExtResource("4_uf2si")
+max_length = 4
+
+[node name="SubmitGjwt" type="Button" parent="CC/M/M/PageStack/GjwtEntry/Entry/EnterGjwt"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Submit
+"
+
+[node name="Busy" type="VBoxContainer" parent="CC/M/M/PageStack/GjwtEntry"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BusyCircle" parent="CC/M/M/PageStack/GjwtEntry/Busy" instance=ExtResource("4_lbmx5")]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CC/M/M/PageStack/GjwtEntry/Busy"]
+layout_mode = 2
+text = "Fetching test credentials..."
+horizontal_alignment = 1
+
 [node name="Home" type="VBoxContainer" parent="CC/M/M/PageStack"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 16
 
@@ -368,6 +418,8 @@ theme_override_colors/font_color = Color(0.733333, 0.733333, 0.733333, 1)
 theme_override_font_sizes/font_size = 16
 
 [connection signal="tab_changed" from="CC/M/M/PageStack" to="." method="_on_page_stack_tab_changed"]
+[connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/PasteGjwt" to="." method="_on_paste_gjwt_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/EnterGjwt/SubmitGjwt" to="." method="_on_submit_gjwt_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartJoin" to="." method="_on_start_join_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartHost" to="." method="_on_start_host_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/HostBack" to="." method="_on_host_back_pressed"]

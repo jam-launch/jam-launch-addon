@@ -13,6 +13,8 @@ extends JamEditorPluginPage
 @onready var deploy_busy: Control = $HB/Releases/VB/PreparingBusy
 @onready var latest_release: Control = $HB/Releases/VB/ReleaseSummary
 
+@onready var platform_options: MenuButton = $HB/Config/PlatformOptions
+
 @onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
 
 signal request_projects_update()
@@ -34,6 +36,8 @@ func _page_init():
 	
 	latest_release.dashboard = dashboard
 	dashboard.load_locker.lock_changed.connect(_load_lock_changed)
+	
+	platform_options.get_popup().id_pressed.connect(_on_platform_option_selected)
 
 func show_init():
 	if active_project:
@@ -79,6 +83,8 @@ func setup_project_data(p):
 	active_project = p
 	dashboard.toolbar_title.text = p["project_name"]
 	
+	var plat_menu = platform_options.get_popup()
+	
 	var net_mode = active_project["configs"][0]["network_mode"]
 	net_mode_box.disabled = false
 	if net_mode == "enet":
@@ -90,12 +96,30 @@ func setup_project_data(p):
 	else:
 		net_mode = "enet"
 		net_mode_box.select(-1)
+	
+	plat_menu.set_item_disabled(3, net_mode == "enet")
 
 	if "releases" in active_project and len(active_project["releases"]) > 0:
+		for idx in range(plat_menu.item_count):
+			plat_menu.set_item_checked(idx, false)
+		
 		latest_release.visible = true
 		var r = active_project["releases"][len(active_project["releases"]) - 1]
 		
 		latest_release.set_release(active_id, r)
+		
+		for j in r["jobs"]:
+			var jname: String = j["job_name"]
+			if "linux-client" in jname:
+				plat_menu.set_item_checked(0, true)
+			elif "windows" in jname:
+				plat_menu.set_item_checked(1, true)
+			elif "mac" in jname:
+				plat_menu.set_item_checked(2, true)
+			elif "web" in jname:
+				plat_menu.set_item_checked(3, true)
+			elif "android" in jname:
+				plat_menu.set_item_checked(4, true)
 		
 		if r["game_id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
@@ -108,6 +132,12 @@ func setup_project_data(p):
 				return
 	else:
 		no_deployments.visible = true
+		
+		plat_menu.set_item_checked(0, true)
+		plat_menu.set_item_checked(1, true)
+		plat_menu.set_item_checked(2, true)
+		plat_menu.set_item_checked(3, false)
+		plat_menu.set_item_checked(4, false)
 
 func _update_release(release_id: String, props: Dictionary):
 	if len(active_id) < 1:
@@ -158,8 +188,22 @@ func _on_btn_deploy_pressed() -> void:
 		dashboard.show_error("Invalid network mode selection")
 		return
 	
+	var additions = []
+	var exclusions = []
+	var plat_menu = platform_options.get_popup()
+	if not plat_menu.is_item_checked(0):
+		exclusions.append("linux")
+	if not plat_menu.is_item_checked(1):
+		exclusions.append("windows")
+	if not plat_menu.is_item_checked(2):
+		exclusions.append("mac")
+	if not plat_menu.is_item_checked(3):
+		exclusions.append("web")
+	if plat_menu.is_item_checked(4):
+		additions.append("android")
+	
 	deploy_busy.visible = true
-	var res = await project_api.local_build_project(active_id, {"network_mode": net_mode})
+	var res = await project_api.local_build_project(active_id, {"network_mode": net_mode, "additions": additions, "exclusions": exclusions})
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 	await get_tree().create_timer(1.5)
@@ -209,10 +253,22 @@ func _on_config_item_selected(_index):
 		dashboard.show_error("invalid network mode selected")
 		return
 	
-	cfg["additions"] = ["android"]
+	var plat_menu = platform_options.get_popup()
+	if cfg["network_mode"] == "enet":
+		plat_menu.set_item_disabled(3, true)
+		plat_menu.set_item_checked(3, false)
+	else:
+		plat_menu.set_item_disabled(3, false)
 	
 	var res = await project_api.post_config(active_id, cfg)
 	
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 		return
+
+func _on_platform_option_selected(idx: int):
+	var menu = platform_options.get_popup()
+	if menu.is_item_disabled(idx):
+		return
+	menu.set_item_checked(idx, not menu.is_item_checked(idx))
+	menu.show.call_deferred()

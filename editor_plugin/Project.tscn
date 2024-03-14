@@ -45,6 +45,31 @@ popup/item_1/id = 1
 popup/item_2/text = "WebRTC"
 popup/item_2/id = 2
 
+[node name="PlatformOptions" type="MenuButton" parent="HB/Config"]
+layout_mode = 2
+text = "Platforms..."
+flat = false
+item_count = 5
+popup/item_0/text = "Linux"
+popup/item_0/checkable = 1
+popup/item_0/checked = true
+popup/item_0/id = 0
+popup/item_1/text = "Windows"
+popup/item_1/checkable = 1
+popup/item_1/checked = true
+popup/item_1/id = 1
+popup/item_2/text = "MacOS"
+popup/item_2/checkable = 1
+popup/item_2/checked = true
+popup/item_2/id = 2
+popup/item_3/text = "Web"
+popup/item_3/checkable = 1
+popup/item_3/id = 3
+popup/item_3/disabled = true
+popup/item_4/text = "Android"
+popup/item_4/checkable = 1
+popup/item_4/id = 4
+
 [node name="Space" type="Label" parent="HB/Config"]
 layout_mode = 2
 text = "

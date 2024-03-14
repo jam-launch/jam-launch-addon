@@ -18,7 +18,7 @@ func _get_web_gjwt() -> Variant:
 		printerr("failed to retrieve GJWT in browser context")
 	return js_return
 
-func get_included_gjwt() -> Variant:
+func get_included_gjwt(game_id: String) -> Variant:
 	if OS.get_name() == "Web":
 		return _get_web_gjwt()
 	
@@ -30,7 +30,10 @@ func get_included_gjwt() -> Variant:
 	if FileAccess.file_exists(gjwt_path):
 		return FileAccess.get_file_as_string(gjwt_path)
 	else:
-		print("Cannot locate included GJWT")
+		if FileAccess.file_exists("user://gjwt-%s" % game_id):
+			return FileAccess.get_file_as_string("user://gjwt-%s" % game_id)
+		else:
+			print("Cannot locate included GJWT")
 	
 	return null
 

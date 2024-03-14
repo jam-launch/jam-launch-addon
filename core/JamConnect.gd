@@ -64,6 +64,10 @@ signal player_left(user_id: String)
 ## connected as peers of the host/server
 signal game_init_finalized()
 
+## Emitted in clients when they have acquired their Jam Launch API credentials
+## (e.g. via embedded file, test client API, or user entry)
+signal gjwt_acquired()
+
 ## Emitted in the server when an asynchronous DB operation has completed or
 ## errored out
 signal game_db_async_result(result, error)
@@ -310,6 +314,8 @@ func edit_config(key: String, value: String):
 ## called from the server to notify clients that they have been verified
 @rpc("reliable")
 func _verification_notification(pinfo: Dictionary):
+	if is_webrtc_mode(): 
+		local_player_joining.emit() # TODO: maybe trigger this earlier?
 	local_player_joined.emit(pinfo)
 
 @rpc("reliable")

@@ -1,6 +1,7 @@
 extends JamClientUI
 
 @onready var pages: JamPageStack = $CC/M/M/PageStack
+@onready var gjwt_page: Control = $CC/M/M/PageStack/GjwtEntry
 @onready var home_page: Control = $CC/M/M/PageStack/Home
 @onready var host_page: Control = $CC/M/M/PageStack/HostGame
 @onready var join_code_page: Control = $CC/M/M/PageStack/JoinGameCode
@@ -8,6 +9,10 @@ extends JamClientUI
 
 @onready var errors: Control = $Bottom/ErrorArea/Errors
 @onready var version_info: Label = $Bottom/M/VersionInfo
+
+@onready var gjwt_edit: LineEdit = $CC/M/M/PageStack/GjwtEntry/Entry/EnterGjwt/GjwtEdit
+@onready var gjwt_entry: Control = $CC/M/M/PageStack/GjwtEntry/Entry
+@onready var gjwt_busy: Control = $CC/M/M/PageStack/GjwtEntry/Busy
 
 @onready var start_join: Button = $CC/M/M/PageStack/Home/VB/StartJoin
 @onready var start_host: Button = $CC/M/M/PageStack/Home/VB/StartHost
@@ -89,19 +94,36 @@ func _ready():
 	var version_number = gid_parts[len(gid_parts) - 1]
 	version_info.text = "version %s" % version_number
 	version_info.text += " - jam launch %s" % client_api.addon_version
-	if OS.is_debug_build():
+	if OS.is_debug_build() and OS.get_name() != "Android":
 		dev_tools.get_popup().id_pressed.connect(_on_devtools_pressed)
 		version_info.text += " (debug)"
 	else:
 		dev_tools.visible = false
 	
-	pages.show_page_node(home_page, false)
+	jam_connect.gjwt_acquired.connect(_on_gjwt_acquired)
+	
+	jam_client.fetching_test_gjwt.connect(_on_gjwt_fetch_busy)
+	_on_gjwt_fetch_busy(jam_client.gjwt_fetch_busy)
+	
+	if jam_client.jwt.has_token():
+		pages.show_page_node(home_page, false)
+	else:
+		pages.show_page_node(gjwt_page, false)
 	
 	if not jam_connect.has_deployment:
 		set_enable_deployments(false)
 	
 	jam_connect.local_player_joining.connect(_on_joining_game)
 	jam_connect.local_player_left.connect(_on_leaving_game)
+
+func _on_gjwt_fetch_busy(busy: bool):
+	gjwt_entry.visible = not busy
+	gjwt_busy.visible = busy
+	if busy:
+		pages.show_page_node(gjwt_page, false)
+
+func _on_gjwt_acquired():
+	pages.show_page_node(home_page, false)
 
 var joined_players = {}
 
@@ -126,7 +148,8 @@ func _on_p2p_player_left(user_id: String):
 	update_player_grid()
 
 func _on_joining_game():
-	start_game_btn.disabled = true
+	if not jam_connect.is_webrtc_mode():
+		start_game_btn.disabled = true
 	did_join_game = true
 
 func _on_leaving_game():
@@ -391,3 +414,16 @@ func _on_start_game_pressed():
 	else:
 		show_error("cannot start game without a session that is ready", 5.0)
 		return
+
+
+func _on_paste_gjwt_pressed():
+	var gjwt = DisplayServer.clipboard_get()
+	_set_gjwt(gjwt)
+
+func _on_submit_gjwt_pressed():
+	_set_gjwt(gjwt_edit.text)
+
+func _set_gjwt(gjwt: String):
+	jam_client.set_gjwt(gjwt)
+	jam_client.persist_gjwt()
+	

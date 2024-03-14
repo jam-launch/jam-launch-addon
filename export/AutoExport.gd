@@ -15,11 +15,14 @@ class ExportConfig:
 	var template_configs: Array[TemplateConfig]
 
 var thread_helper: JamThreadHelper
+var extension_ignore_lock: ScopeLocker
 
 var zip_pack_mutex = Mutex.new()
 
 func _init():
 	thread_helper = JamThreadHelper.new()
+	extension_ignore_lock = ScopeLocker.new()
+	extension_ignore_lock.lock_changed.connect(_handle_extension_ignore_locker)
 	add_child(thread_helper)
 
 func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, staging_dir: String = "user://jam-auto-export") -> JamError:
@@ -83,6 +86,8 @@ func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, sta
 			f_writer.store_buffer(gdx_reader.read_file(f))
 			f_writer.close()
 	
+	var gdx_ignore_lock = extension_ignore_lock.get_lock()
+	
 	var tasks: Array[Callable] = []
 	for template_config in export_config.template_configs:
 		print("adding task for ", template_config.template_name)
@@ -110,6 +115,20 @@ func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, sta
 	else:
 		return JamError.ok()
 
+func _handle_extension_ignore_locker(locked: bool):
+	var gdignore_path = "res://addons/jam_launch/extension/.gdignore"
+	if locked:
+		if FileAccess.file_exists(gdignore_path):
+			var err = DirAccess.remove_absolute(gdignore_path)
+			if err != OK:
+				printerr("Failed to remove extension .gdignore - code %d" % err)
+	else:
+		if DirAccess.dir_exists_absolute("res://addons/jam_launch/extension"):
+			var gdignore_file = FileAccess.open(gdignore_path, FileAccess.WRITE)
+			if gdignore_file == null:
+				printerr("Failed to create extension .gdignore - code %d" % FileAccess.get_open_error())
+			gdignore_file.close()
+
 func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 	# Run the godot export
 	var godot = OS.get_executable_path()
@@ -118,21 +137,25 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 	
 	var output_target = ProjectSettings.globalize_path(output_base.path_join(config.output_target))
 	
+	var export_arg = "--export-release"
+	if config.template_name.begins_with("android"):
+		export_arg = "--export-debug"
+	
 	var output = []
-	var exit_code = OS.execute(godot, ["--headless", "--export-release", config.template_name, "--path", project_path, output_target], output, true)
+	var exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	if exit_code != 0:
 		return JamResult.err("Non-zero exit code from", output)
 	if not (FileAccess.file_exists(output_target) or DirAccess.dir_exists_absolute(output_target)):
 		return JamResult.err("Export failed to produce desired output target", output)
 	
 	# Archive the export output in a zip file
-	var zip_name = "%s.zip" % config.template_name
-	var zip_path = staging_dir.path_join(zip_name)
-	var zip_err = zip_folder(output_base, zip_path)
+	var zip_name := "%s.zip" % config.template_name
+	var zip_path := staging_dir.path_join(zip_name)
+	var zip_err := zip_folder(output_base, zip_path)
 	if zip_err.errored:
-		return JamResult.err("Failed to create zip for %s export - %s" % [config.template_name, zip_err.error_msg])
-	
+		return JamResult.err("Failed to create zip for %s export - %s" % [config.template_name, zip_err.error_msg], output)
 	var zip_reader := FileAccess.open(zip_path, FileAccess.READ)
+		
 	if zip_reader == null:
 		return JamResult.err("Failed to open export zip for upload in %s export - error code %d" % [config.template_name, FileAccess.get_open_error()], output)
 	
@@ -204,16 +227,20 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 	while to_write > 0:
 		tls_peer.poll()
 		if tls_peer.get_status() != StreamPeerTLS.STATUS_CONNECTED:
+			zip_reader.close()
 			return JamResult.err("Bad TLS peer status %d for %s export (mid-upload)" % [tls_peer.get_status(), config.template_name], output)
 		var buf := zip_reader.get_buffer(min(to_write, 16384))
 		if buf.size() < 1:
 			printerr("unexpected empty read %d (supposedly %d left...)" % [buf.size(), to_write])
+			zip_reader.close()
 			return JamResult.err("Bad export read with %d bytes left for %s export (mid-upload)" % [to_write, config.template_name], output)
 			break
 		to_write -= buf.size()
 		err = tls_peer.put_data(buf)
 		if err != OK:
+			zip_reader.close()
 			return JamResult.err("Failed to write archive data for %s export upload - code: %d" % [config.template_name, err], output)
+	zip_reader.close()
 	
 	err = tls_peer.put_data(last_chunk)
 	if err != OK:
