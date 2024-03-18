@@ -156,6 +156,7 @@ func _ready():
 	print("JamConnect node ready, deferring auto start-up...")
 	if not client_ui_scene:
 		client_ui_scene = preload("../ui/client/ExampleClientUI.tscn")
+	
 	start_up.call_deferred()
 
 ## Start the JamConnect functionality including client/server determination and 
@@ -163,6 +164,7 @@ func _ready():
 func start_up():
 	print("Running JamConnect start-up...")
 	get_tree().set_auto_accept_quit(false)
+	JamRoot.get_jam_root(get_tree()).jam_connect = self
 	
 	var args := {}
 	for a in OS.get_cmdline_args():
@@ -222,6 +224,9 @@ func is_dedicated_server() -> bool:
 
 func is_player_server() -> bool:
 	return multiplayer.is_server() and is_webrtc_mode()
+
+func is_player() -> bool:
+	return not multiplayer.is_server() or is_player_server()
 
 
 #
