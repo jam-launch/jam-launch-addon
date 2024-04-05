@@ -1,6 +1,6 @@
 @tool
-extends MarginContainer
 class_name JamEditorPluginDashboard
+extends MarginContainer
 
 var msg_scn = preload("res://addons/jam_launch/ui/MessagePanel.tscn")
 var plugin: EditorPlugin

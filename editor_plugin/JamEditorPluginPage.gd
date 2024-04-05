@@ -1,6 +1,6 @@
 @tool
-extends Control
 class_name JamEditorPluginPage
+extends Control
 
 var dashboard: JamEditorPluginDashboard
 var project_api: JamProjectApi
