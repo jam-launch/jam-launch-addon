@@ -13,6 +13,8 @@ class ExportConfig:
 	var game_id: String
 	var network_mode: String
 	var template_configs: Array[TemplateConfig]
+	var parallel: bool
+	var export_timeout: int
 
 var thread_helper: JamThreadHelper
 var extension_ignore_lock: ScopeLocker
@@ -96,19 +98,29 @@ func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, sta
 		err = DirAccess.make_dir_recursive_absolute(out_base)
 		if err != OK:
 			return JamError.err("Failed to create staging directory at %s - code %d" % [staging_dir, err])
-		tasks.append(perform_export.bind(out_base, template_config))
-	
-	var results = await thread_helper.run_multiple_producers(tasks)
-	
+		tasks.append(perform_export.bind(out_base, template_config, export_config.export_timeout))
+		
+	var results = []
+	if export_config.parallel:
+		results = await thread_helper.run_multiple_producers(tasks)
+	else:
+		for t in tasks:
+			results.append(await thread_helper.run_threaded_producer(t))
+		
 	var errors = []
 	
 	for task_result in results:
 		if task_result.errored:
 			errors.append(task_result.error_msg)
 			continue
-		var export_result: JamResult = task_result.value
+		
+		var export_result = task_result.value
 		if export_result.errored:
 			errors.append(export_result.error_msg)
+
+		if export_result.value:
+			for out in export_result.value:
+				print(out)
 	
 	if len(errors) > 0:
 		return JamError.err(("%d export errors: " % len(errors)) + "\n".join(errors))
@@ -129,7 +141,7 @@ func _handle_extension_ignore_locker(locked: bool):
 				printerr("Failed to create extension .gdignore - code %d" % FileAccess.get_open_error())
 			gdignore_file.close()
 
-func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
+func perform_export(output_base: String, config: TemplateConfig, timeout: int) -> JamResult:
 	# Run the godot export
 	var godot = OS.get_executable_path()
 	var project_path = ProjectSettings.globalize_path("res://")
@@ -142,7 +154,13 @@ func perform_export(output_base: String, config: TemplateConfig) -> JamResult:
 		export_arg = "--export-debug"
 	
 	var output = []
-	var exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+	var exit_code
+	
+	if OS.get_name() == "Windows":
+		var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
+		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+	else:
+		exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	if exit_code != 0:
 		return JamResult.err("Non-zero exit code from", output)
 	if not (FileAccess.file_exists(output_target) or DirAccess.dir_exists_absolute(output_target)):

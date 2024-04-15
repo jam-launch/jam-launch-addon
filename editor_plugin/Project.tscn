@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://dwbbc305p213v"]
+[gd_scene load_steps=7 format=3 uid="uid://dwbbc305p213v"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Project.gd" id="1_pygq4"]
 [ext_resource type="Texture2D" uid="uid://gaqcgtvl36u7" path="res://addons/jam_launch/assets/icons/cancel.svg" id="2_36hr7"]
 [ext_resource type="PackedScene" uid="uid://x8bepljs2sfy" path="res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn" id="2_x4il8"]
 [ext_resource type="PackedScene" uid="uid://c3p82rkol0m5w" path="res://addons/jam_launch/ui/BusyBadge.tscn" id="3_232eu"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="5_d5nsn"]
 
 [sub_resource type="SystemFont" id="SystemFont_s3gwr"]
 font_names = PackedStringArray("Monospace")
@@ -29,6 +30,25 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Prepare Release"
+
+[node name="Timeout" type="HBoxContainer" parent="HB/Config"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HB/Config/Timeout"]
+layout_mode = 2
+text = "Timeout:"
+
+[node name="Minutes" type="SpinBox" parent="HB/Config/Timeout"]
+layout_mode = 2
+min_value = 1.0
+max_value = 120.0
+value = 5.0
+suffix = "m"
+
+[node name="Parallel" type="CheckBox" parent="HB/Config"]
+layout_mode = 2
+button_pressed = true
+text = "Parallel"
 
 [node name="OptLabel" type="Label" parent="HB/Config"]
 layout_mode = 2
@@ -152,6 +172,9 @@ theme_override_fonts/font = SubResource("SystemFont_s3gwr")
 theme_override_font_sizes/font_size = 10
 editable = false
 
+[node name="ExportBusy" type="Node" parent="."]
+script = ExtResource("5_d5nsn")
+
 [connection signal="pressed" from="HB/Config/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
 [connection signal="item_selected" from="HB/Config/NetworkMode" to="." method="_on_config_item_selected"]
 [connection signal="pressed" from="HB/Config/BtnSessions" to="." method="_on_btn_sessions_pressed"]
@@ -160,3 +183,4 @@ editable = false
 [connection signal="update_release" from="HB/Releases/VB/ReleaseSummary" to="." method="_update_release"]
 [connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
 [connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]
+[connection signal="lock_changed" from="ExportBusy" to="." method="_on_export_busy_lock_changed"]

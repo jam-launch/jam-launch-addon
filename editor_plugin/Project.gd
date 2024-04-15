@@ -17,6 +17,10 @@ extends JamEditorPluginPage
 
 @onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
 
+@onready var export_busy: ScopeLocker = $ExportBusy
+@onready var export_timeout: SpinBox = $HB/Config/Timeout/Minutes
+@onready var export_parallel: CheckBox = $HB/Config/Parallel
+
 signal request_projects_update()
 signal go_back()
 signal session_page_selected(project_id: String, project_name: String)
@@ -202,12 +206,18 @@ func _on_btn_deploy_pressed() -> void:
 	if plat_menu.is_item_checked(4):
 		additions.append("android")
 	
-	deploy_busy.visible = true
-	var res = await project_api.local_build_project(active_id, {"network_mode": net_mode, "additions": additions, "exclusions": exclusions})
+	var busy_lock = export_busy.get_lock()
+	var res = await project_api.local_build_project(active_id,
+	{
+		"network_mode": net_mode,
+		"additions": additions,
+		"exclusions": exclusions,
+		"export_timeout": export_timeout.value * 60,
+		"parallel": export_parallel.button_pressed
+	})
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 	await get_tree().create_timer(1.5)
-	deploy_busy.visible = false
 	refresh_project.call_deferred(2.0)
 	
 
@@ -272,3 +282,9 @@ func _on_platform_option_selected(idx: int):
 		return
 	menu.set_item_checked(idx, not menu.is_item_checked(idx))
 	menu.show.call_deferred()
+
+
+func _on_export_busy_lock_changed(locked):
+	deploy_busy.visible = locked
+	latest_release.visible = not locked
+	

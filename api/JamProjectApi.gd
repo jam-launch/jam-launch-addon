@@ -87,6 +87,8 @@ func build_project(project_id: String, project_dir: EditorFileSystemDirectory) -
 func local_build_project(project_id: String, config: Dictionary) -> Result:
 	var export_config = JamAutoExport.ExportConfig.new()
 	export_config.network_mode = config["network_mode"]
+	export_config.export_timeout = config["export_timeout"]
+	export_config.parallel = config["parallel"]
 	
 	print("getting upload info...")
 	var pre_res = await _json_http(
