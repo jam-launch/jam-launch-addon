@@ -21,6 +21,8 @@ extends JamEditorPluginPage
 @onready var export_timeout: SpinBox = $HB/Config/Timeout/Minutes
 @onready var export_parallel: CheckBox = $HB/Config/Parallel
 
+@onready var log_request: HTTPRequest = $LogRequest
+
 signal request_projects_update()
 signal go_back()
 signal session_page_selected(project_id: String, project_name: String)
@@ -42,6 +44,8 @@ func _page_init():
 	dashboard.load_locker.lock_changed.connect(_load_lock_changed)
 	
 	platform_options.get_popup().id_pressed.connect(_on_platform_option_selected)
+	
+	latest_release.build_busy.connect(_on_build_busy)
 
 func show_init():
 	if active_project:
@@ -88,20 +92,6 @@ func setup_project_data(p):
 	dashboard.toolbar_title.text = p["project_name"]
 	
 	var plat_menu = platform_options.get_popup()
-	
-	var net_mode = active_project["configs"][0]["network_mode"]
-	net_mode_box.disabled = false
-	if net_mode == "enet":
-		net_mode_box.select(0)
-	elif net_mode == "websocket":
-		net_mode_box.select(1)
-	elif net_mode == "webrtc":
-		net_mode_box.select(2)
-	else:
-		net_mode = "enet"
-		net_mode_box.select(-1)
-	
-	plat_menu.set_item_disabled(3, net_mode == "enet")
 
 	if "releases" in active_project and len(active_project["releases"]) > 0:
 		for idx in range(plat_menu.item_count):
@@ -110,25 +100,40 @@ func setup_project_data(p):
 		latest_release.visible = true
 		var r = active_project["releases"][len(active_project["releases"]) - 1]
 		
+		#print(r)
+		
+		var net_mode = r["network_mode"]
+		net_mode_box.disabled = false
+		if net_mode == "enet":
+			net_mode_box.select(0)
+		elif net_mode == "websocket":
+			net_mode_box.select(1)
+		elif net_mode == "webrtc":
+			net_mode_box.select(2)
+		else:
+			net_mode = "enet"
+			net_mode_box.select(-1)
+		plat_menu.set_item_disabled(3, net_mode == "enet")
+		
 		latest_release.set_release(active_id, r)
 		
-		for j in r["jobs"]:
-			var jname: String = j["job_name"]
-			if "linux-client" in jname:
+		for b in r["builds"]:
+			var bname: String = b["name"]
+			if "Linux" == bname:
 				plat_menu.set_item_checked(0, true)
-			elif "windows" in jname:
+			elif "Windows" == bname:
 				plat_menu.set_item_checked(1, true)
-			elif "mac" in jname:
+			elif "MacOS" == bname:
 				plat_menu.set_item_checked(2, true)
-			elif "web" in jname:
+			elif "Web" == bname:
 				plat_menu.set_item_checked(3, true)
-			elif "android" in jname:
+			elif "Android" == bname:
 				plat_menu.set_item_checked(4, true)
 		
-		if r["game_id"] != null:
+		if r["id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
 			var deployment_cfg = ConfigFile.new()
-			deployment_cfg.set_value("game", "id", r["game_id"])
+			deployment_cfg.set_value("game", "id", "%s-%s" % [active_id, r["id"]])
 			deployment_cfg.set_value("game", "network_mode", net_mode)
 			var err = deployment_cfg.save(dir + "/../deployment.cfg")
 			if err != OK:
@@ -160,22 +165,33 @@ func _update_release(release_id: String, props: Dictionary):
 	
 	refresh_project.call_deferred()
 
-func _show_logs(p, r, log_id) -> void:
-	log_popup.popup_centered_ratio(0.8)
-	log_display.text = "loading logs..."
-	print("loading %s logs for %s-%s" % [log_id, p, r])
-	var res = await project_api.get_build_logs(p, r, log_id)
-	if res.errored:
-		log_display.text = "Error fetching logs: %s" % res.error_msg
-	else:
-		print("got %d log events..." % len(res.data["events"]))
-		var log_text = ""
-		for e in res.data["events"]:
-			log_text += Time.get_datetime_string_from_unix_time(e["t"] / 1000.0)
-			log_text += " " + e["msg"] + "\n"
-		log_display.text = log_text
+func _on_build_busy():
+	print("setting auto-refresh")
+	$AutoRefreshTimer.start(3.0)
+
+func _show_logs(log_url: String) -> void:
+	log_display.text = "fetching logs..."
+	log_popup.popup_centered()
+	
+	var err := log_request.request(log_url)
+	if err != OK:
+		log_display.text = "failed to fetch logs - error code %d" % err
+		return
+	
+	var resp = await log_request.request_completed
+	var code: int = resp[1]
+	if code > 299:
+		log_display.text = "failed to fetch logs - HTTP status %d" % code
+		return
+	
+	var response_body: String = resp[3].get_string_from_utf8()
+	log_display.text = response_body
 
 func _on_btn_deploy_pressed() -> void:
+	if not active_project:
+		dashboard.show_error("Project is not correctly loaded")
+		return
+		
 	if dashboard.load_locker.is_locked():
 		dashboard.show_error("cannot deploy while handling another request")
 		return
@@ -192,34 +208,65 @@ func _on_btn_deploy_pressed() -> void:
 		dashboard.show_error("Invalid network mode selection")
 		return
 	
-	var additions = []
-	var exclusions = []
+	var builds = []
 	var plat_menu = platform_options.get_popup()
-	if not plat_menu.is_item_checked(0):
-		exclusions.append("linux")
-	if not plat_menu.is_item_checked(1):
-		exclusions.append("windows")
-	if not plat_menu.is_item_checked(2):
-		exclusions.append("mac")
-	if not plat_menu.is_item_checked(3):
-		exclusions.append("web")
+	if plat_menu.is_item_checked(0):
+		builds.append({
+			"name": "Linux",
+			"template_name": "jam-linux",
+			"export_name": "%s.x86_64" % active_project.project_name
+		})
+	if plat_menu.is_item_checked(1):
+		builds.append({
+			"name": "Windows",
+			"template_name": "jam-windows",
+			"export_name": "%s.exe" % active_project.project_name
+		})
+	if plat_menu.is_item_checked(2):
+		builds.append({
+			"name": "MacOS",
+			"template_name": "jam-macos",
+			"export_name": "%s.app" % active_project.project_name
+		})
+	if plat_menu.is_item_checked(3):
+		builds.append({
+			"name": "Web",
+			"template_name": "jam-web",
+			"export_name": "index.html",
+			"is_web": true
+		})
 	if plat_menu.is_item_checked(4):
-		additions.append("android")
+		builds.append({
+			"name": "Android",
+			"template_name": "jam-android",
+			"export_name": "%s.apk" % active_project.project_name
+		})
+	
+	if net_mode in ["enet", "websocket"]:
+		builds.append({
+			"name": "Server",
+			"template_name": "jam-linux-server",
+			"export_name": "linux-server.x86_64",
+			"is_server": true
+		})
 	
 	var busy_lock = export_busy.get_lock()
-	var res = await project_api.local_build_project(active_id,
-	{
+	var cfg = {
 		"network_mode": net_mode,
-		"additions": additions,
-		"exclusions": exclusions,
 		"export_timeout": export_timeout.value * 60,
-		"parallel": export_parallel.button_pressed
-	})
+		"parallel": export_parallel.button_pressed,
+		"builds": builds
+	}
+	var res = await project_api.prepare_release(active_id, cfg)
+	if !res:
+		dashboard.show_error("invalid result from local export attempt")
 	if res.errored:
 		dashboard.show_error(res.error_msg)
-	await get_tree().create_timer(1.5)
-	refresh_project.call_deferred(2.0)
+		return
 	
+	project_api.do_auto_export(active_id, cfg, res.data)
+	
+	refresh_project.call_deferred(3.0)
 
 func _on_auto_refresh_timer_timeout():
 	$AutoRefreshTimer.stop()
@@ -269,12 +316,6 @@ func _on_config_item_selected(_index):
 		plat_menu.set_item_checked(3, false)
 	else:
 		plat_menu.set_item_disabled(3, false)
-	
-	var res = await project_api.post_config(active_id, cfg)
-	
-	if res.errored:
-		dashboard.show_error(res.error_msg)
-		return
 
 func _on_platform_option_selected(idx: int):
 	var menu = platform_options.get_popup()

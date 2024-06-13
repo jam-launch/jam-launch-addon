@@ -23,12 +23,13 @@ func _load_lock_changed(locked: bool):
 	check_public.disabled = locked
 
 signal update_release(release_id: String, data: Dictionary)
-signal show_logs(project_id: String, release_id: String, job_name: String)
+signal show_logs(log_url: String)
+signal build_busy()
 
 func set_release(proj_id: String, r: Dictionary):
 	
 	project_id = proj_id
-	release_id = r["release_id"]
+	release_id = r["id"]
 	release_data = r
 	
 	title.clear()
@@ -39,12 +40,12 @@ func set_release(proj_id: String, r: Dictionary):
 	
 	title.push_font_size(18)
 	title.push_bold()
-	title.add_text(r["release_id"])
+	title.add_text(r["id"])
 	title.pop_all()
 	
 	title.push_context()
 	title.push_color(Color(1, 1, 1, 0.4))
-	var rt = Time.get_datetime_dict_from_datetime_string(r["start_time"], false)
+	var rt = Time.get_datetime_dict_from_datetime_string(r["created_at"], false)
 	title.add_text("\n%s-%02d-%02d\n%02d:%02d:%02d" % [
 		rt["year"],
 		int(rt["month"]),
@@ -69,40 +70,45 @@ func set_release(proj_id: String, r: Dictionary):
 	for child in jobs.get_children():
 		child.queue_free()
 	
-	var jobs_by_name = {}
-	for j in r["jobs"]:
-		var jname: String = j["job_name"]
-		if jname.contains("server"):
-			jobs_by_name["Server"] = j
-		else:
-			jname = jname.split("-")[0].capitalize()
-			jobs_by_name[jname] = j
-	var sorted_job_names: Array = jobs_by_name.keys()
+	var sorted_job_names: Array = []
+	var builds_by_name = {}
+	for b in r["builds"]:
+		sorted_job_names.append(b["name"])
+		builds_by_name[b["name"]] = b
 	sorted_job_names.sort()
 	if sorted_job_names.has("Server"):
 		sorted_job_names.erase("Server")
 		sorted_job_names.push_front("Server")
 	
-	for jname in sorted_job_names:
-		var j = jobs_by_name[jname]
-		if j["status"] == "SUCCEEDED":
+	var is_busy = false
+	for bname in sorted_job_names:
+		var b = builds_by_name[bname]
+		if b["has_build"]:
 			jobs.add_child(preload("res://addons/jam_launch/ui/SuccessBadge.tscn").instantiate())
-		elif j["status"] == "FAILED":
+		elif b["has_log"]:
 			jobs.add_child(preload("res://addons/jam_launch/ui/FailBadge.tscn").instantiate())
 		else:
+			is_busy = true
 			jobs.add_child(preload("res://addons/jam_launch/ui/BusyBadge.tscn").instantiate())
 		
 		var name_lbl = Label.new()
-		name_lbl.text = jname
+		name_lbl.text = bname
 		jobs.add_child(name_lbl)
 		
-		# TODO: maybe re-enable these with the local export log?
-		#var log_btn = Button.new()
-		#log_btn.icon = dashboard.editor_icon("Script")
-		#log_btn.pressed.connect(_show_logs.bind(j["job_name"]))
-		#log_btn.flat = true
-		#log_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		#jobs.add_child(log_btn)
+		if b["has_log"]:
+			var log_btn = Button.new()
+			log_btn.icon = dashboard.editor_icon("Script")
+			log_btn.pressed.connect(_show_logs.bind(b["log_url"]))
+			log_btn.flat = true
+			log_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			jobs.add_child(log_btn)
+		else:
+			var blank = Label.new()
+			jobs.add_child(blank)
+	
+	if is_busy:
+		print("build busy")
+		build_busy.emit()
 
 func release_page_uri() -> String:
 	return "https://app.jamlaunch.com/g/%s/%s" % [project_id, release_id]
@@ -116,8 +122,8 @@ func _on_check_public_toggled(toggled_on: bool):
 		return
 	update_release.emit(release_id, {"public": toggled_on})
 
-func _show_logs(job_name: String):
-	show_logs.emit(project_id, release_id, job_name)
+func _show_logs(log_url: String):
+	show_logs.emit(log_url)
 
 func _on_page_link_pressed():
 	OS.shell_open(release_page_uri())

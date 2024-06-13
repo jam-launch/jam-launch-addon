@@ -57,6 +57,7 @@ text = "Release Options:"
 [node name="NetworkMode" type="OptionButton" parent="HB/Config"]
 layout_mode = 2
 item_count = 3
+selected = 0
 fit_to_longest_item = false
 popup/item_0/text = "ENet"
 popup/item_0/id = 0
@@ -67,6 +68,7 @@ popup/item_2/id = 2
 
 [node name="PlatformOptions" type="MenuButton" parent="HB/Config"]
 layout_mode = 2
+toggle_mode = false
 text = "Platforms..."
 flat = false
 item_count = 5
@@ -96,6 +98,7 @@ text = "
 "
 
 [node name="BtnSessions" type="Button" parent="HB/Config"]
+visible = false
 layout_mode = 2
 text = "View Sessions"
 
@@ -174,6 +177,9 @@ editable = false
 
 [node name="ExportBusy" type="Node" parent="."]
 script = ExtResource("5_d5nsn")
+
+[node name="LogRequest" type="HTTPRequest" parent="."]
+use_threads = true
 
 [connection signal="pressed" from="HB/Config/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
 [connection signal="item_selected" from="HB/Config/NetworkMode" to="." method="_on_config_item_selected"]

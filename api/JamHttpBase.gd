@@ -4,7 +4,7 @@ class_name JamHttpBase
 
 var addon_version: String = "unknown"
 var api_url: String
-var jwt: JamJwt
+var jwt: JamJwt = JamJwt.new()
 
 var pool: JamHttpRequestPool
 
@@ -68,7 +68,9 @@ func _json_http(route: String, method: HTTPClient.Method = HTTPClient.METHOD_GET
 	var resp = await h.http.request_completed
 	var response_code = resp[1]
 	var response_body: String = resp[3].get_string_from_utf8()
-	var data = JSON.parse_string(response_body)
+	var data = {}
+	if len(response_body) > 0:
+		data = JSON.parse_string(response_body)
 	if response_code > 299:
 		result.errored = true
 		result.error_msg = "HTTP error %d" % response_code

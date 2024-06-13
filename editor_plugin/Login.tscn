@@ -1,6 +1,24 @@
-[gd_scene load_steps=2 format=3 uid="uid://dvpd3fdw8nehb"]
+[gd_scene load_steps=9 format=3 uid="uid://dvpd3fdw8nehb"]
 
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Login.gd" id="1_qc7ch"]
+[ext_resource type="Script" path="res://addons/jam_launch/api/JamLoginApi.gd" id="2_5k84e"]
+[ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="2_051wn"]
+[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="2_csf7e"]
+[ext_resource type="Texture2D" uid="uid://dvvpfyr061bd1" path="res://addons/jam_launch/assets/star-jar-outlined_128x128.png" id="2_dpb47"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="5_hf7pv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r7f6r"]
+bg_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.466667, 0.466667, 0.466667, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_8cxc1"]
+font = ExtResource("2_csf7e")
+font_size = 18
+font_color = Color(0.8, 0.8, 0.8, 1)
 
 [node name="Login" type="Control"]
 layout_mode = 3
@@ -13,34 +31,133 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_qc7ch")
 
-[node name="VB" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(250, 0)
+[node name="Base" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -125.0
-offset_top = -33.0
-offset_right = 125.0
-offset_bottom = 33.0
+offset_left = -82.5
+offset_top = -15.5
+offset_right = 82.5
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="TextureRect" type="TextureRect" parent="Base"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+texture = ExtResource("2_dpb47")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LoginButton" type="Button" parent="Base"]
+layout_mode = 2
+text = "Login to Jam Launch
+"
+
+[node name="Busy" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -93.5
+offset_top = -20.0
+offset_right = 93.5
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HB" type="HBoxContainer" parent="Busy"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="BusyCircle" parent="Busy/HB" instance=ExtResource("2_051wn")]
+custom_minimum_size = Vector2(23, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Busy/HB"]
+layout_mode = 2
+text = "Requesting Access..."
+
+[node name="Waiting" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -48.0
+offset_right = 150.0
+offset_bottom = 48.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
 
-[node name="PasteButton" type="Button" parent="VB"]
+[node name="HB" type="HBoxContainer" parent="Waiting"]
 layout_mode = 2
-text = "Paste Key from Clipboard"
+theme_override_constants/separation = 8
+alignment = 1
 
-[node name="Notes" type="RichTextLabel" parent="VB"]
+[node name="BusyCircle" parent="Waiting/HB" instance=ExtResource("2_051wn")]
+custom_minimum_size = Vector2(23, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Waiting/HB"]
+layout_mode = 2
+text = "Waiting for approval..."
+
+[node name="Notes" type="RichTextLabel" parent="Waiting"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 bbcode_enabled = true
-text = "[center][color=gray][bgcolor=#00000000]Your developer key can be found in the Jam Launch dashboard:
-[url]https://app.jamlaunch.com[/url][/bgcolor][/color][/center]"
+text = "[center][color=#eeeeee][bgcolor=#00000000]Confirm the following code at
+[url]https://app.jamsilo.com/device-auth[/url][/bgcolor][/color][/center]"
 fit_content = true
 
-[connection signal="pressed" from="VB/PasteButton" to="." method="_on_paste_button_pressed"]
-[connection signal="meta_clicked" from="VB/Notes" to="." method="_on_notes_meta_clicked"]
-[connection signal="meta_hover_ended" from="VB/Notes" to="." method="_on_notes_meta_hover_ended"]
-[connection signal="meta_hover_started" from="VB/Notes" to="." method="_on_notes_meta_hover_started"]
+[node name="PC" type="PanelContainer" parent="Waiting"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_r7f6r")
+
+[node name="M" type="MarginContainer" parent="Waiting/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="UserCode" type="Label" parent="Waiting/PC/M"]
+layout_mode = 2
+text = "BLAH the-code HELLO"
+label_settings = SubResource("LabelSettings_8cxc1")
+horizontal_alignment = 1
+
+[node name="CancelAuth" type="Button" parent="Waiting"]
+layout_mode = 2
+text = "Cancel
+"
+
+[node name="JamLoginApi" type="Node" parent="."]
+script = ExtResource("2_5k84e")
+
+[node name="BusyScope" type="Node" parent="."]
+script = ExtResource("5_hf7pv")
+
+[node name="WaitingScope" type="Node" parent="."]
+script = ExtResource("5_hf7pv")
+
+[connection signal="pressed" from="Base/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="meta_clicked" from="Waiting/Notes" to="." method="_on_notes_meta_clicked"]
+[connection signal="meta_hover_ended" from="Waiting/Notes" to="." method="_on_notes_meta_hover_ended"]
+[connection signal="meta_hover_started" from="Waiting/Notes" to="." method="_on_notes_meta_hover_started"]
+[connection signal="pressed" from="Waiting/CancelAuth" to="." method="_on_cancel_auth_pressed"]
+[connection signal="lock_changed" from="BusyScope" to="." method="_on_busy_scope_lock_changed"]
+[connection signal="lock_changed" from="WaitingScope" to="." method="_on_waiting_scope_lock_changed"]

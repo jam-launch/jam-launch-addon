@@ -108,7 +108,7 @@ layout_mode = 2
 [node name="Jobs" type="GridContainer" parent="M/HB/M/PC/MC/VB"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
-columns = 2
+columns = 3
 
 [connection signal="pressed" from="M/HB/VB/Config/MC/VB/HB/PageLink" to="." method="_on_page_link_pressed"]
 [connection signal="pressed" from="M/HB/VB/Config/MC/VB/HB/Copy" to="." method="_on_copy_pressed"]
