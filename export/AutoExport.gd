@@ -23,8 +23,9 @@ func _init():
 	thread_helper = JamThreadHelper.new()
 	add_child(thread_helper)
 
-func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, staging_dir: String = "user://jam-auto-export") -> JamError:
+func auto_export(export_config: ExportConfig, staging_dir: String = "user://jam-auto-export") -> JamError:
 	# set up staging directory where exports will be placed
+	print(export_config.game_id)
 	if DirAccess.dir_exists_absolute(staging_dir) or FileAccess.file_exists(staging_dir):
 		var res = recursive_delete(staging_dir)
 		if res.errored:
@@ -33,20 +34,10 @@ func auto_export(export_config: ExportConfig, http_pool: JamHttpRequestPool, sta
 	if err != OK:
 		return JamError.err("Failed to create staging directory at %s - code %d" % [staging_dir, err])
 	
-	# update the deployment.cfg file
-	var deployment_path = ProjectSettings.globalize_path("res://addons/jam_launch/deployment.cfg")
-	var deployment_config = ConfigFile.new()
-	deployment_config.set_value("game", "id", export_config.game_id)
-	deployment_config.set_value("game", "network_mode", export_config.network_mode)
-	deployment_config.save(deployment_path)
-	
 	# set the export presets if they are not already there
-	# TODO: need a better way of playing nice with custom or existing export presets
-	if not FileAccess.file_exists("res://export_presets.cfg"):
-		print("applying base export_presets.cfg...")
-		err = DirAccess.copy_absolute("res://addons/jam_launch/export/preset_base.cfg", "res://export_presets.cfg")
-		if err != OK:
-			return JamError.err("Failed to initialize export_presets.cfg from base copy")
+	var res = merge_presets("res://addons/jam_launch/export/preset_base.cfg")
+	if res.errored:
+		return res
 	
 	# prepare the export tasks
 	var tasks: Array[Callable] = []
@@ -120,9 +111,20 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 		var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
 		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	else:
-		exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		var timeout_check = OS.execute("command", ["-v", "timeout"])
+		var gtimeout_check = OS.execute("command", ["-v", "gtimeout"])
+		if timeout_check == 0:
+			exit_code = OS.execute("timeout", [timeout * 60, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		elif gtimeout_check == 0:
+			exit_code = OS.execute("gtimeout", [timeout * 60, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		else:
+			push_warning("Neither the 'timeout' or 'gtimeout' command could be found on this system - ignoring export timout")
+			exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	if exit_code != 0:
-		return JamError.err("Non-zero exit code from")
+		if exit_code == 124:
+			return JamError.err("Export timed out")
+		else:
+			return JamError.err("Non-zero exit code from export command - %d" % exit_code)
 	if not (FileAccess.file_exists(output_target) or DirAccess.dir_exists_absolute(output_target)):
 		return JamError.err("Export failed to produce desired output target")
 	return JamError.ok()
@@ -223,3 +225,71 @@ static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String
 			if err != OK:
 				printerr("Unexpected error when closing file write: %d" % err)
 		file_name = dir.get_next()
+
+
+static func merge_presets(additions_path: String, base_path: String = "res://export_presets.cfg") -> JamError:
+	
+	if not FileAccess.file_exists(base_path):
+		var err = DirAccess.copy_absolute(additions_path, base_path)
+		if err != OK:
+			return JamError.err("Failed to initialize export_presets.cfg from base copy")
+	else:
+		var export_cfg = ConfigFile.new()
+		var err = export_cfg.load(base_path)
+		if err != OK:
+			return JamError.err("Failed to load existing export presets at '%s'" % base_path)
+		
+		var jam_export_cfg = ConfigFile.new()
+		err = jam_export_cfg.load(additions_path)
+		if err != OK:
+			return JamError.err("Failed to load additional export presets at '%s'" % additions_path)
+		
+		var jam_preset_map: Dictionary = {}
+		var jam_preset_options_map: Dictionary = {}
+		var preset_regex = RegEx.create_from_string("^preset\\.(\\d+)$")
+		for section in jam_export_cfg.get_sections():
+			if preset_regex.search(section) == null:
+				continue
+			# determine name and get values
+			var vals = {}
+			var preset_name = ""
+			for key in jam_export_cfg.get_section_keys(section):
+				vals[key] = jam_export_cfg.get_value(section, key)
+				if key == "name":
+					preset_name = vals[key]
+			jam_preset_map[preset_name] = vals
+			# get options section
+			vals = {}
+			var opt_section = section + ".options"
+			for key in jam_export_cfg.get_section_keys(opt_section):
+				vals[key] = jam_export_cfg.get_value(opt_section, key)
+			jam_preset_options_map[preset_name] = vals
+		
+		var highest_section_num = -1
+		for section in export_cfg.get_sections():
+			var preset_match = preset_regex.search(section)
+			if preset_match == null:
+				continue
+			highest_section_num = maxi(preset_match.get_string(1).to_int(), highest_section_num)
+			for key in export_cfg.get_section_keys(section):
+				if key == "name":
+					jam_preset_map.erase(export_cfg.get_value(section, key))
+					break
+		
+		var insert_index = highest_section_num + 1
+		for preset_name in jam_preset_map:
+			var section = "preset.%d" % insert_index
+			insert_index += 1
+			for key in jam_preset_map[preset_name]:
+				export_cfg.set_value(section, key, jam_preset_map[preset_name][key])
+			
+			var opt_section = "%s.options" % section
+			for key in jam_preset_options_map[preset_name]:
+				export_cfg.set_value(opt_section, key, jam_preset_options_map[preset_name][key])
+		
+		if len(jam_preset_map.keys()) > 0:
+			err = export_cfg.save(base_path)
+			if err != OK:
+				return JamError.err("Failed to save updated export presets at '%s'" % base_path)
+	
+	return JamError.ok()

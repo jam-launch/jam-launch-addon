@@ -18,6 +18,7 @@ extends JamEditorPluginPage
 @onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
 
 @onready var export_busy: ScopeLocker = $ExportBusy
+@onready var export_prep_busy: ScopeLocker = $ExportPrepBusy
 @onready var export_timeout: SpinBox = $HB/Config/Timeout/Minutes
 @onready var export_parallel: CheckBox = $HB/Config/Parallel
 
@@ -34,6 +35,12 @@ var refresh_retries = 0
 var active_project
 var active_id = ""
 
+var waiting_for_export: bool = false
+var auto_export: JamAutoExport
+
+func _ready():
+	auto_export = JamAutoExport.new()
+	add_child(auto_export)
 
 func _page_init():
 	log_popup.visible = false
@@ -166,8 +173,9 @@ func _update_release(release_id: String, props: Dictionary):
 	refresh_project.call_deferred()
 
 func _on_build_busy():
-	print("setting auto-refresh")
-	$AutoRefreshTimer.start(3.0)
+	pass
+	#print("setting auto-refresh")
+	#$AutoRefreshTimer.start(3.0)
 
 func _show_logs(log_url: String) -> void:
 	log_display.text = "fetching logs..."
@@ -191,11 +199,10 @@ func _on_btn_deploy_pressed() -> void:
 	if not active_project:
 		dashboard.show_error("Project is not correctly loaded")
 		return
-		
-	if dashboard.load_locker.is_locked():
-		dashboard.show_error("cannot deploy while handling another request")
+	
+	if export_busy.is_locked() or export_prep_busy.is_locked():
+		dashboard.show_error("Cannot release while release tasks are still active")
 		return
-	var lock = dashboard.load_locker.get_lock()
 	
 	var net_mode
 	if net_mode_box.get_selected_id() == 0:
@@ -250,23 +257,63 @@ func _on_btn_deploy_pressed() -> void:
 			"is_server": true
 		})
 	
-	var busy_lock = export_busy.get_lock()
 	var cfg = {
 		"network_mode": net_mode,
 		"export_timeout": export_timeout.value * 60,
 		"parallel": export_parallel.button_pressed,
 		"builds": builds
 	}
-	var res = await project_api.prepare_release(active_id, cfg)
-	if !res:
-		dashboard.show_error("invalid result from local export attempt")
-	if res.errored:
-		dashboard.show_error(res.error_msg)
+	var prep_res := await _export_prep(cfg)
+	if prep_res.errored:
+		dashboard.show_error(prep_res.error_msg)
 		return
+	refresh_project.call_deferred()
 	
-	project_api.do_auto_export(active_id, cfg, res.data)
+	var export_res := await _do_export(cfg, prep_res.value)
+	if export_res.errored:
+		dashboard.show_error(export_res.error_msg)
 	
 	refresh_project.call_deferred(3.0)
+
+func _export_prep(cfg: Dictionary) -> JamResult:
+	if dashboard.load_locker.is_locked():
+		return JamResult.err("cannot deploy while handling another request")
+	var lock = dashboard.load_locker.get_lock()
+	
+	var busy_lock = export_prep_busy.get_lock()
+	var res = await project_api.prepare_release(active_id, cfg)
+	if !res:
+		return JamResult.err("invalid result from local export attempt")
+	if res.errored:
+		return JamResult.err(res.error_msg)
+	return JamResult.ok(res.data)
+
+func _do_export(config: Dictionary, prepare_result: Dictionary) -> JamError:
+	var busy_lock = export_busy.get_lock()
+	var export_config = JamAutoExport.ExportConfig.new()
+	export_config.network_mode = config["network_mode"]
+	export_config.export_timeout = config["export_timeout"]
+	export_config.parallel = config["parallel"]
+	export_config.game_id = "%s-%s" % [active_id, prepare_result["id"]]
+	export_config.build_configs = ([] as Array[JamAutoExport.BuildConfig])
+	
+	for b in config["builds"]:
+		var c := JamAutoExport.BuildConfig.new()
+		c.output_target = b["export_name"]
+		c.template_name = b["template_name"]
+		var mapped := false
+		for t in prepare_result["builds"]:
+			if t["build_name"] == b["name"]:
+				c.presigned_post = t["upload_target"]
+				c.log_presigned_post = t["log_upload_target"]
+				mapped = true
+				break
+		if not mapped:
+			return JamError.err("Failed to get upload target for '%s' build" % b["name"])
+		
+		export_config.build_configs.append(c)
+	
+	return await auto_export.auto_export(export_config)
 
 func _on_auto_refresh_timer_timeout():
 	$AutoRefreshTimer.stop()
@@ -326,6 +373,8 @@ func _on_platform_option_selected(idx: int):
 
 
 func _on_export_busy_lock_changed(locked):
+	waiting_for_export = locked
+
+func _on_export_prep_busy_lock_changed(locked):
 	deploy_busy.visible = locked
 	latest_release.visible = not locked
-	

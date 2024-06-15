@@ -178,6 +178,9 @@ editable = false
 [node name="ExportBusy" type="Node" parent="."]
 script = ExtResource("5_d5nsn")
 
+[node name="ExportPrepBusy" type="Node" parent="."]
+script = ExtResource("5_d5nsn")
+
 [node name="LogRequest" type="HTTPRequest" parent="."]
 use_threads = true
 
@@ -190,3 +193,4 @@ use_threads = true
 [connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
 [connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]
 [connection signal="lock_changed" from="ExportBusy" to="." method="_on_export_busy_lock_changed"]
+[connection signal="lock_changed" from="ExportPrepBusy" to="." method="_on_export_prep_busy_lock_changed"]

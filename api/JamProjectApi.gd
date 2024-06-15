@@ -2,12 +2,9 @@
 extends JamHttpBase
 class_name JamProjectApi
 
-var auto_export: JamAutoExport
 
 func _ready():
 	super()
-	auto_export = JamAutoExport.new()
-	add_child(auto_export)
 
 func create_project(project_name: String) -> Result:
 	return await _json_http(
@@ -43,35 +40,6 @@ func prepare_release(project_id: String, config: Dictionary) -> Result:
 		HTTPClient.METHOD_POST,
 		req
 	)
-
-func do_auto_export(project_id: String, config: Dictionary, prepare_result: Dictionary) -> JamError:
-	var export_config = JamAutoExport.ExportConfig.new()
-	export_config.network_mode = config["network_mode"]
-	export_config.export_timeout = config["export_timeout"]
-	export_config.parallel = config["parallel"]
-	
-	export_config.game_id = "%s-%s" % [project_id, prepare_result["id"]]
-	
-	export_config.build_configs = ([] as Array[JamAutoExport.BuildConfig])
-	
-	for b in config["builds"]:
-		var c := JamAutoExport.BuildConfig.new()
-		c.output_target = b["export_name"]
-		c.template_name = b["template_name"]
-		
-		var mapped := false
-		for t in prepare_result["builds"]:
-			if t["build_name"] == b["name"]:
-				c.presigned_post = t["upload_target"]
-				c.log_presigned_post = t["log_upload_target"]
-				mapped = true
-				break
-		if not mapped:
-			return Result.err("Failed to get upload target for '%s' build" % b["name"])
-		
-		export_config.build_configs.append(c)
-	
-	return await auto_export.auto_export(export_config, pool)
 
 func update_release(project_id: String, release_id: String, props: Dictionary) -> Result:
 	return await _json_http(
