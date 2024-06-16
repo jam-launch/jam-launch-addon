@@ -37,40 +37,39 @@ func get_included_gjwt(game_id: String) -> Variant:
 	
 	return null
 
-func _load_dev_jwt() -> Variant:
-	if dev_jwt:
-		return dev_jwt
-		
-	var dev_key = cache.get_val(jwt_cache_idx)
-	
-	if dev_key == null:
-		push_error("no developer key available for fetching test keys")
-		return null
-		
-	var jwt = JamJwt.new()
-	var jwt_res = jwt.set_token(dev_key as String)
-	if jwt_res.errored:
-		push_error("invalid developer key in cache: %s" % jwt_res.error)
-		return null
-	
-	dev_jwt = jwt
-	return dev_jwt
-
-func get_test_gjwt(gameId: String, n: int = 1) -> Variant:
+func get_test_gjwt(gameId: String) -> Variant:
 	if not OS.is_debug_build():
 		push_error("can't get test gjwt if not in dev mode")
 		return null
 	
-	_load_dev_jwt()
-	if dev_jwt == null:
-		return null
-	dev_mode_api.jwt = dev_jwt
+	var peer = StreamPeerTCP.new()
+	peer.connect_to_host("127.0.0.1", 17343)
+	while true:
+		await get_tree().create_timer(0.2)
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to connect to local auth proxy for test creds")
+			return null
+		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
+			break
 	
-	var gameIdParts := gameId.split("-")
-	var test_res = await dev_mode_api.get_test_key(gameIdParts[0], gameIdParts[1], n)
-	if test_res.errored:
-		push_error("failed to fetch test key: %s" % test_res.error_msg)
+	var parts = gameId.split("-")
+	peer.put_string("key/%s/%s" % [parts[0], parts[1]])
+	
+	while true:
+		await get_tree().create_timer(0.2)
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to get response from local auth proxy for test creds")
+			return null
+		if peer.get_available_bytes() > 0:
+			break
+	
+	var jwt_response = peer.get_string()
+	
+	if jwt_response.begins_with("Error:"):
+		push_error("failed to get test creds - %s" % jwt_response)
 		return null
 	
-	return test_res.data["test_jwt"]
-
+	peer.disconnect_from_host()
+	return jwt_response

@@ -21,6 +21,8 @@ var plugin: EditorPlugin
 @onready var toolbar_back: Button = $VB/ToolBar/Back
 @onready var toolbar_title: Label = $VB/ToolBar/Title
 
+@onready var auth_proxy: JamAuthProxy = $JamAuthProxy
+
 func _ready() -> void:
 	if not plugin:
 		return
@@ -35,6 +37,8 @@ func _ready() -> void:
 		if is_instance_of(page, JamEditorPluginPage):
 			page.page_init()
 	
+	auth_proxy.api = project_api
+	auth_proxy.start()
 	login_page.jwt.token_changed.connect(_on_jwt_changed)
 	project_api.jwt = login_page.jwt
 	_on_jwt_changed(login_page.jwt.get_token())

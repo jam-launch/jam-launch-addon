@@ -99,3 +99,13 @@ func terminate_session(project_id: String, release_id: String, session_id: Strin
 		HTTPClient.METHOD_POST,
 		{}
 	)
+
+func get_test_key(project_id: String, release: String, test_num: int) -> Result:
+	return await _json_http(
+		"/projects/%s/testkey" % [project_id],
+		HTTPClient.METHOD_POST,
+		{
+			"test_num": test_num,
+			"release": release
+		}
+	) 

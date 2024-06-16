@@ -62,7 +62,7 @@ func _ready():
 
 func _setup_test_gjwt():
 	gjwt_fetch_busy = true
-	var gjwt = await keys.get_test_gjwt(_jc.game_id, test_client_number)
+	var gjwt = await keys.get_test_gjwt(_jc.game_id)
 	gjwt_fetch_busy = false
 	if gjwt != null:
 		set_gjwt(gjwt as String)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://b1on16edsk3a6"]
+[gd_scene load_steps=12 format=3 uid="uid://b1on16edsk3a6"]
 
 [ext_resource type="Theme" uid="uid://ei4p7e7xwi5w" path="res://addons/jam_launch/themes/jam_launch_launch_theme.tres" id="1_lvjb2"]
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Dashboard.gd" id="1_pqj8q"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://addons/jam_launch/api/JamProjectApi.gd" id="6_21ydx"]
 [ext_resource type="PackedScene" uid="uid://c6y6dgxhoqjjv" path="res://addons/jam_launch/editor_plugin/Sessions.tscn" id="6_dow21"]
 [ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="9_ucv5t"]
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/JamAuthProxy.gd" id="11_k0jvn"]
 
 [node name="Dashboard" type="MarginContainer" groups=["jam_launch_dashboard"]]
 anchors_preset = 15
@@ -87,6 +88,9 @@ script = ExtResource("6_21ydx")
 
 [node name="LoadLocker" type="Node" parent="."]
 script = ExtResource("9_ucv5t")
+
+[node name="JamAuthProxy" type="Node" parent="."]
+script = ExtResource("11_k0jvn")
 
 [connection signal="pressed" from="VB/ToolBar/Back" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="VB/ToolBar/Refresh" to="." method="_on_refresh_pressed"]
