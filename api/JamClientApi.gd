@@ -17,17 +17,21 @@ class GameSessionAddress:
 class PlayerInfo:
 	extends RefCounted
 	var user_id: String
+	var token: String
 
 class GameSessionResult:
 	extends JamHttpBase.Result
 	var session_id: String = ""
 	var status: SessionStatus = SessionStatus.UNKNOWN
 	var region: String = ""
-	var addresses: Array[GameSessionAddress] = []
+	var address: String = ""
 	var players: Array[PlayerInfo] = []
 	var join_id: String = ""
 	
 	static func from_result(res: Result) -> GameSessionResult:
+		
+		print(res.data)
+		
 		var gres = GameSessionResult.new()
 		gres.data = res.data
 		gres.errored = res.errored
@@ -36,23 +40,22 @@ class GameSessionResult:
 		if res.errored:
 			return gres
 		
-		gres.status = SessionStatus.get(res.data["status"], SessionStatus.UNKNOWN)
+		print(res.data)
+		gres.status = SessionStatus.get(res.data["state"], SessionStatus.UNKNOWN)
 		gres.session_id = res.data["id"]
 		gres.region = res.data["region"]
 		for p in res.data["players"]:
 			var pinfo = PlayerInfo.new()
-			pinfo.user_id = p["user_id"]
+			pinfo.user_id = p["username"]
 			gres.players.push_back(pinfo)
+			if "joinToken" in p:
+				pinfo.token = p["joinToken"]
 		
-		for a in res.data["addresses"]:
-			var addr = GameSessionAddress.new()
-			addr.ip = a["ip"]
-			addr.port = a["port"]
-			addr.domain = a["domain"]
-			gres.addresses.push_back(addr)
-		
-		if "join_id" in res.data:
-			gres.join_id = res.data["join_id"]
+		if "address" in res.data:
+			gres.address = res.data["address"]
+			
+		if "joinCode" in res.data:
+			gres.join_id = res.data["joinCode"]
 		
 		return gres
 	
@@ -141,19 +144,19 @@ func create_game_session(region: String="us-east-2") -> Result:
 
 func join_game_session(join_id: String) -> Result:
 	return await _json_http(
-		"/sessions/%s/%s/join" % [game_id, join_id],
+		"/sessions/%s/join/%s" % [game_id, join_id],
 		HTTPClient.METHOD_POST,
 		{}
 	)
 
 func get_game_session(session_id: String) -> GameSessionResult:
 	return GameSessionResult.from_result(
-		await _json_http("/sessions/%s/%s" % [game_id, session_id])
+		await _json_http("/sessions/%s/check/%s" % [game_id, session_id])
 	)
 
 func leave_game_session(session_id: String) -> Result:
 	return await _json_http(
-		"/sessions/%s/%s/leave" % [game_id, session_id],
+		"/sessions/%s/leave/%s" % [game_id, session_id],
 		HTTPClient.METHOD_POST,
 		{}
 	)

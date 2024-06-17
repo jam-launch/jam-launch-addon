@@ -101,28 +101,21 @@ func client_start():
 	add_child(client_ui)
 
 ## Initiates a connection to a provisioned server
-func client_session_request(ip: String, port: int, token: String, domain: Variant):
+func client_session_request(host: String, port: int, token: String):
 	current_client_token = token
 	client_ui.visible = false
 	
-	var dev_ws = _jc.network_mode == "websocket" and OS.is_debug_build()
-	
-	if OS.has_feature("websocket") or dev_ws:
-		if domain == null:
-			domain = "jamserve.net"
-		ip = "wss://%s" % domain
-	
-	_jc.log_event.emit("Attempting to connect to %s:%d..." % [ip, port])
-	print("Attempting to connect to %s:%d..." % [ip, port])
+	_jc.log_event.emit("Attempting to connect to %s:%d..." % [host, port])
+	print("Attempting to connect to %s:%d..." % [host, port])
 	
 	var peer
 	var err
-	if OS.has_feature("websocket") or dev_ws:
+	if _jc.network_mode == "websocket":
 		peer = WebSocketMultiplayerPeer.new()
-		err = peer.create_client("%s:%d" % [ip, port], TLSOptions.client_unsafe())
+		err = peer.create_client("wss://%s:%d" % [host, port], TLSOptions.client_unsafe())
 	else:
 		peer = ENetMultiplayerPeer.new()
-		err = peer.create_client(ip, port)
+		err = peer.create_client(host, port)
 	if err != OK:
 		printerr("Server connection error: ", err)
 		_jc.log_event.emit("Error: %d" % err)
@@ -157,7 +150,7 @@ func _on_client_connect_fail():
 func _on_client_connect():
 	if not _jc.is_webrtc_mode():
 		_jc.log_event.emit("Connected, verifying...")
-		_jc.verify_identity(current_client_token)
+		_jc.verify_identity(jwt.claims["username"] as String, current_client_token)
 
 func _on_server_disconnect():
 	_jc.log_event.emit("Server disconnected")

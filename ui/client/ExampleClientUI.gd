@@ -164,7 +164,7 @@ func _on_devtools_pressed(id: int):
 	if id == 0:
 		jam_connect.start_as_dev_server.call_deferred()
 	elif id == 1:
-		jam_client.client_session_request("127.0.0.1", 7437, "localdev", "localhost")
+		jam_client.client_session_request("127.0.0.1", 7437, "localdev")
 	elif id >= 3 and id <= 7:
 		var client_num = id - 2
 		jam_client.test_client_number = client_num
@@ -190,10 +190,11 @@ func _notification(what):
 		get_tree().quit()
 #
 func enter_session(session_id: String, token: String) -> bool:
-	session_result = await client_api.get_game_session(session_id)
-	if session_result.errored:
-		show_error(session_result.error_msg)
+	var res = await client_api.get_game_session(session_id)
+	if res.errored:
+		show_error(res.error_msg)
 		return false
+	session_result = res
 	
 	if len(session_result.join_id):
 		join_code_btn.text = session_result.join_id
@@ -293,7 +294,7 @@ func _on_host_pressed():
 		show_error(res.error_msg)
 		return
 	
-	if not await enter_session(res.data["id"] as String, res.data["join_token"] as String):
+	if not await enter_session(res.data["id"] as String, res.data["token"] as String):
 		res = await client_api.leave_game_session(res.data["id"] as String)
 		if res.errored:
 			show_error("failed to leave game session after failing to enter: %s" % res.error_msg)
@@ -328,7 +329,8 @@ func _on_join_with_code_pressed():
 		if res.errored:
 			show_error(res.error_msg)
 			return
-		if not await enter_session(res.data["session_id"] as String, res.data["join_token"] as String):
+		print(res.data)
+		if not await enter_session(res.data["id"] as String, res.data["token"] as String):
 			return
 		join_code_edit.clear()
 
@@ -407,8 +409,12 @@ func _on_join_code_back_pressed():
 func _on_start_game_pressed():
 	if session_result and session_result.busy_progress() == 1.0:
 		session_refresh_timer.stop()
-		var addr := session_result.addresses[0]
-		jam_client.client_session_request(addr.ip, addr.port, session_token, addr.domain)
+		var addr := session_result.address
+		var addrParts := addr.rsplit(":", false, 1)
+		if len(addrParts) < 2:
+			show_error("cannot start game without a valid session address", 5.0)
+			return
+		jam_client.client_session_request(addrParts[0], addrParts[1].to_int(), session_token)
 	elif p2p_session_result:
 		jam_client.p2p_game_start()
 	else:

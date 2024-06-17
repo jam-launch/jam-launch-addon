@@ -14,9 +14,6 @@ var db: JamDB
 ## file bucket. The implementation may vary based on whether the server is in the
 ## Jam Launch cloud or being run locally.
 var files: JamFiles
-# Client implementations for AWS services (only available when deployed)
-var _ddb
-var _s3
 
 ## The list of connected client peer IDs that have not verified their identity
 ## yet
@@ -29,9 +26,15 @@ var accepted_peers := {}
 ## implementations.
 var dev_mode := false
 
+var callback_api: JamCallbackApi
+
 var _jc: JamConnect:
 	get:
 		return get_parent()
+
+func _ready():
+	callback_api = JamCallbackApi.new()
+	add_child(callback_api)
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -41,6 +44,8 @@ func _notification(what):
 ## Configures and starts server functionality
 func server_start(args: Dictionary):
 	print("Starting as server...")
+	
+	
 	
 	var listen_port: int = DEFAULT_PORT
 	if "port" in args:
@@ -102,34 +107,20 @@ func server_start(args: Dictionary):
 		_jc.server_pre_ready.emit()
 		_jc.server_post_ready.emit()
 	else:
-		if not ClassDB.can_instantiate("DynamoDbClient"):
-			printerr("FATAL: Cannot instantiate DynamoDbClient. Is the Jam Launch extension missing?")
-			get_tree().quit()
-			
-		if not ClassDB.can_instantiate("S3Client"):
-			printerr("FATAL: Cannot instantiate S3Client. Is the Jam Launch extension missing?")
-			get_tree().quit()
-			
-		_ddb = ClassDB.instantiate("DynamoDbClient")
-		@warning_ignore("unsafe_call_argument")
-		db = JamDBDynamo.new(_jc, _ddb)
-		_s3 = ClassDB.instantiate("S3Client")
-		@warning_ignore("unsafe_call_argument")
-		files = JamFilesS3.new(_jc, _s3)
-		
+		# TODO: new file system
+		db = JamDB.new(_jc)
+		files = JamFiles.new(_jc)
 		_jc.server_pre_ready.emit()
-		var res = db.put_session_data("status", {
-			"status": "READY"
-		})
-		if not res:
-			printerr("FATAL: Failed to set READY status in database - aborting...")
+		var res = await callback_api.send_ready()
+		if res.errored:
+			printerr("FATAL: Failed to set READY status in database - %s - aborting..." % res.error_msg )
 			get_tree().quit()
 		_jc.server_post_ready.emit()
 
 ## Verifies a player by correlating the provided [code]join_token[/code] with
 ## the token in the database. In developer mode, a token with the value
 ## [code]"localdev"[/code] will always verify successfully. 
-func verify_player(join_token: String):
+func verify_player(username: String, join_token: String):
 	var pid: int = multiplayer.get_remote_sender_id()
 	if pid not in pending_peers:
 		print("Ignoring verification request from non-pending peer %d" % pid)
@@ -144,13 +135,14 @@ func verify_player(join_token: String):
 	
 	else:
 		print("Verifying join token from %d" % pid)
-		pinfo = db.get_session_data("JGT-"+join_token)
-		if pinfo == null or "name" not in pinfo:
-			print("Failed verification of join token (%s), booting %d..." % [join_token, pid])
+		var res := await callback_api.check_token(username, join_token)
+		if res.errored:
+			print("Failed verification of join token (%s) - %s - booting %d..." % [join_token, res.error_msg, pid])
 			multiplayer.multiplayer_peer.disconnect_peer(pid, true)
 			pending_peers.erase(pid)
 			return
 		
+		pinfo = {"name": username}
 		for already_here in accepted_peers.values():
 			if already_here["name"] == pinfo["name"]:
 				print("Player '%s' is already joined, removing duplicate pid %d from pending peers..." % [pinfo["name"], pid])

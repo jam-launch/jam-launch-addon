@@ -235,14 +235,14 @@ func is_player() -> bool:
 
 ## A client-callable method used by connected clients to verify their
 ## identity with the server.
-func verify_identity(join_token: String):
+func verify_identity(username: String, join_token: String):
 	if not is_webrtc_mode():
-		_verify_player.rpc_id(1, join_token)
+		_verify_player.rpc_id(1, username, join_token)
 
 @rpc("any_peer", "call_remote", "reliable")
-func _verify_player(join_token: String):
+func _verify_player(username: String, join_token: String):
 	if is_dedicated_server():
-		server.verify_player(join_token)
+		server.verify_player(username, join_token)
 
 ## A client-callable RPC method used to fetch configuration information. Results
 ## will be returned with the [JamConnect.config_request_result] signal
