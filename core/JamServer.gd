@@ -52,32 +52,53 @@ func server_start(args: Dictionary):
 		listen_port = (args["port"] as String).to_int()
 	
 	dev_mode = "dev" in args and args["dev"]
-	var dev_ws = _jc.network_mode == "websocket" and OS.is_debug_build()
 	
 	var peer
 	var err
-	if OS.has_feature("websocket") or dev_ws:
+	if _jc.network_mode == "websocket":
 		peer = WebSocketMultiplayerPeer.new()
 		var key: CryptoKey
 		var cert: X509Certificate
-		if OS.is_debug_build():
+		if OS.is_debug_build() or dev_mode:
 			var crypto = Crypto.new()
 			key = crypto.generate_rsa(2048)
 			cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
 		else:
-			var cert_base := "certs"
-			var key_path := cert_base.path_join("private.key")
-			var crt_path := cert_base.path_join("certificate.crt")
+			print("Setting up certificates for secure websockets...")
+			var extra_downloads = OS.get_environment("EXTRA_DOWNLOAD_URLS")
+			if len(extra_downloads) < 0:
+				push_error("FATAL: Missing EXTRA_DOWNLOAD_URLS environment variable for cert and key downloads")
+				get_tree().quit(1)
+				return
+			var extras = JSON.parse_string(extra_downloads)
+			if extras == null:
+				push_error("FATAL: EXTRA_DOWNLOAD_URLS environment variable failed to parse as valid JSON")
+				get_tree().quit(1)
+				return
+			if not "server.key" in extras or not "server.crt" in extras:
+				push_error("FATAL: Missing cert and key downloads")
+				get_tree().quit(1)
+				return
+			var key_res = await callback_api.get_string_data(extras["server.key"])
+			if key_res.errored:
+				push_error("FATAL: server key download failed - %s" % key_res.error_msg)
+				get_tree().quit(1)
+				return
+			var cert_res = await callback_api.get_string_data(extras["server.crt"])
+			if cert_res.errored:
+				push_error("FATAL: server cert download failed - %s" % cert_res.error_msg)
+				get_tree().quit(1)
+				return
 			key = CryptoKey.new()
-			err = key.load(key_path)
+			err = key.load_from_string(key_res.value)
 			if err != OK:
-				push_error("FATAL: Failed to load server key at %s" % key_path)
+				push_error("FATAL: Failed to load server key %s" % key_res.value)
 				get_tree().quit(1)
 				return
 			cert = X509Certificate.new()
-			err = cert.load(crt_path)
+			err = cert.load_from_string(cert_res.value)
 			if err != OK:
-				push_error("FATAL: Failed to load server cert at %s" % crt_path)
+				push_error("FATAL: Failed to load server cert %s" % cert_res.value)
 				get_tree().quit(1)
 				return
 		err = peer.create_server(listen_port, "*", TLSOptions.server(key, cert))

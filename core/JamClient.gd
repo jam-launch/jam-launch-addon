@@ -30,16 +30,12 @@ var api: JamClientApi
 ## Helper object for acquiring a Game JWT for authentication
 var keys: ClientKeys
 
-## The WebRTC client helper (available if network mode is WebRTC peer-to-peer)
-var webrtc_helper: JamWebRTCHelper
-
 var _jc: JamConnect:
 	get:
 		return get_parent()
 
 func _init():
 	layer = 512
-	
 	keys = ClientKeys.new()
 	add_child(keys)
 
@@ -91,8 +87,6 @@ func persist_gjwt() -> bool:
 ## Configures and starts client functionality
 func client_start():
 	print("Starting as client...")
-	if _jc.network_mode == "webrtc" or OS.has_feature("webrtc"):
-		webrtc_init()
 	
 	multiplayer.connected_to_server.connect(_on_client_connect)
 	multiplayer.connection_failed.connect(_on_client_connect_fail)
@@ -125,16 +119,6 @@ func client_session_request(host: String, port: int, token: String):
 	multiplayer.multiplayer_peer = peer
 	_jc.local_player_joining.emit()
 
-## initiates the P2P signalling connection
-func p2p_session_connect(sess_id: String, user_id: String, token: String) -> JamError:
-	current_client_token = token
-	return await webrtc_helper.start("wss://p2p.jamlaunch.com/?session=%s&user=%s&token=%s" % [sess_id, user_id, token])
-
-func p2p_game_start():
-	if _jc.is_player_server():
-		webrtc_helper.signalling.seal_lobby()
-		_jc._send_game_init_finalized.rpc()
-
 ## Elegantly leaves the game by disconnecting from the server and notifying the
 ## Jam Launch API
 func leave_game():
@@ -156,65 +140,6 @@ func _on_server_disconnect():
 	_jc.log_event.emit("Server disconnected")
 	_jc.local_player_left.emit()
 	client_ui.visible = true
-
-func webrtc_init():
-	webrtc_helper = JamWebRTCHelper.new()
-	add_child(webrtc_helper)
-	
-	webrtc_helper.session_sealed.connect(self._webtrc_session_sealed)
-	webrtc_helper.multiplayer_initialized.connect(self._p2p_multiplayer_initialized)
-	webrtc_helper.multiplayer_terminating.connect(self._p2p_multiplayer_terminating)
-
-	multiplayer.peer_connected.connect(self._p2p_peer_connected)
-	multiplayer.peer_disconnected.connect(self._p2p_peer_disconnected)
-
-func _p2p_peer_connected(pid: int):
-	#print("P2P peer connected: %d (to %d)" % [pid, multiplayer.get_unique_id()])
-	if _jc.is_player_server():
-		if not webrtc_helper.peers.has(pid):
-			printerr("Unexpected client connection from peer '%d'" % pid)
-			return
-		var p: Dictionary = webrtc_helper.peers[pid]
-		_jc.notify_players.rpc("'%s' has joined" % p["name"])
-		_jc.player_verified.emit(pid, p)
-		_jc._verification_notification.rpc_id(pid, p)
-		
-		for other in webrtc_helper.peers.values():
-			if other["name"] != p["name"]:
-				_jc._send_player_joined.rpc_id(pid, other["name"])
-				_jc.notify_players.rpc_id(pid, "'%s' is here" % other["name"])
-		_jc.notify_players.rpc("'%s' has joined" % p["name"])
-		_jc._send_player_joined.rpc(p["name"])
-		_jc.player_joined.emit(p["name"])
-
-func _p2p_peer_disconnected(pid: int):
-	#print("P2P peer disconnected: %d" % pid)
-	if _jc.is_player_server():
-		if pid in webrtc_helper.peers:
-			var pinfo = webrtc_helper.peers[pid]
-			
-			_jc.notify_players.rpc("Player '%s' has disconnected" % pinfo.get("name", "<>"))
-			_jc.player_disconnected.emit(pid, pinfo)
-			_jc._send_player_left.rpc(pinfo["name"])
-			_jc.player_left.emit(pinfo["name"])
-			
-			webrtc_helper.peers.erase(pid)
-	
-func _p2p_multiplayer_initialized(pid: int, pinfo: Dictionary):
-	if _jc.is_player_server():
-		_jc.log_event.emit("'%s' has joined" % pinfo["name"])
-		_jc.player_verified.emit(pinfo["pid"], pinfo)
-		_jc.local_player_joining.emit()
-		_jc.local_player_joined.emit(pinfo)
-		_jc.player_joined.emit(pinfo["name"])
-		print("server player joined")
-
-func _p2p_multiplayer_terminating():
-	_jc.local_player_left.emit()
-
-func _webtrc_session_sealed():
-	pass
-	#print("WebRTC Client Session Sealed!")
 
 func _on_game_init_finalized():
 	client_ui.visible = false

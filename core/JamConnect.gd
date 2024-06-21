@@ -177,7 +177,7 @@ func start_up():
 	if OS.has_feature("server") or "--server" in OS.get_cmdline_args():
 		server = JamServer.new()
 		add_child(server)
-		server.server_start(args)
+		await server.server_start(args)
 	else:
 		client = JamClient.new()
 		client.client_ui = client_ui_scene.instantiate()
@@ -193,7 +193,7 @@ func start_as_dev_server():
 
 	server = JamServer.new()
 	add_child(server)
-	server.server_start({"dev": true})
+	await server.server_start({"dev": true})
 
 ## Gets the project ID (the game ID without the release string)
 func get_project_id() -> String:

@@ -115,8 +115,8 @@ func setup_project_data(p):
 			net_mode_box.select(0)
 		elif net_mode == "websocket":
 			net_mode_box.select(1)
-		elif net_mode == "webrtc":
-			net_mode_box.select(2)
+		#elif net_mode == "webrtc":
+			#net_mode_box.select(2)
 		else:
 			net_mode = "enet"
 			net_mode_box.select(-1)
@@ -209,8 +209,8 @@ func _on_btn_deploy_pressed() -> void:
 		net_mode = "enet"
 	elif net_mode_box.get_selected_id() == 1:
 		net_mode = "websocket"
-	elif net_mode_box.get_selected_id() == 2:
-		net_mode = "webrtc"
+	#elif net_mode_box.get_selected_id() == 2:
+		#net_mode = "webrtc"
 	else:
 		dashboard.show_error("Invalid network mode selection")
 		return
@@ -351,8 +351,8 @@ func _on_config_item_selected(_index):
 		cfg["network_mode"] = "enet"
 	elif net_mode_box.get_selected_id() == 1:
 		cfg["network_mode"] = "websocket"
-	elif net_mode_box.get_selected_id() == 2:
-		cfg["network_mode"] = "webrtc"
+	#elif net_mode_box.get_selected_id() == 2:
+		#cfg["network_mode"] = "webrtc"
 	else:
 		dashboard.show_error("invalid network mode selected")
 		return

@@ -65,6 +65,7 @@ popup/item_1/text = "WebSocket"
 popup/item_1/id = 1
 popup/item_2/text = "WebRTC"
 popup/item_2/id = 2
+popup/item_2/disabled = true
 
 [node name="PlatformOptions" type="MenuButton" parent="HB/Config"]
 layout_mode = 2
