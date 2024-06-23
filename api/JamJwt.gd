@@ -88,7 +88,5 @@ static func parse_token(token: String) -> TokenParseResult:
 		
 	tkn.signature = parts[2]
 	
-	print(tkn.claims)
-	
 	result.data = tkn
 	return result

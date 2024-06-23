@@ -10,7 +10,9 @@ extends JamClientUI
 @onready var errors: Control = $Bottom/ErrorArea/Errors
 @onready var version_info: Label = $Bottom/M/VersionInfo
 
-@onready var gjwt_edit: LineEdit = $CC/M/M/PageStack/GjwtEntry/Entry/EnterGjwt/GjwtEdit
+@onready var gjwt_edit: LineEdit = $CC/M/M/PageStack/GjwtEntry/Entry/Manual/EnterGjwt/GjwtEdit
+@onready var device_auth: DeviceAuthUI = $CC/M/M/PageStack/GjwtEntry/Entry/DeviceAuth
+@onready var manual_auth: Control = $CC/M/M/PageStack/GjwtEntry/Entry/Manual
 @onready var gjwt_entry: Control = $CC/M/M/PageStack/GjwtEntry/Entry
 @onready var gjwt_busy: Control = $CC/M/M/PageStack/GjwtEntry/Busy
 
@@ -18,6 +20,7 @@ extends JamClientUI
 @onready var start_host: Button = $CC/M/M/PageStack/Home/VB/StartHost
 @onready var no_deploy_lbl: Label = $CC/M/M/PageStack/Home/NoDeployment
 @onready var dev_tools: MenuButton = $CC/M/M/PageStack/Home/VB/DevTools
+@onready var logged_in: Label = $CC/M/M/PageStack/Home/VB/LoggedIn
 
 @onready var join_busy: Control = $CC/M/M/PageStack/JoinGameCode/Busy
 @onready var join_busy_lock: ScopeLocker = $CC/M/M/PageStack/JoinGameCode/JoinBusy
@@ -82,12 +85,14 @@ func _ready():
 	else:
 		dev_tools.visible = false
 	
+	device_auth.active_auth.connect(_on_active_device_auth)
+	device_auth.has_token.connect(_set_gjwt)
 	jam_connect.gjwt_acquired.connect(_on_gjwt_acquired)
 	jam_client.fetching_test_gjwt.connect(_on_gjwt_fetch_busy)
 	_on_gjwt_fetch_busy(jam_client.gjwt_fetch_busy)
 	
 	if jam_client.jwt.has_token():
-		pages.show_page_node(home_page, false)
+		_on_gjwt_acquired()
 	else:
 		pages.show_page_node(gjwt_page, false)
 	
@@ -97,6 +102,9 @@ func _ready():
 	jam_connect.local_player_joining.connect(_on_joining_game)
 	jam_connect.local_player_left.connect(_on_leaving_game)
 
+func _on_active_device_auth(active: bool):
+	manual_auth.visible = !active
+	
 func _on_gjwt_fetch_busy(busy: bool):
 	gjwt_entry.visible = not busy
 	gjwt_busy.visible = busy
@@ -105,6 +113,7 @@ func _on_gjwt_fetch_busy(busy: bool):
 
 func _on_gjwt_acquired():
 	pages.show_page_node(home_page, false)
+	logged_in.text = "Logged in as\n%s" % jam_client.jwt.username
 
 var joined_players = {}
 
@@ -238,7 +247,6 @@ func _on_join_with_code_pressed():
 	if res.errored:
 		show_error(res.error_msg)
 		return
-	print(res.data)
 	if not await enter_session(res.data["id"] as String, res.data["token"] as String):
 		return
 	join_code_edit.clear()
@@ -315,7 +323,6 @@ func _on_start_game_pressed():
 		show_error("cannot start game without a session that is ready", 5.0)
 		return
 
-
 func _on_paste_gjwt_pressed():
 	var gjwt = DisplayServer.clipboard_get()
 	_set_gjwt(gjwt)
@@ -325,5 +332,5 @@ func _on_submit_gjwt_pressed():
 
 func _set_gjwt(gjwt: String):
 	jam_client.set_gjwt(gjwt)
-	jam_client.persist_gjwt()
-	
+	if !OS.is_debug_build() or OS.get_name() == "Android":
+		jam_client.persist_gjwt()

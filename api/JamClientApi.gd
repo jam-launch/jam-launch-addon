@@ -30,7 +30,7 @@ class GameSessionResult:
 	
 	static func from_result(res: Result) -> GameSessionResult:
 		
-		print(res.data)
+		#print(res.data)
 		
 		var gres = GameSessionResult.new()
 		gres.data = res.data
@@ -40,7 +40,6 @@ class GameSessionResult:
 		if res.errored:
 			return gres
 		
-		print(res.data)
 		gres.status = SessionStatus.get(res.data["state"], SessionStatus.UNKNOWN)
 		gres.session_id = res.data["id"]
 		gres.region = res.data["region"]

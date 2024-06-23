@@ -1,0 +1,123 @@
+[gd_scene load_steps=8 format=3 uid="uid://jk7hixxc6pu3"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/ui/client/DeviceAuthUI.gd" id="1_hd2xw"]
+[ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="2_nlny5"]
+[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="3_i6h7r"]
+[ext_resource type="Script" path="res://addons/jam_launch/api/JamLoginApi.gd" id="4_4j6ob"]
+[ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="5_voc5j"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bkwmn"]
+bg_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.466667, 0.466667, 0.466667, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_8iwvo"]
+font = ExtResource("3_i6h7r")
+font_size = 18
+font_color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="DeviceAuth" type="MarginContainer"]
+custom_minimum_size = Vector2(0, 75)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hd2xw")
+
+[node name="Base" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LoginButton" type="Button" parent="Base"]
+layout_mode = 2
+text = "Login with Jam Launch
+"
+
+[node name="Busy" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+
+[node name="HB" type="HBoxContainer" parent="Busy"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="BusyCircle" parent="Busy/HB" instance=ExtResource("2_nlny5")]
+custom_minimum_size = Vector2(23, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Busy/HB"]
+layout_mode = 2
+text = "Requesting Access..."
+
+[node name="Waiting" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HB" type="HBoxContainer" parent="Waiting"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="BusyCircle" parent="Waiting/HB" instance=ExtResource("2_nlny5")]
+custom_minimum_size = Vector2(23, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Waiting/HB"]
+layout_mode = 2
+text = "Waiting for approval..."
+
+[node name="Notes" type="RichTextLabel" parent="Waiting"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+bbcode_enabled = true
+text = "[center][color=#eeeeee][bgcolor=#00000000]Confirm the following code at
+[url]https://app.jamlaunch.com/device-auth[/url][/bgcolor][/color][/center]"
+fit_content = true
+
+[node name="PC" type="PanelContainer" parent="Waiting"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bkwmn")
+
+[node name="M" type="MarginContainer" parent="Waiting/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="UserCode" type="Label" parent="Waiting/PC/M"]
+layout_mode = 2
+text = "the-device-auth-code"
+label_settings = SubResource("LabelSettings_8iwvo")
+horizontal_alignment = 1
+
+[node name="CancelAuth" type="Button" parent="Waiting"]
+layout_mode = 2
+text = "Cancel
+"
+
+[node name="JamLoginApi" type="Node" parent="."]
+script = ExtResource("4_4j6ob")
+
+[node name="BusyScope" type="Node" parent="."]
+script = ExtResource("5_voc5j")
+
+[node name="WaitingScope" type="Node" parent="."]
+script = ExtResource("5_voc5j")
+
+[node name="ActiveScope" type="Node" parent="."]
+script = ExtResource("5_voc5j")
+
+[connection signal="pressed" from="Base/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="meta_clicked" from="Waiting/Notes" to="." method="_on_notes_meta_clicked"]
+[connection signal="meta_hover_ended" from="Waiting/Notes" to="." method="_on_notes_meta_hover_ended"]
+[connection signal="meta_hover_started" from="Waiting/Notes" to="." method="_on_notes_meta_hover_started"]
+[connection signal="pressed" from="Waiting/CancelAuth" to="." method="_on_cancel_auth_pressed"]
+[connection signal="lock_changed" from="BusyScope" to="." method="_on_busy_scope_lock_changed"]
+[connection signal="lock_changed" from="WaitingScope" to="." method="_on_waiting_scope_lock_changed"]

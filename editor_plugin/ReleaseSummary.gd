@@ -26,6 +26,17 @@ signal update_release(release_id: String, data: Dictionary)
 signal show_logs(log_url: String)
 signal build_busy()
 
+var dashboard_url = "https://app.jamlaunch.com"
+
+func _ready():
+	var dir := (self.get_script() as Script).get_path().get_base_dir()
+	var settings = ConfigFile.new()
+	var err = settings.load(dir + "/../settings.cfg")
+	if err != OK:
+		printerr("Failed to load settings for dashboard address")
+		return
+	dashboard_url = "https://%s" % settings.get_value("api", "dashboard_domain")
+
 func set_release(proj_id: String, r: Dictionary):
 	
 	project_id = proj_id
@@ -111,7 +122,7 @@ func set_release(proj_id: String, r: Dictionary):
 		build_busy.emit()
 
 func release_page_uri() -> String:
-	return "https://app.jamlaunch.com/g/%s/%s" % [project_id, release_id]
+	return "%s/g/%s-%s" % [dashboard_url, project_id, release_id]
 
 func _on_copy_pressed():
 	DisplayServer.clipboard_set(release_page_uri())

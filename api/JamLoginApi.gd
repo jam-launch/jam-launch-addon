@@ -9,13 +9,24 @@ func _ready():
 	super()
 	var dir := (self.get_script() as Script).get_path().get_base_dir()
 
-func request_auth(client_id: String, scope: String) -> Result:
+func request_developer_auth() -> Result:
 	return await _json_http(
 		"/device-auth/request",
 		HTTPClient.METHOD_POST,
 		{
-			"clientId": client_id,
-			"scope": scope
+			"clientId": "jamlaunch-addon",
+			"scope": "developer"
+		}
+	)
+	
+func request_user_auth(gameId: String) -> Result:
+	return await _json_http(
+		"/device-auth/request",
+		HTTPClient.METHOD_POST,
+		{
+			"clientId": "jam-play",
+			"scope": "user",
+			"game": gameId
 		}
 	)
 

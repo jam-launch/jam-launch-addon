@@ -49,7 +49,7 @@ func _ready():
 	
 	var gjwt = keys.get_included_gjwt(_jc.get_game_id())
 	if gjwt == null:
-		if OS.is_debug_build():
+		if OS.is_debug_build() and OS.get_name() != "Android":
 			_setup_test_gjwt()
 		else:
 			push_error("Failed to load GJWT")
