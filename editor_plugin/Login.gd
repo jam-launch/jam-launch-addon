@@ -61,7 +61,7 @@ func _on_notes_meta_clicked(meta):
 func _on_login_button_pressed():
 	
 	var lock = busy_scope.get_lock()
-	var res = await login_api.request_auth(client_id, JamLoginApi.DEV_SCOPE)
+	var res = await login_api.request_developer_auth()
 	if res.errored:
 		_err(res.error_msg)
 		return
