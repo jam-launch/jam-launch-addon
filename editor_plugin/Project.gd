@@ -246,7 +246,8 @@ func _on_btn_deploy_pressed() -> void:
 		builds.append({
 			"name": "Android",
 			"template_name": "jam-android",
-			"export_name": "%s.apk" % active_project.project_name
+			"export_name": "%s.apk" % active_project.project_name,
+			"no_zip": true
 		})
 	
 	if net_mode in ["enet", "websocket"]:
@@ -301,6 +302,7 @@ func _do_export(config: Dictionary, prepare_result: Dictionary) -> JamError:
 		var c := JamAutoExport.BuildConfig.new()
 		c.output_target = b["export_name"]
 		c.template_name = b["template_name"]
+		c.no_zip = b.get("no_zip", false)
 		var mapped := false
 		for t in prepare_result["builds"]:
 			if t["build_name"] == b["name"]:

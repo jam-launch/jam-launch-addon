@@ -1,8 +1,6 @@
 extends Node
 class_name ClientKeys
 
-const jwt_cache_idx = "editor_jwt_dev_key"
-var cache = KeyValCache.new()
 var dev_mode_api: JamDevModeApi
 
 var dev_jwt: JamJwt

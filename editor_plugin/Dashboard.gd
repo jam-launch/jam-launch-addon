@@ -27,6 +27,9 @@ func _ready() -> void:
 	if not plugin:
 		return
 	
+	if not Engine.is_editor_hint():
+		return
+	
 	toolbar_refresh.icon = editor_icon("Reload")
 	toolbar_back.icon = editor_icon("Back")
 	
@@ -39,6 +42,7 @@ func _ready() -> void:
 	
 	auth_proxy.api = project_api
 	auth_proxy.start()
+	
 	login_page.jwt.token_changed.connect(_on_jwt_changed)
 	project_api.jwt = login_page.jwt
 	_on_jwt_changed(login_page.jwt.get_token())

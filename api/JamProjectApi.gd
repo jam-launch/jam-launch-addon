@@ -32,7 +32,8 @@ func prepare_release(project_id: String, config: Dictionary) -> Result:
 			"name": b["name"],
 			"export_name": b["export_name"],
 			"is_server": b.get("is_server", false),
-			"is_web": b.get("is_web", false)
+			"is_web": b.get("is_web", false),
+			"no_zip": b.get("no_zip", false)
 		})
 	}
 	return await _json_http(

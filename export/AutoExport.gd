@@ -6,6 +6,7 @@ class BuildConfig:
 	extends RefCounted
 	var template_name: String
 	var output_target: Variant
+	var no_zip: bool
 	var presigned_post: Dictionary
 	var log_presigned_post: Dictionary
 
@@ -104,7 +105,7 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 	var staging_dir = output_base.path_join("..").simplify_path()
 	var output_target = ProjectSettings.globalize_path(output_base.path_join(config.output_target))
 	var export_arg = "--export-release"
-	if config.template_name.begins_with("android"):
+	if config.template_name.to_lower().contains("android"):
 		export_arg = "--export-debug"
 	var exit_code
 	if OS.get_name() == "Windows":
@@ -130,16 +131,21 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 	return JamError.ok()
 
 static func upload_export(output_base: String, config: BuildConfig) -> JamError:
-	# Archive the export output in a zip file
+	
 	var staging_dir = output_base.path_join("..").simplify_path()
-	var zip_name := "%s.zip" % config.template_name
-	var zip_path := staging_dir.path_join(zip_name)
-	var zip_err := zip_folder(output_base, zip_path)
-	if zip_err.errored:
-		return JamError.err("Failed to create zip for %s export - %s" % [config.template_name, zip_err.error_msg])
+	var artifact_path: String
+	if config.no_zip:
+		artifact_path = ProjectSettings.globalize_path(output_base.path_join(config.output_target))
+	else:
+		# Archive the export output in a zip file
+		var zip_name := "%s.zip" % config.template_name
+		artifact_path = staging_dir.path_join(zip_name)
+		var zip_err := zip_folder(output_base, artifact_path)
+		if zip_err.errored:
+			return JamError.err("Failed to create zip for %s export - %s" % [config.template_name, zip_err.error_msg])
 	
 	# Perform streaming upload of the zip file
-	var stream_reader_res = StreamingUpload.FileReader.from_path(zip_path)
+	var stream_reader_res = StreamingUpload.FileReader.from_path(artifact_path)
 	if stream_reader_res.errored:
 		return JamError.err(stream_reader_res.error_msg)
 	

@@ -10,7 +10,7 @@ extends JamEditorPluginPage
 
 var jwt: JamJwt = JamJwt.new()
 var cache: KeyValCache = KeyValCache.new()
-const jwt_cache_idx = "editor_jwt_dev_key"
+const jwt_cache_idx = "addon_jwt_dev_key"
 
 var cancel_auth: bool = false
 var device_auth_url: String
