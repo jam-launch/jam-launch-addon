@@ -77,7 +77,7 @@ func _on_new_project_cancel() -> void:
 func _on_new_project_create_done(project_id: String, project_name: String) -> void:
 	pages.go_back()
 	show_page(project_page)
-	project_page.show_project(project_id, project_name)
+	project_page.show_project.call_deferred(project_id, project_name)
 
 func _on_project_session_page_selected(project_id: String, project_name: String):
 	show_page(sessions_page)

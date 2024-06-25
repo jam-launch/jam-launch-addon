@@ -70,16 +70,16 @@ func show_project(project_id: String, project_name: String = "..."):
 	active_id = project_id
 	dashboard.toolbar_title.text = project_name
 	latest_release.visible = false
-	refresh_project()
+	if not await refresh_project():
+		$AutoRefreshTimer.start(1.0)
 
 func refresh_project(repeat: float = 0.0) -> bool:
 	no_deployments.visible = false
 	
 	if len(active_id) < 1:
+		dashboard.show_error("invalid project ID")
 		return false
 	
-	if dashboard.load_locker.is_locked():
-		return false
 	var lock = dashboard.load_locker.get_lock()
 	
 	var res = await project_api.get_project(active_id)
