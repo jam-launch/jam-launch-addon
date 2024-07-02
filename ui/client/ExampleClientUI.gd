@@ -53,6 +53,7 @@ var session_result: JamClientApi.GameSessionResult = null:
 		start_game_btn.visible = false
 		
 		if session_result == null:
+			start_game_btn.visible = true
 			return
 		elif session_result.has_unusable_status():
 			show_error("server in unusable status - quitting session")
@@ -138,7 +139,7 @@ func _on_devtools_pressed(id: int):
 	if id == 0:
 		jam_connect.start_as_dev_server.call_deferred()
 	elif id == 1:
-		jam_client.client_session_request("127.0.0.1", 7437, "localdev")
+		jam_client.client_session_request("localhost", 7437, "localdev")
 	elif id >= 3 and id <= 7:
 		var client_num = id - 2
 		jam_client.test_client_number = client_num

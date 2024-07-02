@@ -77,11 +77,19 @@ func _ready():
 	get_parent().has_jam_connect.connect(_jam_connect_init)
 
 func _jam_connect_init(jc: JamConnect):
-	jc.player_verified.connect(_on_player_verified)
+	if not jc.m.is_server():
+		return
+	jc.m.peer_connected.connect(_on_peer_connected)
+	jc.m.peer_disconnected.connect(_on_peer_disconnected)
 
-func _on_player_verified(pid: int, _pinfo):
+func _on_peer_connected(pid: int):
+	if not multiplayer.is_server():
+		return
 	for sync_id in sync_refs:
-		scene_spawn(sync_refs[sync_id], pid)
+		scene_spawn(sync_refs[sync_id], pid) #TODO: figure out how to make this work with re-joining
+
+func _on_peer_disconnected(pid: int):
+	pass
 
 func _process(delta):
 	if not multiplayer.has_multiplayer_peer():

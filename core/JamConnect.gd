@@ -28,14 +28,10 @@ extends Node
 ## Emitted in clients whenever the server sends a notification message
 signal log_event(msg: String)
 
-## Emitted in the server whenever the server finishes verifying a connected
-## client - [code]pid[/code] is the Godot multiplayer peer ID of the player, and
-## the [code]pinfo[/code] dictionary will include the unique Jam Launch username
-## of the player in the [code]"name"[/code] key
-signal player_verified(pid: int, pinfo: Dictionary)
-## Emitted in the server whenever a player disconnects from the server - see
-## [signal JamConnect.player_verified] for argument details.
-signal player_disconnected(pid: int, pinfo: Dictionary)
+## Emitted in the server whenever a player connects and authenticates with the server
+signal player_connected(pid: int, username: String)
+## Emitted in the server whenever a player disconnects from the server
+signal player_disconnected(pid: int, username: String)
 
 ## Emitted in the server immediately before a "READY" notification is provided
 ## to Jam Launch - this can be used for configuring things before players join.
@@ -50,14 +46,14 @@ signal server_shutting_down()
 ## Emitted in the client when it starts trying to connect to the server
 signal local_player_joining()
 ## Emitted in the client when it has been verified
-signal local_player_joined(pinfo: Dictionary)
+signal local_player_joined()
 ## Emitted in the client when it has been disconnected or fails to connect
 signal local_player_left()
 
 ## Emitted in clients when a player joins
-signal player_joined(user_id: String)
+signal player_joined(pid: int, username: String)
 ## Emitted in clients when a player leaves
-signal player_left(user_id: String)
+signal player_left(pid: int, username: String)
 
 ## Emitted in clients and server when the game has finished a standard
 ## initialization step. By default, this implies that all pending players have
@@ -67,21 +63,6 @@ signal game_init_finalized()
 ## Emitted in clients when they have acquired their Jam Launch API credentials
 ## (e.g. via embedded file, test client API, or user entry)
 signal gjwt_acquired()
-
-## Emitted in the server when an asynchronous DB operation has completed or
-## errored out
-signal game_db_async_result(result, error)
-## Emitted in the server when an asynchronous Files operation has completed or
-## errored out
-signal game_files_async_result(key, error)
-
-## Emitted in the client when a configuration request response is received from
-## the server
-signal config_request_result(key: String, value: String, error: Variant)
-
-## Emitted in the client when a configuration set request response is received
-## from the server
-signal config_set_request_result(key: String, error: Variant)
 
 ## A reference to the child [JamClient] node that will be instantiated when
 ## running as a client
@@ -124,6 +105,9 @@ var thread_helper: JamThreadHelper
 
 @export var client_ui_scene: PackedScene
 
+## Convenience reference to the MultiplayerAPI for full SceneMultiplayer API
+## auto-completion
+var m: SceneMultiplayer
 
 #
 # ----- Core Methods -----
@@ -143,6 +127,10 @@ func _init():
 		game_id = "init-undeployed"
 	else:
 		game_id = deployment_info.get_value("game", "id")
+		if game_id == null:
+			printerr("FATAL: deployment.cfg does not contain a game id value")
+			get_tree().quit(1)
+			return
 		network_mode = deployment_info.get_value("game", "network_mode", "enet")
 		has_deployment = true
 
@@ -157,6 +145,7 @@ func _ready():
 	if not client_ui_scene:
 		client_ui_scene = preload("../ui/client/ExampleClientUI.tscn")
 	
+	m = multiplayer
 	start_up.call_deferred()
 
 ## Start the JamConnect functionality including client/server determination and 
@@ -204,7 +193,7 @@ func get_project_id() -> String:
 func get_game_id() -> String:
 	return game_id
 
-## Gets the session ID (the game ID concatenated with a unique session string)
+## Gets the session ID
 func get_session_id() -> String:
 	if server:
 		return OS.get_environment("SESSION_ID")
@@ -214,10 +203,10 @@ func get_session_id() -> String:
 		return ""
 
 func is_webrtc_mode() -> bool:
-	return network_mode == "webrtc" or OS.has_feature("webrtc")
+	return network_mode == "webrtc"
 
 func is_websocket_mode():
-	return network_mode == "websocket" or OS.has_feature("webrtc")
+	return network_mode == "websocket"
 	
 func is_dedicated_server() -> bool:
 	return multiplayer.is_server() and not is_webrtc_mode()
@@ -228,108 +217,17 @@ func is_player_server() -> bool:
 func is_player() -> bool:
 	return not multiplayer.is_server() or is_player_server()
 
-
-#
-# ----- Client methods -----
-#
-
-## A client-callable method used by connected clients to verify their
-## identity with the server.
-func verify_identity(username: String, join_token: String):
-	if not is_webrtc_mode():
-		_verify_player.rpc_id(1, username, join_token)
-
-@rpc("any_peer", "call_remote", "reliable")
-func _verify_player(username: String, join_token: String):
-	if is_dedicated_server():
-		server.verify_player(username, join_token)
-
-## A client-callable RPC method used to fetch configuration information. Results
-## will be returned with the [JamConnect.config_request_result] signal
-@rpc("any_peer", "reliable")
-func request_config(key: String):
-	if not multiplayer.is_server() or not server:
-		resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", "Invalid request")
-		return
-	if multiplayer.get_remote_sender_id() not in server.accepted_peers:
-		return
-	if len(key) > 255:
-		resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", "Config key too large")
-		return
-	
-	var p = await thread_helper.run_threaded_producer(server.db.get_session_data.bind("CFG"))
-	if p.errored:
-		printerr("Failed to get session config info: ", p.error_msg)
-		resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", p.error_msg)
-	else:
-		if p.value is Dictionary:
-			if key in p.value:
-				resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, p.value[key], null)
-			else:
-				resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", "Requested key '%s' was not found in config" % key)
-		else:
-			printerr("Unexpected session config result: ", p.value)
-			resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", "Unexpected config query result")
-
-## A client-callable RPC method used to patch configuration information. Results
-## will be returned with the [JamConnect.config_request_result] signal
-@rpc("any_peer", "reliable")
-func edit_config(key: String, value: String):
-	# TODO: maybe add some sort of assignable conditional to restrict usage (right now just restricted to host)
-	if not multiplayer.is_server() or not server:
-		resolve_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "", "Invalid request")
-		return
-	if multiplayer.get_remote_sender_id() not in server.accepted_peers:
-		return
-	if len(key) > 255:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "Config key too large")
-	if len(value) > 20000:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "Config value too large")
-	
-	var pinfo = server.accepted_peers[multiplayer.get_remote_sender_id()]
-	
-	# check if caller is host
-	var cfg = await thread_helper.run_threaded_producer(server.db.get_session_data.bind("CFG"))
-	if cfg.errored:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, cfg.error_msg)
-		return
-	if not (cfg.value is Dictionary):
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "Unexpected config query result")
-		return
-	var cfg_data: Dictionary = cfg.value
-	if not cfg_data.get("host", "").split(",").has(pinfo["name"]):
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "Player %s cannot edit the config" % pinfo["name"])
-		return
-	
-	cfg_data.erase("key_1")
-	cfg_data.erase("key_2")
-	cfg_data[key] = value
-	var set_result = await thread_helper.run_threaded_producer(server.db.put_session_data.bind("CFG", cfg_data))
-	if set_result.errored:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, set_result.error_msg)
-	elif not set_result.value:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, "set config failed")
-	else:
-		resolve_set_config_request.rpc_id(multiplayer.get_remote_sender_id(), key, null)
-
 #
 # ----- Server methods -----
 #
 
-## called from the server to notify clients that they have been verified
 @rpc("reliable")
-func _verification_notification(pinfo: Dictionary):
-	if is_webrtc_mode(): 
-		local_player_joining.emit() # TODO: maybe trigger this earlier?
-	local_player_joined.emit(pinfo)
+func _send_player_joined(pid: int, username: String):
+	player_joined.emit(pid, username)
 
 @rpc("reliable")
-func _send_player_joined(user_id: String):
-	player_joined.emit(user_id)
-
-@rpc("reliable")
-func _send_player_left(user_id: String):
-	player_left.emit(user_id)
+func _send_player_left(pid: int, username: String):
+	player_left.emit(pid, username)
 
 @rpc("reliable", "call_local")
 func _send_game_init_finalized():
@@ -340,22 +238,3 @@ func _send_game_init_finalized():
 @rpc("reliable")
 func notify_players(msg: String):
 	log_event.emit(msg)
-
-## A server-callable RPC method for resolving configuration requests from the
-## client
-@rpc("reliable")
-func resolve_config_request(key: String, value: String, error: Variant):
-	config_request_result.emit(key, value, error)
-
-## A server-callable RPC method for resolving configuration requests from the
-## client
-@rpc("reliable")
-func resolve_set_config_request(key: String, error: Variant):
-	config_set_request_result.emit(key, error)
-
-## A method that can be called on the server in order to make sure the client
-## is verified before relaying to other clients.
-func server_relay(callable: Callable, args: Array = []):
-	if not multiplayer.is_server() or not server:
-		return
-	server.rpc_relay(callable, multiplayer.get_remote_sender_id(), args)

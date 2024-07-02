@@ -6,26 +6,15 @@ extends Node
 const MAX_CLIENTS = 100
 const DEFAULT_PORT = 7437
 
-## Interface for saving and loading project-scoped data in the Jam Launch
-## database. The implementation may vary based on whether the server is in the
-## Jam Launch cloud or being run locally.
-var db: JamDB
-## Interface for saving and loading project-scoped files in the Jam Launch
-## file bucket. The implementation may vary based on whether the server is in the
-## Jam Launch cloud or being run locally.
-var files: JamFiles
+## A dictionary mapping peer id [code]int[/code]s to username [code]String[/code]s
+var peer_usernames := {}
 
-## The list of connected client peer IDs that have not verified their identity
-## yet
-var pending_peers := []
-## A dictionary of verified client information. The keys are the peer ID and the
-## value is a dictionary of client information.
-var accepted_peers := {}
 ## True if the server is in developer mode. In developer mode, the clients are
 ## not verified and dummy API implementations are used instead of the AWS-driven
 ## implementations.
 var dev_mode := false
 
+## A callback API client for communicating back to Jam Launch
 var callback_api: JamCallbackApi
 
 var _jc: JamConnect:
@@ -45,7 +34,7 @@ func _notification(what):
 func server_start(args: Dictionary):
 	print("Starting as server...")
 	
-	
+	_jc.m.auth_callback = _auth_callback
 	
 	var listen_port: int = DEFAULT_PORT
 	if "port" in args:
@@ -111,26 +100,18 @@ func server_start(args: Dictionary):
 		return
 	
 	multiplayer.multiplayer_peer = peer
-	peer.peer_connected.connect(
-		func(new_peer_id):
-			print("pending peer %d..." % new_peer_id)
-			pending_peers.append(new_peer_id)
-	)
-	
+	#peer.peer_connected.connect(_on_peer_connect)
 	peer.peer_disconnected.connect(_on_peer_disconnect)
+	_jc.m.peer_connected.connect(_on_peer_connect)
 	
 	print("Server listening on port %d" % listen_port)
 	
 	if dev_mode:
 		# TODO: mock/local DB and file API using files in user://... ?
-		db = JamDB.new(_jc)
-		files = JamFiles.new(_jc)
 		_jc.server_pre_ready.emit()
 		_jc.server_post_ready.emit()
 	else:
-		# TODO: new file system
-		db = JamDB.new(_jc)
-		files = JamFiles.new(_jc)
+		# TODO: new file/DB system
 		_jc.server_pre_ready.emit()
 		var res = await callback_api.send_ready()
 		if res.errored:
@@ -138,87 +119,84 @@ func server_start(args: Dictionary):
 			get_tree().quit()
 		_jc.server_post_ready.emit()
 
-## Verifies a player by correlating the provided [code]join_token[/code] with
-## the token in the database. In developer mode, a token with the value
-## [code]"localdev"[/code] will always verify successfully. 
-func verify_player(username: String, join_token: String):
-	var pid: int = multiplayer.get_remote_sender_id()
-	if pid not in pending_peers:
-		print("Ignoring verification request from non-pending peer %d" % pid)
+## Authenticates a player by verifying the provided [code]username[/code] and
+## [code]token[/code] with the Jam Launch callback. In developer mode, a token
+## with the value [code]"localdev"[/code] will always verify successfully. 
+func _auth_callback(peer_id: int, data: PackedByteArray):
+	var data_json := data.get_string_from_utf8()
+	if data_json == "":
+		printerr("Invalid UTF-8 auth data provided by peer %d" % peer_id)
+	var data_obj = JSON.parse_string(data_json)
+	if data_obj == null:
+		printerr("Invalid JSON auth data provided by peer %d" % peer_id)
+	print("peer ", peer_id, ", data: ", data_obj)
+	
+	var username = data_obj["username"]
+	if peer_id in peer_usernames:
+		printerr("Unexpected duplicate auth call for peer %d : %s : %s" % [peer_id, peer_usernames[peer_id], username])
+	
+	var res := await _check_auth(username, data_obj["token"])
+	if res.errored:
+		push_error("Auth failure - peer id %d - %s" % [peer_id, res.error_msg])
+		_jc.m.disconnect_peer(peer_id)
 		return
 	
-	var pinfo
-	if dev_mode:
-		if join_token != "localdev":
-			push_error("failed verification request from localdev peer %d" % pid)
-			return
-		pinfo = {"name": "dev-%d" % pid}
+	print("Correlating peer %d with username %s" % [peer_id, username])
+	peer_usernames[peer_id] = username
+	var err := _jc.m.complete_auth(peer_id)
+	if err != OK:
+		printerr("Unexpected error when completing %d auth - code %d" % [peer_id, err])
+		peer_usernames.erase(peer_id)
+		return
 	
-	else:
-		print("Verifying join token from %d" % pid)
-		var res := await callback_api.check_token(username, join_token)
-		if res.errored:
-			print("Failed verification of join token (%s) - %s - booting %d..." % [join_token, res.error_msg, pid])
-			multiplayer.multiplayer_peer.disconnect_peer(pid, true)
-			pending_peers.erase(pid)
-			return
-		
-		pinfo = {"name": username}
-		for already_here in accepted_peers.values():
-			if already_here["name"] == pinfo["name"]:
-				print("Player '%s' is already joined, removing duplicate pid %d from pending peers..." % [pinfo["name"], pid])
-				pending_peers.erase(pid)
-				return
-		
-		pinfo.erase("key_1")
-		pinfo.erase("key_2")
-		
-	pending_peers.erase(pid)
-	accepted_peers[pid] = pinfo
-	
-	print("Accepted player %d as %s!" % [pid, pinfo["name"]])
-	_jc.player_verified.emit(pid, pinfo)
-	_jc._verification_notification.rpc_id(pid, pinfo)
-	
-	for other in accepted_peers.values():
-		if other["name"] != pinfo["name"]:
-			_jc._send_player_joined.rpc_id(pid, other["name"])
-			_jc.notify_players.rpc_id(pid, "'%s' is here" % other["name"])
-	_jc.notify_players.rpc("'%s' has joined" % pinfo["name"])
-	_jc._send_player_joined.rpc(pinfo["name"])
+	print("Authenticated peer %d as %s!" % [peer_id, username])
 
-## Triggers the provided RPC-enabled Callable on all verified peers if the
-## [code]origin_pid[/code] is from a peer that has also been verified. Useful
-## for limiting client-triggered broadcasts to only include verified peers.
-func rpc_relay(rpc_call: Callable, origin_pid: int, args: Array):
-	var pinfo = accepted_peers.get(origin_pid)
-	if pinfo == null:
-		print("Ignoring relay call from non-accepted peer %d" % origin_pid)
+func _check_auth(username: String, join_token: String) -> JamError:
+	if dev_mode:
+		if join_token == "localdev":
+			return JamError.ok()
+		else:
+			return JamError.err("Failed local dev auth for %s - token %s" % [username, join_token])
+		
+	var res := await callback_api.check_token(username, join_token)
+	if res.errored:
+		return JamError.err("Failed verification of join token for %s (%s) - %s" % [username, join_token, res.error_msg])
+	else:
+		return JamError.ok()
+
+func _on_peer_connect(peer_id: int):
+	if peer_id not in peer_usernames:
+		printerr("Unexpected connect without username record - peer_id %d" % peer_id)
 		return
-	var call_args := [origin_pid, pinfo.get("name", "<>")]
-	call_args.append_array(args)
-	var bound_rpc_call = rpc_call.bindv(call_args)
-	for pid in accepted_peers:
-		bound_rpc_call.rpc_id(pid as int)
+	
+	var username = peer_usernames[peer_id]
+	for other in peer_usernames.keys():
+		if peer_usernames[other] != username:
+			_jc._send_player_joined.rpc_id(peer_id, other, peer_usernames[other])
+			_jc.notify_players.rpc_id(peer_id, "'%s' is here" % peer_usernames[other])
+	_jc.notify_players.rpc("'%s' has connected" % username)
+	_jc.player_connected.emit(peer_id, username)
+	_jc._send_player_joined.rpc(peer_id, username)
+	
 
 func _on_peer_disconnect(pid: int):
-	if pid in accepted_peers:
-		var pinfo = accepted_peers[pid]
-		accepted_peers.erase(pid)
-		_jc.notify_players.rpc("Player '%s' has disconnected" % pinfo.get("name", "<>"))
-		_jc.player_disconnected.emit(pid, pinfo)
-		_jc._send_player_left.rpc(pinfo["name"])
-	pending_peers.erase(pid)
+	if pid in peer_usernames:
+		var username = peer_usernames[pid]
+		peer_usernames.erase(pid)
+		_jc.notify_players.rpc("'%s' has disconnected" % username)
+		_jc.player_disconnected.emit(pid, username)
+		_jc._send_player_left.rpc(pid, username)
 	
-	if pending_peers.is_empty() and accepted_peers.is_empty():
+	if peer_usernames.is_empty():
 		print("All peers disconnected - shutting down...")
 		shut_down(false)
 
 ## Shuts down the server elegantly
 func shut_down(do_disconnect: bool = true):
 	if do_disconnect:
-		var all_pids = pending_peers + accepted_peers.keys()
-		for pid in all_pids:
+		for pid in _jc.m.get_authenticating_peers():
+			multiplayer.multiplayer_peer.disconnect_peer(pid, true)
+		for pid in peer_usernames.keys():
 			multiplayer.multiplayer_peer.disconnect_peer(pid as int, true)
 	_jc.server_shutting_down.emit()
 	get_tree().quit()

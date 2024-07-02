@@ -5,9 +5,13 @@ extends CanvasLayer
 
 ## The client UI used to configure and initiate sessions
 var client_ui: JamClientUI
+
 ## The client token for the active session. The token is used to verify
 ## identity with the server.
 var current_client_token: String
+
+## A dictionary mapping peer id [code]int[/code]s to username [code]String[/code]s
+var peer_usernames := {}
 
 var test_client_number: int = 1:
 	set(val):
@@ -34,6 +38,8 @@ var _jc: JamConnect:
 	get:
 		return get_parent()
 
+var _m: SceneMultiplayer
+
 func _init():
 	layer = 512
 	keys = ClientKeys.new()
@@ -46,6 +52,8 @@ func _ready():
 	add_child(api)
 	
 	_jc.game_init_finalized.connect(_on_game_init_finalized)
+	_jc.player_joined.connect(_on_player_joined)
+	_jc.player_left.connect(_on_player_left)
 	
 	var gjwt = keys.get_included_gjwt(_jc.get_game_id())
 	if gjwt == null:
@@ -72,8 +80,7 @@ func set_gjwt(gjwt: String):
 	else:
 		_jc.gjwt_acquired.emit()
 
-## Persists the GJWT so that it can be retrieved in the next run. Should only be
-## used when the GJWT was not embedded in the game package (e.g. on mobile)
+## Persists the GJWT so that it can be retrieved in the next run
 func persist_gjwt() -> bool:
 	if not jwt.has_token():
 		return false
@@ -88,9 +95,12 @@ func persist_gjwt() -> bool:
 func client_start():
 	print("Starting as client...")
 	
-	multiplayer.connected_to_server.connect(_on_client_connect)
-	multiplayer.connection_failed.connect(_on_client_connect_fail)
-	multiplayer.server_disconnected.connect(_on_server_disconnect)
+	_jc.m.connected_to_server.connect(_on_client_connect)
+	_jc.m.peer_authenticating.connect(_on_client_authenticating)
+	_jc.m.peer_authentication_failed.connect(_on_client_authentication_failed)
+	_jc.m.connection_failed.connect(_on_client_connect_fail)
+	_jc.m.server_disconnected.connect(_on_server_disconnect)
+	
 	client_ui.client_ui_initialization(_jc)
 	add_child(client_ui)
 
@@ -116,25 +126,48 @@ func client_session_request(host: String, port: int, token: String):
 		client_ui.visible = true
 		client_ui.show_error(("Server connection error: %d" % err) as String)
 		return
-	multiplayer.multiplayer_peer = peer
+	_jc.m.multiplayer_peer = peer
 	_jc.local_player_joining.emit()
+	
+	_jc.m.auth_callback = _on_auth
 
 ## Elegantly leaves the game by disconnecting from the server and notifying the
 ## Jam Launch API
 func leave_game():
 	client_ui.visible = true
 	await client_ui.leave_game_session()
-	multiplayer.multiplayer_peer.close()
+	_jc.m.multiplayer_peer.close()
 
 func _on_client_connect_fail():
 	_jc.log_event.emit("Connection to server failed")
 	_jc.local_player_left.emit()
 	client_ui.visible = true
 
+func _on_client_authentication_failed():
+	_jc.log_event.emit("Authentication failed")
+	_on_client_connect_fail()
+	
+func _on_client_authenticating(peer_id: int):
+	_jc.log_event.emit("Authenticating...")
+	var auth_data = JSON.stringify({
+		"username": jwt.claims.get("username", "dev-%d" % _jc.m.multiplayer_peer.get_unique_id()),
+		"token": current_client_token
+	})
+	_jc.m.send_auth(peer_id, auth_data.to_utf8_buffer())
+	
+	# accept the server peer without additional validation
+	_on_auth(1, PackedByteArray())
+
+func _on_auth(peer_id: int, data: PackedByteArray):
+	# For now, clients do not validate their peers.
+	# Websocket servers with certs provide good server peer validation.
+	var err := _jc.m.complete_auth(peer_id)
+	if err != OK:
+		_jc.log_event.emit("Unexpected failure to complete auth for %d..." % peer_id)
+
 func _on_client_connect():
-	if not _jc.is_webrtc_mode():
-		_jc.log_event.emit("Connected, verifying...")
-		_jc.verify_identity(jwt.claims["username"] as String, current_client_token)
+	_jc.log_event.emit("Connected to server")
+	#_jc.local_player_joined.emit()
 
 func _on_server_disconnect():
 	_jc.log_event.emit("Server disconnected")
@@ -143,3 +176,9 @@ func _on_server_disconnect():
 
 func _on_game_init_finalized():
 	client_ui.visible = false
+
+func _on_player_joined(peer_id: int, username: String):
+	peer_usernames[peer_id] = username
+
+func _on_player_left(peer_id: int, username: String):
+	peer_usernames.erase(peer_id)

@@ -10,6 +10,7 @@ var jam_connect: JamConnect:
 		jam_connect = val
 
 func append_status_message(msg: String):
+	print(msg)
 	chat_log.text += "[color=#aaa][i]" + msg + "[/i][/color]\n"
 	
 func append_chat_message(sender: String, msg: String):
@@ -26,12 +27,20 @@ func _on_text_submit():
 	msg_line.clear()
 	msg_line.release_focus()
 	if len(msg) > 0:
-		_send_chat_msg.rpc_id(1, msg)
+		_send_chat_msg.rpc(msg)
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func _send_chat_msg(msg: String):
 	msg = sanitize(msg)
-	jam_connect.server_relay(_print_chat_msg, [msg])
+	
+	var peer_id := multiplayer.get_remote_sender_id()
+	var username: String = "<>"
+	if jam_connect.server:
+		username = jam_connect.server.peer_usernames.get(peer_id, "<>")
+	elif jam_connect.client:
+		username = jam_connect.client.peer_usernames.get(peer_id, "<>")
+	
+	_print_chat_msg(username, msg)
 
 func sanitize(msg: String) -> String:
 	msg = msg.substr(0, 500)
@@ -40,6 +49,6 @@ func sanitize(msg: String) -> String:
 	msg = msg.replace("]", ")")
 	return msg
 
-@rpc
-func _print_chat_msg(_sender_pid: int, sender_name: String, msg: String):
-	append_chat_message(sender_name, msg)
+func _print_chat_msg(username: String, msg: String):
+	
+	append_chat_message(username, msg)
