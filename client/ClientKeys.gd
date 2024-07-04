@@ -43,7 +43,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 	var peer = StreamPeerTCP.new()
 	peer.connect_to_host("127.0.0.1", 17343)
 	while true:
-		await get_tree().create_timer(0.2)
+		await get_tree().create_timer(0.1).timeout
 		var err := peer.poll()
 		if err != OK:
 			push_error("failed to connect to local auth proxy for test creds")
@@ -55,7 +55,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 	peer.put_string("key/%s/%s" % [parts[0], parts[1]])
 	
 	while true:
-		await get_tree().create_timer(0.2)
+		await get_tree().create_timer(0.1).timeout
 		var err := peer.poll()
 		if err != OK:
 			push_error("failed to get response from local auth proxy for test creds")

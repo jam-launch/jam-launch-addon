@@ -25,7 +25,7 @@ var sessions: Array = []
 
 var filter_active_sessions := true
 
-var session_details: Dictionary = {} :
+var session_details: Dictionary = {}:
 	set(val):
 		session_details = val
 		var sid = session_details.get("id")
@@ -61,7 +61,7 @@ func refresh_sessions():
 		show_error("cannot refresh sessions while loading...", 5.0)
 		return
 	
-	var lock = load_locker.get_lock()
+	var _lock = load_locker.get_lock()
 	session_details = {}
 	session_list.clear()
 	session_list.visible = false
@@ -144,7 +144,7 @@ func _show_logs(p, r, s) -> void:
 			log_text += " " + e["msg"] + "\n"
 		log_display.text = log_text
 
-func show_error(msg: String, auto_dismiss: float = 0.0):
+func show_error(msg: String, auto_dismiss: float=0.0):
 	dashboard.show_error(msg, auto_dismiss)
 
 func _on_load_locker_lock_changed(locked: bool):
@@ -183,7 +183,6 @@ func _on_session_list_item_selected(index):
 	
 	var s = sessions[index]
 	_get_session_details(project_id, s["release_id"], s["id"])
-
 
 func _on_filter_item_selected(index):
 	if index == 0:

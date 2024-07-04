@@ -56,7 +56,7 @@ func get_string_data(url: String) -> JamResult:
 	
 	var resp = await h.http.request_completed
 	if resp[1] > 299:
-		return JamResult.err("HTTP error code %d" % resp[1])
+		return JamResult.err("HTTP error code %d" % [resp[1]])
 	
 	var s = resp[3].get_string_from_utf8()
 	if len(s) < 1:
@@ -64,7 +64,7 @@ func get_string_data(url: String) -> JamResult:
 	
 	return JamResult.ok(s)
 
-func _json_http(route: String, method: HTTPClient.Method = HTTPClient.METHOD_GET, body: Variant = null) -> Result:
+func _json_http(route: String, method: HTTPClient.Method=HTTPClient.METHOD_GET, body: Variant=null) -> Result:
 	var result = Result.new()
 	var err
 	var h = pool.get_client()

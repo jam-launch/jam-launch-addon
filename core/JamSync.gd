@@ -8,7 +8,6 @@ var sync_id: int
 @export var spawn_properties: Array[String] = []
 @export var sync_properties: Array[String] = []
 
-
 func _ready():
 	jam_root = JamRoot.get_jam_root(get_tree())
 	replicator = JamReplicator.get_replicator(get_tree())
@@ -19,7 +18,6 @@ func _target_ready():
 	if not multiplayer.has_multiplayer_peer() or not jam_root.jam_connect:
 		return
 	
-	var target = get_parent()
 	if multiplayer.is_server():
 		sync_id = get_instance_id()
 		replicator.sync_refs[sync_id] = self
@@ -31,12 +29,12 @@ func _exit_tree():
 	if multiplayer.is_server():
 		replicator.scene_despawn(self)
 
-func _process(delta):
+func _process(_delta):
 	pass
 
 const LERP_TYPES = [TYPE_INT, TYPE_FLOAT, TYPE_VECTOR2, TYPE_VECTOR3, TYPE_VECTOR4, TYPE_COLOR, TYPE_QUATERNION, TYPE_BASIS]
 
-func _physics_process(delta):
+func _physics_process(_delta):
 	if not multiplayer.has_multiplayer_peer():
 		return
 	
@@ -57,6 +55,4 @@ func _physics_process(delta):
 			var val: Variant = s.start_state[p]
 			if typeof(val) in LERP_TYPES:
 				val = lerp(val, s.end_state[p], s.progress)
-			target.set(p, val)
-		
-	
+			target.set(p as String, val)

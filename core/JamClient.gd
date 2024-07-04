@@ -38,8 +38,6 @@ var _jc: JamConnect:
 	get:
 		return get_parent()
 
-var _m: SceneMultiplayer
-
 func _init():
 	layer = 512
 	keys = ClientKeys.new()
@@ -158,7 +156,7 @@ func _on_client_authenticating(peer_id: int):
 	# accept the server peer without additional validation
 	_on_auth(1, PackedByteArray())
 
-func _on_auth(peer_id: int, data: PackedByteArray):
+func _on_auth(peer_id: int, _data: PackedByteArray):
 	# For now, clients do not validate their peers.
 	# Websocket servers with certs provide good server peer validation.
 	var err := _jc.m.complete_auth(peer_id)
@@ -180,5 +178,5 @@ func _on_game_init_finalized():
 func _on_player_joined(peer_id: int, username: String):
 	peer_usernames[peer_id] = username
 
-func _on_player_left(peer_id: int, username: String):
+func _on_player_left(peer_id: int, _username: String):
 	peer_usernames.erase(peer_id)

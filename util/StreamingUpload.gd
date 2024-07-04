@@ -9,8 +9,8 @@ class StringReader:
 	var data: String
 	var idx: int = 0
 		
-	func get_data(max: int) -> PackedByteArray:
-		var toTake = min(max, len(data))
+	func get_data(max_bytes: int) -> PackedByteArray:
+		var toTake := min(max_bytes, len(data)) as int
 		var buf = data.substr(idx, toTake).to_utf8_buffer()
 		idx += toTake
 		return buf
@@ -30,8 +30,8 @@ class FileReader:
 		r.data_length = r.data_reader.get_length()
 		return JamResult.ok(r)
 		
-	func get_data(max: int) -> PackedByteArray:
-		return data_reader.get_buffer(max)
+	func get_data(max_bytes: int) -> PackedByteArray:
+		return data_reader.get_buffer(max_bytes)
 	
 	func _notification(what):
 		if what == NOTIFICATION_PREDELETE:
@@ -45,24 +45,24 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	var path = "/"
 	if len(split_url) > 1:
 		path += split_url[1]
-	var host_ip = IP.resolve_hostname(host)
+	var host_ip := IP.resolve_hostname(host)
 	
 	# prepare request data
 	var bound = "----BodyBoundary%d" % (randi() % 100000)
 	
-	var upload_body_start = PackedByteArray()
+	var upload_body_start := PackedByteArray()
 	upload_body_start.append_array("--{0}\r\n".format([bound]).to_utf8_buffer())
 	for key in fields:
-		upload_body_start.append_array(("Content-Disposition: form-data; name=\"%s\"\r\n\r\n" % key).to_utf8_buffer())
-		upload_body_start.append_array(("%s" % fields[key]).to_utf8_buffer())
+		upload_body_start.append_array(("Content-Disposition: form-data; name=\"{0}\"\r\n\r\n".format(key)).to_utf8_buffer())
+		upload_body_start.append_array(("{0}".format(fields[key])).to_utf8_buffer())
 		upload_body_start.append_array("\r\n--{0}\r\n".format([bound]).to_utf8_buffer())
 	upload_body_start.append_array(("Content-Disposition: form-data; name=\"file\"; filename=\"{0}\"\r\n").format([reader.filename]).to_utf8_buffer())
 	upload_body_start.append_array(("Content-Type: application/zip\r\n\r\n").to_utf8_buffer())
 	
-	var last_chunk = PackedByteArray()
+	var last_chunk := PackedByteArray()
 	last_chunk.append_array("\r\n--{0}--\r\n".format([bound]).to_utf8_buffer())
 	
-	var first_chunk = PackedByteArray()
+	var first_chunk := PackedByteArray()
 	first_chunk.append_array("POST {0} HTTP/1.1\r\n".format([path]).to_utf8_buffer())
 	first_chunk.append_array("Host: {0}\r\n".format([host]).to_utf8_buffer())
 	first_chunk.append_array("Connection: keep-alive\r\n".to_utf8_buffer())
@@ -74,7 +74,7 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	var tcp_peer := StreamPeerTCP.new()
 	var err := tcp_peer.connect_to_host(host_ip, 443)
 	if err != OK:
-		return JamError.err("Failed to connect to upload host for %s upload" % reader.filename)
+		return JamError.err("Failed to connect to upload host for {0} upload".format(reader.filename))
 	while true:
 		tcp_peer.poll()
 		if tcp_peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
@@ -85,7 +85,7 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	var tls_peer := StreamPeerTLS.new()
 	err = tls_peer.connect_to_stream(tcp_peer, host)
 	if err != OK:
-		return JamError.err("Failed TLS to upload host for %s export" % reader.filename)
+		return JamError.err("Failed TLS to upload host for %s export" % [reader.filename])
 	while true:
 		tls_peer.poll()
 		if tls_peer.get_status() == StreamPeerTLS.STATUS_CONNECTED:
@@ -97,7 +97,7 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	# Send data
 	err = tls_peer.put_data(first_chunk)
 	if err != OK:
-		return JamError.err("Failed to put first chunk of data for %s export upload" % reader.filename)
+		return JamError.err("Failed to put first chunk of data for %s export upload" % [reader.filename])
 	
 	var to_write = reader.data_length
 	while to_write > 0:
@@ -109,7 +109,6 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 		if buf.size() < 1:
 			printerr("unexpected empty read %d (supposedly %d left...)" % [buf.size(), to_write])
 			return JamError.err("Bad export read with %d bytes left for %s export (mid-upload)" % [to_write, reader.filename])
-			break
 		to_write -= buf.size()
 		err = tls_peer.put_data(buf)
 		if err != OK:
@@ -117,7 +116,7 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	
 	err = tls_peer.put_data(last_chunk)
 	if err != OK:
-		return JamError.err("Failed to put last chunk of data for %s export upload" % reader.filename)
+		return JamError.err("Failed to put last chunk of data for %s export upload" % [reader.filename])
 	
 	# Get and parse response
 	var http_resp_re := RegEx.new()
@@ -127,15 +126,14 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 		OS.delay_msec(50)
 		tls_peer.poll()
 		if tls_peer.get_status() != StreamPeerTLS.STATUS_CONNECTED:
-			return JamError.err("Failed to get response for %s export upload before connection closed" % reader.filename)
+			return JamError.err("Failed to get response for %s export upload before connection closed" % [reader.filename])
 		if tls_peer.get_available_bytes() > 0:
 			var resp = tls_peer.get_data(tls_peer.get_available_bytes())
 			if resp[0] != 0:
-				return JamError.err("Failure receiving HTTP response bytes from %s export upload" % reader.filename)
+				return JamError.err("Failure receiving HTTP response bytes from %s export upload" % [reader.filename])
 			
-			full_resp.append_array(resp[1])
-			var resp_string = full_resp.get_string_from_utf8()
-			#print(resp_string)
+			full_resp.append_array(resp[1] as PackedByteArray)
+			var resp_string := full_resp.get_string_from_utf8()
 			var m := http_resp_re.search(resp_string)
 			if m != null:
 				var code = int(m.get_string(1))
@@ -145,4 +143,4 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 				else:
 					return JamError.ok()
 	
-	return JamError.err("HTTP response for %s upload timed out" % reader.filename)
+	return JamError.err("HTTP response for %s upload timed out" % [reader.filename])

@@ -51,20 +51,19 @@ func _ready():
 func _err(msg: String):
 	errored.emit(msg)
 
-func _on_notes_meta_hover_started(meta):
+func _on_notes_meta_hover_started(_meta):
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-func _on_notes_meta_hover_ended(meta):
+func _on_notes_meta_hover_ended(_meta):
 	mouse_default_cursor_shape = Control.CURSOR_ARROW
 
-func _on_notes_meta_clicked(meta):
+func _on_notes_meta_clicked(meta: String):
 	OS.shell_open(meta)
 
 func _on_login_button_pressed():
-	var active_lock = active_scope.get_lock()
-	
-	var lock = busy_scope.get_lock()
-	
+	var _active_lock = active_scope.get_lock()
+	var _lock = busy_scope.get_lock()
+
 	var res: JamLoginApi.Result
 	if auth_mode == AUTH_MODE.USER:
 		res = await login_api.request_user_auth(game_id)
@@ -74,22 +73,22 @@ func _on_login_button_pressed():
 		_err(res.error_msg)
 		return
 	
-	var userCode = res.data["userCode"]
-	var deviceCode = res.data["deviceCode"]
-	var authUrl = "%s?user_code=%s" % [device_auth_url, userCode]
+	var userCode := res.data["userCode"] as String
+	var deviceCode := res.data["deviceCode"] as String
+	var authUrl := "%s?user_code=%s" % [device_auth_url, userCode]
 	
 	OS.shell_open(authUrl)
 	user_code_label.text = userCode
 	notes.parse_bbcode("[center][color=#eeeeee][bgcolor=#00000000]Confirm the following code at
 [url]%s[/url][/bgcolor][/color][/center]" % device_auth_url)
 	
-	lock = waiting_scope.get_lock()
+	_lock = waiting_scope.get_lock()
 	while true:
 		if cancel_auth:
 			cancel_auth = false
 			return
 		await get_tree().create_timer(1).timeout
-		var authRes = await login_api.check_auth(userCode, deviceCode)
+		var authRes := await login_api.check_auth(userCode, deviceCode)
 		if authRes.errored:
 			_err(authRes.error_msg)
 		elif authRes.data["state"] == "pending":
@@ -102,11 +101,11 @@ func _on_login_button_pressed():
 
 func _on_busy_scope_lock_changed(locked):
 	$Busy.visible = locked
-	$Base.visible = not (locked || waiting_scope.is_locked())
+	$Base.visible = not (locked||waiting_scope.is_locked())
 
 func _on_waiting_scope_lock_changed(locked):
 	$Waiting.visible = locked
-	$Base.visible = not (locked || busy_scope.is_locked())
+	$Base.visible = not (locked||busy_scope.is_locked())
 
 func _on_cancel_auth_pressed():
 	cancel_auth = true

@@ -55,9 +55,9 @@ class ProducerHandle:
 	var product_id: int
 	var task_id: int
 	
-	func _init(product_id: int, task_id: int):
-		self.product_id = product_id
-		self.task_id = task_id
+	func _init(prod_id: int, tsk_id: int):
+		self.product_id = prod_id
+		self.task_id = tsk_id
 
 func _add_a_producer(producer: Callable) -> ProducerHandle:
 	var product_id := randi()
@@ -86,9 +86,9 @@ func run_multiple_producers(producers: Array[Callable]) -> Array[ThreadProduct]:
 	var products: Array[ThreadProduct] = []
 	while len(handles) > 0:
 		await _thread_wait_timer.timeout
-		if WorkerThreadPool.is_task_completed(handles.front().task_id):
+		if WorkerThreadPool.is_task_completed(handles.front().task_id as int):
 			print("task done")
-			var handle = handles.pop_front()
+			var handle := handles.pop_front() as ProducerHandle
 			products.append(take_product(handle.product_id))
 	
 	return products

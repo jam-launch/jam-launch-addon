@@ -7,7 +7,6 @@ const USER_SCOPE: String = "user"
 
 func _ready():
 	super()
-	var dir := (self.get_script() as Script).get_path().get_base_dir()
 
 func request_developer_auth() -> Result:
 	return await _json_http(

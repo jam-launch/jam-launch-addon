@@ -165,7 +165,7 @@ func _notification(what):
 		get_tree().quit()
 #
 func enter_session(session_id: String, token: String) -> bool:
-	var res = await client_api.get_game_session(session_id)
+	var res := await client_api.get_game_session(session_id)
 	if res.errored:
 		show_error(res.error_msg)
 		return false
@@ -325,7 +325,7 @@ func _on_start_game_pressed():
 		return
 
 func _on_paste_gjwt_pressed():
-	var gjwt = DisplayServer.clipboard_get()
+	var gjwt := DisplayServer.clipboard_get()
 	_set_gjwt(gjwt)
 
 func _on_submit_gjwt_pressed():

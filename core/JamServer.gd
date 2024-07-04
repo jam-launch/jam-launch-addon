@@ -54,7 +54,7 @@ func server_start(args: Dictionary):
 			cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
 		else:
 			print("Setting up certificates for secure websockets...")
-			var extra_downloads = OS.get_environment("EXTRA_DOWNLOAD_URLS")
+			var extra_downloads := OS.get_environment("EXTRA_DOWNLOAD_URLS")
 			if len(extra_downloads) < 0:
 				push_error("FATAL: Missing EXTRA_DOWNLOAD_URLS environment variable for cert and key downloads")
 				get_tree().quit(1)
@@ -68,24 +68,24 @@ func server_start(args: Dictionary):
 				push_error("FATAL: Missing cert and key downloads")
 				get_tree().quit(1)
 				return
-			var key_res = await callback_api.get_string_data(extras["server.key"])
+			var key_res := await callback_api.get_string_data(extras["server.key"] as String)
 			if key_res.errored:
 				push_error("FATAL: server key download failed - %s" % key_res.error_msg)
 				get_tree().quit(1)
 				return
-			var cert_res = await callback_api.get_string_data(extras["server.crt"])
+			var cert_res := await callback_api.get_string_data(extras["server.crt"] as String)
 			if cert_res.errored:
 				push_error("FATAL: server cert download failed - %s" % cert_res.error_msg)
 				get_tree().quit(1)
 				return
 			key = CryptoKey.new()
-			err = key.load_from_string(key_res.value)
+			err = key.load_from_string(key_res.value as String)
 			if err != OK:
 				push_error("FATAL: Failed to load server key %s" % key_res.value)
 				get_tree().quit(1)
 				return
 			cert = X509Certificate.new()
-			err = cert.load_from_string(cert_res.value)
+			err = cert.load_from_string(cert_res.value as String)
 			if err != OK:
 				push_error("FATAL: Failed to load server cert %s" % cert_res.value)
 				get_tree().quit(1)
@@ -100,7 +100,6 @@ func server_start(args: Dictionary):
 		return
 	
 	multiplayer.multiplayer_peer = peer
-	#peer.peer_connected.connect(_on_peer_connect)
 	peer.peer_disconnected.connect(_on_peer_disconnect)
 	_jc.m.peer_connected.connect(_on_peer_connect)
 	
@@ -115,7 +114,7 @@ func server_start(args: Dictionary):
 		_jc.server_pre_ready.emit()
 		var res = await callback_api.send_ready()
 		if res.errored:
-			printerr("FATAL: Failed to set READY status in database - %s - aborting..." % res.error_msg )
+			printerr("FATAL: Failed to set READY status in database - %s - aborting..." % res.error_msg)
 			get_tree().quit()
 		_jc.server_post_ready.emit()
 
@@ -131,11 +130,11 @@ func _auth_callback(peer_id: int, data: PackedByteArray):
 		printerr("Invalid JSON auth data provided by peer %d" % peer_id)
 	print("peer ", peer_id, ", data: ", data_obj)
 	
-	var username = data_obj["username"]
+	var username := data_obj["username"] as String
 	if peer_id in peer_usernames:
 		printerr("Unexpected duplicate auth call for peer %d : %s : %s" % [peer_id, peer_usernames[peer_id], username])
 	
-	var res := await _check_auth(username, data_obj["token"])
+	var res := await _check_auth(username, data_obj["token"] as String)
 	if res.errored:
 		push_error("Auth failure - peer id %d - %s" % [peer_id, res.error_msg])
 		_jc.m.disconnect_peer(peer_id)
@@ -177,7 +176,6 @@ func _on_peer_connect(peer_id: int):
 	_jc.notify_players.rpc("'%s' has connected" % username)
 	_jc.player_connected.emit(peer_id, username)
 	_jc._send_player_joined.rpc(peer_id, username)
-	
 
 func _on_peer_disconnect(pid: int):
 	if pid in peer_usernames:
@@ -192,7 +190,7 @@ func _on_peer_disconnect(pid: int):
 		shut_down(false)
 
 ## Shuts down the server elegantly
-func shut_down(do_disconnect: bool = true):
+func shut_down(do_disconnect: bool=true):
 	if do_disconnect:
 		for pid in _jc.m.get_authenticating_peers():
 			multiplayer.multiplayer_peer.disconnect_peer(pid, true)

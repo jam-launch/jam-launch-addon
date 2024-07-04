@@ -1,9 +1,10 @@
 class_name JamReplicator
 extends Node
 
-const sync_interval = 1.0/30.0
+const sync_interval = 1.0 / 30.0
 var sync_seq = 0
 var sync_clock: float = 0.0
+var sync_stable: bool = false
 
 var state_buffer: Array[StateFrame] = []
 var state_interp: float = 0.0
@@ -29,10 +30,10 @@ class StateFrame:
 	var seq: int
 	var data: Dictionary
 	
-	static func from(seq: int, data: Dictionary) -> StateFrame:
+	static func from(s: int, d: Dictionary) -> StateFrame:
 		var f = StateFrame.new()
-		f.seq = seq
-		f.data = data
+		f.seq = s
+		f.data = d
 		return f
 
 class StateInterp:
@@ -73,7 +74,7 @@ static func get_replicator(tree: SceneTree) -> JamReplicator:
 
 func _ready():
 	if get_parent().jam_connect:
-		_jam_connect_init(get_parent().jam_connect)
+		_jam_connect_init(get_parent().jam_connect as JamConnect)
 	get_parent().has_jam_connect.connect(_jam_connect_init)
 
 func _jam_connect_init(jc: JamConnect):
@@ -86,10 +87,11 @@ func _on_peer_connected(pid: int):
 	if not multiplayer.is_server():
 		return
 	for sync_id in sync_refs:
-		scene_spawn(sync_refs[sync_id], pid) #TODO: figure out how to make this work with re-joining
+		scene_spawn(sync_refs[sync_id] as JamSync, pid) # TODO: figure out how to make this work with re-joining
 
-func _on_peer_disconnected(pid: int):
-	pass
+func _on_peer_disconnected(_pid: int):
+	if not multiplayer.is_server():
+		return
 
 func _process(delta):
 	if not multiplayer.has_multiplayer_peer():
@@ -101,8 +103,12 @@ func _process(delta):
 			sync_seq += 1
 			sync_clock -= sync_interval
 			if sync_clock > sync_interval:
-				push_warning("sync interval lagging - resetting sync clock")
+				if sync_stable:
+					push_warning("sync interval lagging due to large _process delta - resetting sync clock")
 				sync_clock = 0.0
+			else:
+				sync_stable = true
+			
 			sync_state.rpc(sync_seq, server_state)
 			server_state = {}
 	else:
@@ -161,11 +167,11 @@ func sync_state(seq: int, data: Dictionary):
 		got_initial_state = true
 		state_interp = 0.0
 		state_buffer.append(StateFrame.from(seq, data))
-	elif seq > state_buffer[-1].seq:
-		data.merge(state_buffer[-1].data)
+	elif seq > state_buffer[- 1].seq:
+		data.merge(state_buffer[ - 1].data)
 		state_buffer.append(StateFrame.from(seq, data))
-		if seq > state_buffer[-1].seq + 1:
-			push_warning("state seq skipped %d" % (seq - state_buffer[-1].seq))
+		if seq > state_buffer[- 1].seq + 1:
+			push_warning("state seq skipped %d" % (seq - state_buffer[ - 1].seq))
 	elif seq < state_buffer[0].seq:
 		push_warning("state drop %d" % seq)
 	else:
@@ -187,10 +193,10 @@ var spawn_scene_cache = {}
 func _instantiate_spawn_scene(scene_path: String) -> Node:
 	if scene_path not in spawn_scene_cache:
 		var scene = load(scene_path)
-		spawn_scene_cache[scene_path] = scene 
+		spawn_scene_cache[scene_path] = scene
 	return spawn_scene_cache[scene_path].instantiate()
 
-func scene_spawn(sync_node: JamSync, peer_id: int = -1):
+func scene_spawn(sync_node: JamSync, peer_id: int=- 1):
 	var target = sync_node.get_parent()
 	var target_node_path = "/" + target.get_path().get_concatenated_names()
 	
@@ -198,26 +204,26 @@ func scene_spawn(sync_node: JamSync, peer_id: int = -1):
 	for p in sync_node.spawn_properties:
 		sprops[p] = target.get(p)
 	
-	if peer_id == -1:
-		_scene_spawn.rpc(target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
+	if peer_id == - 1:
+		_scene_spawn. rpc (target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
 	else:
 		_scene_spawn.rpc_id(peer_id, target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
 
 func scene_despawn(sync_node: JamSync):
-	_scene_despawn.rpc(sync_node.sync_id)
+	_scene_despawn. rpc (sync_node.sync_id)
 
 @rpc("authority", "call_remote", "reliable")
 func _scene_spawn(node_path: String, scene_path: String, spawn_properties: Dictionary, sync_id: int):
 	if sync_id in sync_refs:
 		return
-	var parent_path = node_path.rsplit("/", true, 1)[0]
+	var parent_path := node_path.rsplit("/", true, 1)[0]
 	var parent_node = get_node_or_null(parent_path)
 	if parent_node == null:
 		push_warning("received scene spawn sync for '%s' on missing parent node '%s'" % [scene_path, parent_path])
 		return
 	var spawned_node := _instantiate_spawn_scene(scene_path)
 	for k in spawn_properties:
-		spawned_node.set(k, spawn_properties[k])
+		spawned_node.set(k as String, spawn_properties[k])
 	spawned_node.name = node_path.rsplit("/", true, 1)[1]
 	for child in spawned_node.get_children():
 		if is_instance_of(child, JamSync):
