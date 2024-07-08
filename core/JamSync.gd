@@ -28,6 +28,8 @@ func _target_ready():
 func _exit_tree():
 	if multiplayer.is_server():
 		replicator.scene_despawn(self)
+	else:
+		replicator.clear_sync_ref(sync_id)
 
 func _process(_delta):
 	pass

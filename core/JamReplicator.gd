@@ -87,7 +87,7 @@ func _on_peer_connected(pid: int):
 	if not multiplayer.is_server():
 		return
 	for sync_id in sync_refs:
-		scene_spawn(sync_refs[sync_id] as JamSync, pid) # TODO: figure out how to make this work with re-joining
+		scene_spawn(sync_refs[sync_id] as JamSync, pid)
 
 func _on_peer_disconnected(_pid: int):
 	if not multiplayer.is_server():
@@ -196,7 +196,7 @@ func _instantiate_spawn_scene(scene_path: String) -> Node:
 		spawn_scene_cache[scene_path] = scene
 	return spawn_scene_cache[scene_path].instantiate()
 
-func scene_spawn(sync_node: JamSync, peer_id: int=- 1):
+func scene_spawn(sync_node: JamSync, peer_id: int=-1):
 	var target = sync_node.get_parent()
 	var target_node_path = "/" + target.get_path().get_concatenated_names()
 	
@@ -204,17 +204,18 @@ func scene_spawn(sync_node: JamSync, peer_id: int=- 1):
 	for p in sync_node.spawn_properties:
 		sprops[p] = target.get(p)
 	
-	if peer_id == - 1:
-		_scene_spawn. rpc (target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
+	if peer_id == -1:
+		_scene_spawn.rpc(target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
 	else:
 		_scene_spawn.rpc_id(peer_id, target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
 
 func scene_despawn(sync_node: JamSync):
-	_scene_despawn. rpc (sync_node.sync_id)
+	_scene_despawn.rpc(sync_node.sync_id)
 
 @rpc("authority", "call_remote", "reliable")
 func _scene_spawn(node_path: String, scene_path: String, spawn_properties: Dictionary, sync_id: int):
 	if sync_id in sync_refs:
+		push_warning("sync id already in refs, no need to spawn: %d - %s" % [sync_id, node_path])
 		return
 	var parent_path := node_path.rsplit("/", true, 1)[0]
 	var parent_node = get_node_or_null(parent_path)
@@ -231,8 +232,11 @@ func _scene_spawn(node_path: String, scene_path: String, spawn_properties: Dicti
 			break
 	parent_node.add_child(spawned_node)
 
-@rpc("authority", "call_remote", "reliable")
+@rpc("authority", "call_local", "reliable")
 func _scene_despawn(sync_id: int):
 	if sync_id in sync_refs:
 		sync_refs[sync_id].get_parent().queue_free()
-		sync_refs.erase(sync_id)
+		clear_sync_ref(sync_id)
+
+func clear_sync_ref(sync_id: int):
+	sync_refs.erase(sync_id)

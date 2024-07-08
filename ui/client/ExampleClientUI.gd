@@ -53,11 +53,18 @@ var session_result: JamClientApi.GameSessionResult = null:
 		start_game_btn.visible = false
 		
 		if session_result == null:
-			start_game_btn.visible = true
+			while player_grid.get_child_count() > 0:
+				var c := player_grid.get_child(0)
+				player_grid.remove_child(c)
+				c.queue_free()
+			session_server_progress.value = 0
+			session_server_progress.get_parent().visible = true
+			start_game_btn.visible = false
+			pages.show_page_node(home_page, false)
 			return
 		elif session_result.has_unusable_status():
 			show_error("server in unusable status - quitting session")
-			pages.show_page_node(home_page, false)
+			session_result = null
 		else:
 			while player_grid.get_child_count() > 0:
 				var c := player_grid.get_child(0)
@@ -189,6 +196,7 @@ func exit_session() -> bool:
 	if session_result != null:
 		var res := await client_api.leave_game_session(session_result.session_id)
 		session_result = null
+		
 		if res.errored:
 			show_error(res.error_msg)
 			return false
