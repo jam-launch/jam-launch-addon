@@ -82,15 +82,20 @@ func perform_export(output_base: String, config: BuildConfig, timeout: int) -> J
 	if not err.errored:
 		err = JamAutoExport.upload_export(output_base, config)
 	
-	var log_err = JamError.ok()
+	var reader := StreamingUpload.StringReader.new()
 	if len(output) > 0:
-		var reader := StreamingUpload.StringReader.new()
 		reader.data = output[0]
 		reader.data_length = len(output[0])
-		reader.filename = "%s-build.log" % config.template_name
-		log_err = StreamingUpload.streaming_upload(config.log_presigned_post["url"] as String, config.log_presigned_post["fields"] as Dictionary, reader)
+	else:
+		reader.data = "No export output log was available"
+		reader.data_length = len(reader.data)
+	reader.filename = "%s-build.log" % config.template_name
+	var log_err := StreamingUpload.streaming_upload(config.log_presigned_post["url"] as String, config.log_presigned_post["fields"] as Dictionary, reader)
 	
 	if err.errored:
+		if log_err.errored:
+			printerr("log upload failed after export failure - release may be stuck in 'pending' state")
+			printerr(log_err.error_msg)
 		return err
 	elif log_err.errored:
 		return log_err
@@ -128,7 +133,6 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 	return JamError.ok()
 
 static func upload_export(output_base: String, config: BuildConfig) -> JamError:
-	
 	var staging_dir = output_base.path_join("..").simplify_path()
 	var artifact_path: String
 	if config.no_zip:

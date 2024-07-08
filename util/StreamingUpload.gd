@@ -53,8 +53,8 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	var upload_body_start := PackedByteArray()
 	upload_body_start.append_array("--{0}\r\n".format([bound]).to_utf8_buffer())
 	for key in fields:
-		upload_body_start.append_array(("Content-Disposition: form-data; name=\"{0}\"\r\n\r\n".format(key)).to_utf8_buffer())
-		upload_body_start.append_array(("{0}".format(fields[key])).to_utf8_buffer())
+		upload_body_start.append_array(("Content-Disposition: form-data; name=\"{0}\"\r\n\r\n".format([key])).to_utf8_buffer())
+		upload_body_start.append_array(("{0}".format([fields[key]])).to_utf8_buffer())
 		upload_body_start.append_array("\r\n--{0}\r\n".format([bound]).to_utf8_buffer())
 	upload_body_start.append_array(("Content-Disposition: form-data; name=\"file\"; filename=\"{0}\"\r\n").format([reader.filename]).to_utf8_buffer())
 	upload_body_start.append_array(("Content-Type: application/zip\r\n\r\n").to_utf8_buffer())
@@ -74,7 +74,7 @@ static func streaming_upload(url: String, fields: Dictionary, reader) -> JamErro
 	var tcp_peer := StreamPeerTCP.new()
 	var err := tcp_peer.connect_to_host(host_ip, 443)
 	if err != OK:
-		return JamError.err("Failed to connect to upload host for {0} upload".format(reader.filename))
+		return JamError.err("Failed to connect to upload host for {0} upload".format([reader.filename]))
 	while true:
 		tcp_peer.poll()
 		if tcp_peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
