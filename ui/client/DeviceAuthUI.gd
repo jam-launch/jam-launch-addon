@@ -13,7 +13,7 @@ class_name DeviceAuthUI
 
 var cancel_auth: bool = false
 var device_auth_url: String
-var game_id: String
+var game_id: String = ""
 
 enum AUTH_MODE {
 	USER,
@@ -66,7 +66,12 @@ func _on_login_button_pressed():
 
 	var res: JamLoginApi.Result
 	if auth_mode == AUTH_MODE.USER:
-		res = await login_api.request_user_auth(game_id)
+		if len(game_id) > 0:
+			res = await login_api.request_user_auth(game_id)
+		elif OS.is_debug_build():
+			res = await login_api.request_developer_auth()
+		else:
+			res = JamLoginApi.Result.err("missing Game ID from deployment settings - can't log in")
 	else:
 		res = await login_api.request_developer_auth()
 	if res.errored:

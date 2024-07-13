@@ -170,7 +170,7 @@ func _notification(what):
 			else:
 				print("left game session")
 		get_tree().quit()
-#
+
 func enter_session(session_id: String, token: String) -> bool:
 	var res := await client_api.get_game_session(session_id)
 	if res.errored:
@@ -343,3 +343,13 @@ func _set_gjwt(gjwt: String):
 	jam_client.set_gjwt(gjwt)
 	if !OS.is_debug_build() or OS.get_name() == "Android":
 		jam_client.persist_gjwt()
+
+
+func _on_client_pressed():
+	jam_client.client_session_request("localhost", 7437, "localdev")
+
+func _on_server_pressed():
+	jam_connect.start_as_dev_server.call_deferred()
+
+func _on_device_auth_errored(msg):
+	show_error(msg)

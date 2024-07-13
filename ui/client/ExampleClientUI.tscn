@@ -104,6 +104,31 @@ size_flags_horizontal = 3
 text = "Submit
 "
 
+[node name="gap2" type="Control" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual"]
+layout_mode = 2
+
+[node name="Or3" type="Label" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual"]
+layout_mode = 2
+text = "or"
+horizontal_alignment = 1
+
+[node name="gap3" type="Control" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual"]
+layout_mode = 2
+
+[node name="Dev" type="HBoxContainer" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Client" type="Button" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Dev"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Local Client"
+
+[node name="Server" type="Button" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Dev"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Local Server"
+
 [node name="Busy" type="VBoxContainer" parent="CC/M/M/PageStack/GjwtEntry"]
 visible = false
 layout_mode = 2
@@ -425,8 +450,11 @@ theme_override_colors/font_color = Color(0.733333, 0.733333, 0.733333, 1)
 theme_override_font_sizes/font_size = 16
 
 [connection signal="tab_changed" from="CC/M/M/PageStack" to="." method="_on_page_stack_tab_changed"]
+[connection signal="errored" from="CC/M/M/PageStack/GjwtEntry/Entry/DeviceAuth" to="." method="_on_device_auth_errored"]
 [connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/Manual/PasteGjwt" to="." method="_on_paste_gjwt_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/Manual/EnterGjwt/SubmitGjwt" to="." method="_on_submit_gjwt_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Dev/Client" to="." method="_on_client_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Dev/Server" to="." method="_on_server_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartJoin" to="." method="_on_start_join_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartHost" to="." method="_on_start_host_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/HostBack" to="." method="_on_host_back_pressed"]
