@@ -32,3 +32,13 @@ func check_token(username: String, token: String) -> Result:
 			}
 		}
 	)
+
+func get_vars(var_names: Array[String]) -> Result:
+	return await _json_http(
+		"",
+		HTTPClient.METHOD_POST,
+		{
+			"sessionId": session_id,
+			"getVars": var_names
+		}
+	)
