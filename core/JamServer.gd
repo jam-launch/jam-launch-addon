@@ -17,6 +17,9 @@ var dev_mode := false
 ## A callback API client for communicating back to Jam Launch
 var callback_api: JamCallbackApi
 
+## A data API client for persisting project information
+var data_api: JamDataApi
+
 var _jc: JamConnect:
 	get:
 		return get_parent()
@@ -24,6 +27,9 @@ var _jc: JamConnect:
 func _ready():
 	callback_api = JamCallbackApi.new()
 	add_child(callback_api)
+	
+	data_api = JamDataApi.new()
+	add_child(data_api)
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -33,6 +39,8 @@ func _notification(what):
 ## Configures and starts server functionality
 func server_start(args: Dictionary):
 	print("Starting as server...")
+	
+	data_api.project_id = _jc.get_project_id()
 	
 	_jc.m.auth_callback = _auth_callback
 	

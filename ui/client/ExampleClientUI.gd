@@ -344,12 +344,11 @@ func _set_gjwt(gjwt: String):
 	if !OS.is_debug_build() or OS.get_name() == "Android":
 		jam_client.persist_gjwt()
 
-
 func _on_client_pressed():
 	jam_client.client_session_request("localhost", 7437, "localdev")
 
 func _on_server_pressed():
 	jam_connect.start_as_dev_server.call_deferred()
 
-func _on_device_auth_errored(msg):
+func _on_device_auth_errored(msg: String):
 	show_error(msg)

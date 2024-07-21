@@ -1,6 +1,6 @@
 @tool
-extends JamHttpBase
 class_name JamClientApi
+extends JamHttpBase
 
 var game_id: String
 
