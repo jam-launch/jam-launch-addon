@@ -17,7 +17,7 @@ There is an example project that uses this addon
 With a regular Jam Launch account, you can play a deployed version of
 the example project [here](https://app.jamlaunch.com/g/e61CshPH-07).
 
-## Deploy with a Jam Launch Credits
+## Deploy with Jam Launch Credits
 
 Jam Launch credits can be purchased and used to host your project on Jam Launch infrastructure. You only pay for the resources you use, and deployments can be
 done in one click from the addon's editor plugin:
