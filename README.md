@@ -35,3 +35,4 @@ Jam Launch.
 [Report issues in GitHub](https://github.com/jam-launch/jam-launch-addon/issues)
 
 [Join the Discord](https://discord.gg/5NhuMWTcHC)
+
