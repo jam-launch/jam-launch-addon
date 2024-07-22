@@ -112,7 +112,7 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 	var exit_code
 	if OS.get_name() == "Windows":
 		var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
-		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", "'" + project_path + "'", "'" + output_target + "'"], output, true)
 	else:
 		var timeout_check = OS.execute("command", ["-v", "timeout"])
 		var gtimeout_check = OS.execute("command", ["-v", "gtimeout"])
