@@ -138,6 +138,8 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 		else:
 			return JamError.err("Non-zero exit code from export command - %d" % [exit_code])
 	if not (FileAccess.file_exists(output_target) or DirAccess.dir_exists_absolute(output_target)):
+		if (output[0].contains("No export template found at the expected path")):
+			printerr("Make sure you have installed the export templates for this version of Godot - you can check for and download the export templates at 'Editor -> Manage Export Templates...' in the editor menu")
 		return JamError.err("Export failed to produce desired output target")
 	return JamError.ok()
 

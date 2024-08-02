@@ -41,6 +41,7 @@ var auto_export: JamAutoExport
 func _ready():
 	auto_export = JamAutoExport.new()
 	add_child(auto_export)
+	export_busy.lock_changed.connect(latest_release.on_export_active_changed)
 
 func _page_init():
 	log_popup.visible = false

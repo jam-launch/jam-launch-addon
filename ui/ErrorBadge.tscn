@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://ke8nf8ia5klb"]
+
+[ext_resource type="Texture2D" uid="uid://cbq6k2uog5akw" path="res://addons/jam_launch/assets/icons/error.svg" id="1_a0yuq"]
+
+[node name="ErrorBadge" type="TextureRect"]
+modulate = Color(0.533333, 0.533333, 0.533333, 1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_a0yuq")
+stretch_mode = 3

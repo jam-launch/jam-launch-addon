@@ -19,6 +19,8 @@ var project_id: String = ""
 var release_id: String = ""
 var release_data
 
+var local_export_active: bool = false
+
 func _load_lock_changed(locked: bool):
 	check_public.disabled = locked
 
@@ -99,8 +101,11 @@ func set_release(proj_id: String, r: Dictionary):
 		elif b["has_log"]:
 			jobs.add_child(preload("res://addons/jam_launch/ui/FailBadge.tscn").instantiate())
 		else:
-			is_busy = true
-			jobs.add_child(preload("res://addons/jam_launch/ui/BusyBadge.tscn").instantiate())
+			if local_export_active:
+				is_busy = true
+				jobs.add_child(preload("res://addons/jam_launch/ui/BusyBadge.tscn").instantiate())
+			else:
+				jobs.add_child(preload("res://addons/jam_launch/ui/ErrorBadge.tscn").instantiate())
 		
 		var name_lbl = Label.new()
 		name_lbl.text = bname
@@ -118,7 +123,6 @@ func set_release(proj_id: String, r: Dictionary):
 			jobs.add_child(blank)
 	
 	if is_busy:
-		print("build busy")
 		build_busy.emit()
 
 func release_page_uri() -> String:
@@ -138,3 +142,6 @@ func _show_logs(log_url: String):
 
 func _on_page_link_pressed():
 	OS.shell_open(release_page_uri())
+
+func on_export_active_changed(export_active: bool):
+	local_export_active = export_active
