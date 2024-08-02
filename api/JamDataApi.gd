@@ -10,7 +10,7 @@ func _ready():
 	jwt.set_token(OS.get_environment("DATA_KEY"))
 
 func put_object(key: String, object: Dictionary) -> Result:
-	var path = "/proj/%s/data/%s" % [project_id, key]
+	var path := "/proj/%s/data/%s" % [project_id, key]
 	return await _json_http(
 		path,
 		HTTPClient.METHOD_POST,

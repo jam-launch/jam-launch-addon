@@ -110,3 +110,12 @@ func get_test_key(project_id: String, release: String, test_num: int) -> Result:
 			"release": release
 		}
 	) 
+
+func get_local_server_keys(project_id: String, release: String) -> Result:
+	return await _json_http(
+		"/projects/%s/localserverkeys" % [project_id],
+		HTTPClient.METHOD_POST,
+		{
+			"release": release
+		}
+	) 

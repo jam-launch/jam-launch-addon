@@ -14,17 +14,28 @@ var peer_usernames := {}
 ## implementations.
 var dev_mode := false
 
+## True if the local dev mode server has keys for accessing server APIs like
+## Data and Callback 
+var has_dev_keys := false
+
 ## A callback API client for communicating back to Jam Launch
 var callback_api: JamCallbackApi
 
 ## A data API client for persisting project information
 var data_api: JamDataApi
 
+var session_id: String = "unset" :
+	set(v):
+		session_id = v
+		if callback_api:
+			callback_api.session_id = v
+
 var _jc: JamConnect:
 	get:
 		return get_parent()
 
 func _ready():
+	session_id = OS.get_environment("SESSION_ID")
 	callback_api = JamCallbackApi.new()
 	add_child(callback_api)
 	
@@ -114,8 +125,8 @@ func server_start(args: Dictionary):
 	print("Server listening on port %d" % listen_port)
 	
 	if dev_mode:
-		# TODO: mock/local DB and file API using files in user://... ?
 		_jc.server_pre_ready.emit()
+		await _setup_local_dev_keys()
 		_jc.server_post_ready.emit()
 	else:
 		# TODO: new file/DB system
@@ -206,3 +217,61 @@ func shut_down(do_disconnect: bool=true):
 			multiplayer.multiplayer_peer.disconnect_peer(pid as int, true)
 	_jc.server_shutting_down.emit()
 	get_tree().quit()
+
+func _setup_local_dev_keys():
+	var local_keys = await _fetch_local_dev_keys()
+	if local_keys == null:
+		return
+	
+	session_id = local_keys["session_id"]
+	callback_api.api_url = local_keys["callback_url"] as String
+	var res := callback_api.jwt.set_token(local_keys["callback_key"]as String)
+	if res.errored:
+		printerr("failed to set dev key for callback API - %s" % [res.error])
+		return
+	data_api.api_url = local_keys["data_url"] as String
+	res = data_api.jwt.set_token(local_keys["data_key"]as String)
+	if res.errored:
+		printerr("failed to set dev key for data API - %s" % [res.error])
+		return
+	
+	print("Setup local server dev keys for data and callback access - session %s" % [session_id])
+	has_dev_keys = true
+
+func _fetch_local_dev_keys() -> Variant:
+	var peer = StreamPeerTCP.new()
+	peer.connect_to_host("127.0.0.1", 17343)
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to connect to local auth proxy for local server creds")
+			return null
+		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
+			break
+	
+	var parts = _jc.get_game_id().split("-")
+	peer.put_string("serverkeys/%s/%s" % [parts[0], parts[1] + "dev"])
+	
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to get response from local auth proxy for server creds")
+			return null
+		if peer.get_available_bytes() > 0:
+			break
+	
+	var json_response := peer.get_string()
+	
+	if json_response.begins_with("Error:"):
+		push_error("failed to get server creds - %s" % json_response)
+		return null
+	
+	var result = JSON.parse_string(json_response)
+	if result == null:
+		push_error("failed to parse server creds result - %s" % json_response)
+		return null
+	
+	peer.disconnect_from_host()
+	return result

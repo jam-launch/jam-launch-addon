@@ -196,7 +196,7 @@ func get_game_id() -> String:
 ## Gets the session ID
 func get_session_id() -> String:
 	if server:
-		return OS.get_environment("SESSION_ID")
+		return server.session_id
 	elif client:
 		return client.session_id
 	else:

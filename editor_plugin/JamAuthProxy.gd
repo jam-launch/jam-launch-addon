@@ -22,10 +22,22 @@ class RequestHandler:
 			return
 		is_started = true
 		
-		var req_parts = request.split("/")
-		if req_parts[0] != "key":
+		var req_parts := request.split("/")
+		if req_parts[0] == "key":
+			_get_testclient_key(req_parts)
+		elif req_parts[0] == "serverkeys":
+			_get_server_keys(req_parts)
+		else:
 			await _err("Unexpected auth proxy request: %s" % req_parts[0])
 			return
+	
+	func _err(msg: String):
+		printerr(msg)
+		peer.put_string("Error: %s" % msg)
+		await get_tree().create_timer(1.0).timeout
+		is_done = true
+	
+	func _get_testclient_key(req_parts: PackedStringArray):
 		if len(req_parts) != 3:
 			await _err("Expected 3 parts in key request, got %d" % len(req_parts))
 			return
@@ -39,11 +51,19 @@ class RequestHandler:
 		await get_tree().create_timer(1.0).timeout
 		is_done = true
 	
-	func _err(msg: String):
-		printerr(msg)
-		peer.put_string("Error: %s" % msg)
+	func _get_server_keys(req_parts: PackedStringArray):
+		if len(req_parts) != 3:
+			await _err("Expected 3 parts in server keys request, got %d" % len(req_parts))
+			return
+		
+		var res := await api.get_local_server_keys(req_parts[1], req_parts[2])
+		if res.errored:
+			await _err(res.error_msg)
+			return
+		peer.put_string(JSON.stringify(res.data))
 		await get_tree().create_timer(1.0).timeout
 		is_done = true
+		
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
