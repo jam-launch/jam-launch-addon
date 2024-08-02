@@ -15,7 +15,7 @@ There is an example project that uses this addon
 ### Try out a deployed version
 
 With a regular Jam Launch account, you can play a deployed version of
-the example project [here](https://app.jamlaunch.com/g/e61CshPH-07).
+the example project [here](https://app.jamlaunch.com/g/e61CshPH-0K).
 
 ## Deploy with Jam Launch Credits
 
