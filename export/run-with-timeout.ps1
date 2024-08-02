@@ -6,9 +6,16 @@ remaining args are the command to run.
 
 $jobArgs = @( $args | Select-Object -Skip 1 )
 $timeoutSeconds = $args[0]
+
+# Escape spaces in each argument
+$escapedJobArgs = $jobArgs | ForEach-Object { $_ -replace ' ', '` ' }
+
+# Join the arguments into a single string
+$jobArgsString = $escapedJobArgs -join ' '
+
 $wrapped = {
-    Write-Output "Running: $using:jobArgs"
-    powershell.exe -Command "$using:jobArgs"
+    Write-Output "Running: $using:jobArgsString"
+    powershell.exe -Command "$using:jobArgsString"
 }
 Write-Output "Starting command with timeout of ${timeoutSeconds} seconds..."
 $j = Start-Job -ScriptBlock $wrapped

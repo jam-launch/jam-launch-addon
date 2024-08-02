@@ -24,7 +24,7 @@ func _init():
 	thread_helper = JamThreadHelper.new()
 	add_child(thread_helper)
 
-func auto_export(export_config: ExportConfig, staging_dir: String="user://jam-auto-export") -> JamError:
+func auto_export(export_config: ExportConfig, staging_dir: String = "user://jam-auto-export") -> JamError:
 	# set up staging directory where exports will be placed
 	print(export_config.game_id)
 	if DirAccess.dir_exists_absolute(staging_dir) or FileAccess.file_exists(staging_dir):
@@ -112,7 +112,7 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 	var exit_code
 	if OS.get_name() == "Windows":
 		var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
-		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", "'" + project_path + "'", "'" + output_target + "'"], output, true)
+		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	else:
 		var timeout_check = OS.execute("command", ["-v", "timeout"])
 		var gtimeout_check = OS.execute("command", ["-v", "gtimeout"])
@@ -209,7 +209,7 @@ static func zip_folder(source_root: String, zip_path: String) -> JamError:
 		#return JamError.err("Failed to close zip file (error code %d)" % err)
 	#return JamError.ok()
 
-static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String=""):
+static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String = ""):
 	dir.include_hidden = true
 	
 	if len(root_folder) == 0:
@@ -223,7 +223,7 @@ static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String
 		if dir.current_is_dir():
 			recursive_zip(DirAccess.open(abs_file), writer, root_folder)
 		else:
-			err = writer.start_file(abs_file.right( - 1 * len(root_folder)).lstrip("/"))
+			err = writer.start_file(abs_file.right(-1 * len(root_folder)).lstrip("/"))
 			if err != OK:
 				printerr("Unexpected error when starting file write: %d" % err)
 			err = writer.write_file(FileAccess.get_file_as_bytes(abs_file))
@@ -234,7 +234,7 @@ static func recursive_zip(dir: DirAccess, writer: ZIPPacker, root_folder: String
 				printerr("Unexpected error when closing file write: %d" % err)
 		file_name = dir.get_next()
 
-static func merge_presets(additions_path: String, base_path: String="res://export_presets.cfg") -> JamError:
+static func merge_presets(additions_path: String, base_path: String = "res://export_presets.cfg") -> JamError:
 	
 	if not FileAccess.file_exists(base_path):
 		var err = DirAccess.copy_absolute(additions_path, base_path)
@@ -272,7 +272,7 @@ static func merge_presets(additions_path: String, base_path: String="res://expor
 				vals[key] = jam_export_cfg.get_value(opt_section, key)
 			jam_preset_options_map[preset_name] = vals
 		
-		var highest_section_num := - 1
+		var highest_section_num := -1
 		for section in export_cfg.get_sections():
 			var preset_match = preset_regex.search(section)
 			if preset_match == null:
