@@ -111,8 +111,17 @@ static func perform_godot_export(output_base: String, config: BuildConfig, timeo
 		export_arg = "--export-debug"
 	var exit_code
 	if OS.get_name() == "Windows":
-		var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
-		exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		var ps_check_out := []
+		var ps_check = OS.execute("powershell.exe", ["Get-ExecutionPolicy"], ps_check_out, true)
+		if ps_check == 0 and ps_check_out[0].strip_edges() == "Unrestricted":
+			var timeout_script = ProjectSettings.globalize_path("res://addons/jam_launch/export/run-with-timeout.ps1")
+			exit_code = OS.execute("powershell.exe", ["-file", timeout_script, timeout, godot, "--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
+		else:
+			if ps_check != 0:
+				push_warning("powershell.exe failed to execute - export timeout will be ignored")
+			else:
+				push_warning("cannot execute timeout script due to '%s' powershell script execution policy - set 'Set-ExecutionPolicy -Scope CurrentUser unrestricted' in an admin powershell to enable the timeout functionality" % [ps_check_out[0].strip_edges()])
+			exit_code = OS.execute(godot, ["--headless", export_arg, config.template_name, "--path", project_path, output_target], output, true)
 	else:
 		var timeout_check = OS.execute("command", ["-v", "timeout"])
 		var gtimeout_check = OS.execute("command", ["-v", "gtimeout"])
