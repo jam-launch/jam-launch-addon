@@ -7,6 +7,9 @@ var connections: Array[StreamPeerTCP]
 var req_counter := 0
 var api: JamProjectApi
 
+var localhostKey: String
+var localhostCert: String
+
 class RequestHandler:
 	extends Node
 	
@@ -16,6 +19,8 @@ class RequestHandler:
 	var api: JamProjectApi
 	var is_done: bool = false
 	var is_started: bool = false
+	var localhostKey: String = ""
+	var localhostCert: String = ""
 	
 	func _process(_delta):
 		if is_started:
@@ -27,6 +32,10 @@ class RequestHandler:
 			_get_testclient_key(req_parts)
 		elif req_parts[0] == "serverkeys":
 			_get_server_keys(req_parts)
+		elif req_parts[0] == "localhostkey":
+			_get_localhost_key(req_parts)
+		elif req_parts[0] == "localhostcert":
+			_get_localhost_cert(req_parts)
 		else:
 			await _err("Unexpected auth proxy request: %s" % req_parts[0])
 			return
@@ -63,6 +72,22 @@ class RequestHandler:
 		peer.put_string(JSON.stringify(res.data))
 		await get_tree().create_timer(1.0).timeout
 		is_done = true
+	
+	func _get_localhost_key(req_parts: PackedStringArray):
+		if len(req_parts) != 1:
+			await _err("Expected 1 part in localhost key request, got %d" % len(req_parts))
+			return
+		peer.put_string(localhostKey)
+		await get_tree().create_timer(1.0).timeout
+		is_done = true
+	
+	func _get_localhost_cert(req_parts: PackedStringArray):
+		if len(req_parts) != 1:
+			await _err("Expected 1 parts in localhost cert request, got %d" % len(req_parts))
+			return
+		peer.put_string(localhostCert)
+		await get_tree().create_timer(1.0).timeout
+		is_done = true
 		
 
 # Called when the node enters the scene tree for the first time.
@@ -74,7 +99,13 @@ func start():
 	if server.is_listening():
 		return
 	print_debug("starting Jam Launch auth proxy server...")
-	var port = 17343
+	
+	var crypto := Crypto.new()
+	var key := crypto.generate_rsa(2048)
+	localhostKey = key.save_to_string()
+	localhostCert = crypto.generate_self_signed_certificate(key, "CN=localhost").save_to_string()
+	
+	var port := 17343
 	var err := server.listen(port, "127.0.0.1")
 	if err != OK:
 		printerr("failed to start auth proxy server - code %d" % err)
@@ -115,6 +146,8 @@ func _process(delta):
 		
 		var req_string = c.get_string()
 		var req = RequestHandler.new()
+		req.localhostKey = localhostKey
+		req.localhostCert = localhostCert
 		req.request = req_string
 		req.request_num = req_counter
 		req.api = api

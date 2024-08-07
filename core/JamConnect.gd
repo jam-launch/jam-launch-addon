@@ -238,3 +238,70 @@ func _send_game_init_finalized():
 @rpc("reliable")
 func notify_players(msg: String):
 	log_event.emit(msg)
+
+
+func fetch_dev_localhost_key() -> Variant:
+	var peer = StreamPeerTCP.new()
+	peer.connect_to_host("127.0.0.1", 17343)
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to connect to local auth proxy for localhost cert key info - this might result in TLS handshake errors")
+			peer.disconnect_from_host()
+			return null
+		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
+			break
+	
+	peer.put_string("localhostkey")
+	
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to get response from local auth proxy for localhost cert key")
+			peer.disconnect_from_host()
+			return null
+		if peer.get_available_bytes() > 0:
+			break
+	
+	var response := peer.get_string()
+	
+	if response.begins_with("Error:"):
+		push_error("failed to get localhost cert key - %s" % response)
+		return null
+	
+	return response
+
+func fetch_dev_localhost_cert() -> Variant:
+	var peer = StreamPeerTCP.new()
+	peer.connect_to_host("127.0.0.1", 17343)
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to connect to local auth proxy for localhost cert - this might result in TLS handshake errors")
+			peer.disconnect_from_host()
+			return null
+		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
+			break
+	
+	peer.put_string("localhostcert")
+	
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		var err := peer.poll()
+		if err != OK:
+			push_error("failed to get response from local auth proxy for localhost cert")
+			peer.disconnect_from_host()
+			return null
+		if peer.get_available_bytes() > 0:
+			break
+	
+	var response := peer.get_string()
+	
+	if response.begins_with("Error:"):
+		push_error("failed to get localhost cert - %s" % response)
+		return null
+	
+	return response

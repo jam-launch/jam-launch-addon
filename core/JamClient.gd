@@ -113,8 +113,15 @@ func client_session_request(host: String, port: int, token: String):
 	var peer
 	var err
 	if _jc.network_mode == "websocket":
+		var chain: X509Certificate = null
+		if host == "localhost" and OS.is_debug_build():
+			var localchain = await _jc.fetch_dev_localhost_cert()
+			if localchain != null:
+				chain = X509Certificate.new()
+				chain.load_from_string(localchain as String)
+			
 		peer = WebSocketMultiplayerPeer.new()
-		err = peer.create_client("wss://%s:%d" % [host, port], TLSOptions.client_unsafe())
+		err = peer.create_client("wss://%s:%d" % [host, port], TLSOptions.client_unsafe(chain))
 	else:
 		peer = ENetMultiplayerPeer.new()
 		err = peer.create_client(host, port)

@@ -24,7 +24,7 @@ var callback_api: JamCallbackApi
 ## A data API client for persisting project information
 var data_api: JamDataApi
 
-var session_id: String = "unset" :
+var session_id: String = "unset":
 	set(v):
 		session_id = v
 		if callback_api:
@@ -69,8 +69,19 @@ func server_start(args: Dictionary):
 		var cert: X509Certificate
 		if OS.is_debug_build() or dev_mode:
 			var crypto = Crypto.new()
-			key = crypto.generate_rsa(2048)
-			cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
+			var localkey = await _jc.fetch_dev_localhost_key()
+			if localkey != null:
+				key = CryptoKey.new()
+				key.load_from_string(localkey as String)
+			else:
+				key = crypto.generate_rsa(2048)
+			
+			var localcert = await _jc.fetch_dev_localhost_cert()
+			if localcert != null:
+				cert = X509Certificate.new()
+				cert.load_from_string(localcert as String)
+			else:
+				cert = crypto.generate_self_signed_certificate(key, "CN=localhost")
 		else:
 			print("Setting up certificates for secure websockets...")
 			var extra_downloads := OS.get_environment("EXTRA_DOWNLOAD_URLS")
@@ -209,7 +220,7 @@ func _on_peer_disconnect(pid: int):
 		shut_down(false)
 
 ## Shuts down the server elegantly
-func shut_down(do_disconnect: bool=true):
+func shut_down(do_disconnect: bool = true):
 	if do_disconnect:
 		for pid in _jc.m.get_authenticating_peers():
 			multiplayer.multiplayer_peer.disconnect_peer(pid, true)
@@ -225,12 +236,12 @@ func _setup_local_dev_keys():
 	
 	session_id = local_keys["session_id"]
 	callback_api.api_url = local_keys["callback_url"] as String
-	var res := callback_api.jwt.set_token(local_keys["callback_key"]as String)
+	var res := callback_api.jwt.set_token(local_keys["callback_key"] as String)
 	if res.errored:
 		printerr("failed to set dev key for callback API - %s" % [res.error])
 		return
 	data_api.api_url = local_keys["data_url"] as String
-	res = data_api.jwt.set_token(local_keys["data_key"]as String)
+	res = data_api.jwt.set_token(local_keys["data_key"] as String)
 	if res.errored:
 		printerr("failed to set dev key for data API - %s" % [res.error])
 		return
