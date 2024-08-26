@@ -1,0 +1,109 @@
+[gd_scene load_steps=4 format=3 uid="uid://dycr2bcl2gmlt"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/ChannelSummary.gd" id="1_ocfq5"]
+[ext_resource type="Theme" uid="uid://cw4h2pbqj113b" path="res://addons/jam_launch/themes/sub_panel.tres" id="2_fea5n"]
+[ext_resource type="Texture2D" uid="uid://ds0nr8tqtmbp2" path="res://addons/jam_launch/assets/icons/lock.svg" id="3_3cnus"]
+
+[node name="ChannelSummary" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1020.0
+offset_bottom = -443.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ocfq5")
+
+[node name="P" type="Panel" parent="."]
+layout_mode = 2
+
+[node name="M" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VB" type="VBoxContainer" parent="M"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="RichTextLabel" parent="M/VB"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[b]stable[/b]
+[color=\"#888\"]No Release
+[/color]"
+fit_content = true
+scroll_active = false
+
+[node name="Config" type="PanelContainer" parent="M/VB"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_fea5n")
+
+[node name="MC" type="MarginContainer" parent="M/VB/Config"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VB" type="VBoxContainer" parent="M/VB/Config/MC"]
+layout_mode = 2
+
+[node name="HB" type="HBoxContainer" parent="M/VB/Config/MC/VB"]
+visible = false
+layout_mode = 2
+
+[node name="PageLink" type="Button" parent="M/VB/Config/MC/VB/HB"]
+layout_mode = 2
+text = "Download Page"
+
+[node name="Copy" type="Button" parent="M/VB/Config/MC/VB/HB"]
+layout_mode = 2
+
+[node name="CheckDefault" type="CheckButton" parent="M/VB/Config/MC/VB"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+focus_mode = 0
+text = "Default Channel"
+
+[node name="CheckGuests" type="CheckButton" parent="M/VB/Config/MC/VB"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+focus_mode = 0
+text = "Guests"
+
+[node name="Access" type="HBoxContainer" parent="M/VB/Config/MC/VB"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="AccessIcon" type="TextureRect" parent="M/VB/Config/MC/VB/Access"]
+layout_mode = 2
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+texture = ExtResource("3_3cnus")
+stretch_mode = 5
+
+[node name="CheckPublic" type="CheckButton" parent="M/VB/Config/MC/VB/Access"]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Private releases are only accessible to you.
+
+Public releases are accessible to anyone with the link."
+focus_mode = 0
+text = "Private"
+
+[connection signal="pressed" from="M/VB/Config/MC/VB/HB/PageLink" to="." method="_on_page_link_pressed"]
+[connection signal="pressed" from="M/VB/Config/MC/VB/HB/Copy" to="." method="_on_copy_pressed"]
+[connection signal="toggled" from="M/VB/Config/MC/VB/CheckDefault" to="." method="_on_config_change"]
+[connection signal="toggled" from="M/VB/Config/MC/VB/CheckGuests" to="." method="_on_config_change"]
+[connection signal="toggled" from="M/VB/Config/MC/VB/Access/CheckPublic" to="." method="_on_config_change"]

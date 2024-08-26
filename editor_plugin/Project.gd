@@ -11,11 +11,13 @@ extends JamEditorPluginPage
 @onready var btn_sessions: Button = $HB/Config/BtnSessions
 
 @onready var deploy_busy: Control = $HB/Releases/VB/PreparingBusy
-@onready var latest_release: Control = $HB/Releases/VB/ReleaseSummary
 
 @onready var platform_options: MenuButton = $HB/Config/PlatformOptions
 
 @onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
+
+@onready var channels_root: VBoxContainer = $HB/Channels/VB/VB
+@onready var releases_root: VBoxContainer = $HB/Releases/VB/VB
 
 @onready var export_busy: ScopeLocker = $ExportBusy
 @onready var export_prep_busy: ScopeLocker = $ExportPrepBusy
@@ -41,19 +43,16 @@ var auto_export: JamAutoExport
 func _ready():
 	auto_export = JamAutoExport.new()
 	add_child(auto_export)
-	export_busy.lock_changed.connect(latest_release.on_export_active_changed)
 
 func _page_init():
 	log_popup.visible = false
 	btn_deploy.icon = dashboard.editor_icon("ArrowUp")
 	btn_sessions.icon = dashboard.editor_icon("GuiVisibilityVisible")
 	
-	latest_release.dashboard = dashboard
 	dashboard.load_locker.lock_changed.connect(_load_lock_changed)
 	
 	platform_options.get_popup().id_pressed.connect(_on_platform_option_selected)
 	
-	latest_release.build_busy.connect(_on_build_busy)
 
 func show_init():
 	if active_project:
@@ -70,7 +69,7 @@ func refresh_page():
 func show_project(project_id: String, project_name: String = "..."):
 	active_id = project_id
 	dashboard.toolbar_title.text = project_name
-	latest_release.visible = false
+	releases_root.visible = false
 	if not await refresh_project():
 		$AutoRefreshTimer.start(1.0)
 
@@ -100,16 +99,46 @@ func setup_project_data(p):
 	dashboard.toolbar_title.text = p["project_name"]
 	
 	var plat_menu = platform_options.get_popup()
-
-	if "releases" in active_project and len(active_project["releases"]) > 0:
-		for idx in range(plat_menu.item_count):
-			plat_menu.set_item_checked(idx, false)
+	
+	var available_channels = []
+	while channels_root.get_child_count() > 0:
+		var c = channels_root.get_child(0)
+		channels_root.remove_child(c)
+		c.queue_free()
+	var sorted_channels = active_project.get("channels", [])
+	sorted_channels.sort_custom(func (a, _b): return a.get("default_release", false))
+	for channel in sorted_channels:
+		available_channels.append(channel.get("name"))
+		var channel_release = "No Release"
+		for rel in active_project.get("releases", []):
+			if rel.get("channel") == channel.get("name"):
+				channel_release = "Release: %s" % [rel.get("id", "")]
+		var summary = preload("res://addons/jam_launch/editor_plugin/ChannelSummary.tscn").instantiate()
+		channels_root.add_child(summary)
+		summary.set_channel(channel, channel_release)
+		summary.update_channel.connect(_update_channel)
 		
-		latest_release.visible = true
-		var r = active_project["releases"][len(active_project["releases"]) - 1]
+	while releases_root.get_child_count() > 0:
+		var rel = releases_root.get_child(0)
+		releases_root.remove_child(rel)
+		rel.queue_free()
+	var sorted_releases = active_project.get("releases", [])
+	sorted_releases.reverse()
+	for r in sorted_releases:
+		var rel_summary = preload("res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn").instantiate()
+		releases_root.add_child(rel_summary)
+		rel_summary.dashboard = dashboard
+		rel_summary.build_busy.connect(_on_build_busy)
+		export_busy.lock_changed.connect(rel_summary.on_export_active_changed)
+		rel_summary.set_channels(available_channels)
+		rel_summary.set_release(active_id, r)
 		
-		#print(r)
-		
+		rel_summary.update_release.connect(_update_release)
+		rel_summary.show_logs.connect(_show_logs)
+	
+	if len(sorted_releases) > 0:
+		releases_root.visible = true
+		var r = sorted_releases[0]
 		var net_mode = r["network_mode"]
 		net_mode_box.disabled = false
 		if net_mode == "enet":
@@ -123,8 +152,8 @@ func setup_project_data(p):
 			net_mode_box.select(-1)
 		plat_menu.set_item_disabled(3, net_mode == "enet")
 		
-		latest_release.set_release(active_id, r)
-		
+		for idx in range(plat_menu.item_count):
+			plat_menu.set_item_checked(idx, false)
 		for b in r["builds"]:
 			var bname: String = b["name"]
 			if "Linux" == bname:
@@ -137,19 +166,19 @@ func setup_project_data(p):
 				plat_menu.set_item_checked(3, true)
 			elif "Android" == bname:
 				plat_menu.set_item_checked(4, true)
-		
+	
 		if r["id"] != null:
 			var dir = self.get_script().get_path().get_base_dir()
 			var deployment_cfg = ConfigFile.new()
 			deployment_cfg.set_value("game", "id", "%s-%s" % [active_id, r["id"]])
 			deployment_cfg.set_value("game", "network_mode", net_mode)
+			deployment_cfg.set_value("game", "allow_guests", r.get("allow_guests", false))
 			var err = deployment_cfg.save(dir + "/../deployment.cfg")
 			if err != OK:
 				dashboard.show_error("Failed to save current deployment configuration")
 				return
 	else:
 		no_deployments.visible = true
-		
 		plat_menu.set_item_checked(0, true)
 		plat_menu.set_item_checked(1, true)
 		plat_menu.set_item_checked(2, true)
@@ -169,7 +198,22 @@ func _update_release(release_id: String, props: Dictionary):
 	
 	if res.errored:
 		dashboard.show_error(res.error_msg)
+	
+	refresh_project.call_deferred()
+
+func _update_channel(channel: String, props: Dictionary):
+	if len(active_id) < 1:
+		return false
+	
+	if dashboard.load_locker.is_locked():
+		dashboard.show_error("cannot update channel while handling another request")
 		return
+	var lock = dashboard.load_locker.get_lock()
+	
+	var res = await project_api.update_channel(active_id, channel, props)
+	
+	if res.errored:
+		dashboard.show_error(res.error_msg)
 	
 	refresh_project.call_deferred()
 
@@ -380,4 +424,23 @@ func _on_export_busy_lock_changed(locked):
 
 func _on_export_prep_busy_lock_changed(locked):
 	deploy_busy.visible = locked
-	latest_release.visible = not locked
+	releases_root.visible = not locked
+
+
+func _on_add_channel_pressed() -> void:
+	$CreateChannel/VB/NewChannelName.clear()
+	$CreateChannel.popup_centered()
+	
+
+func _on_create_channel_confirmed() -> void:
+	var lock = $ChannelUpdateBusy.get_lock()
+	var res = await project_api.create_channel(active_id, $CreateChannel/VB/NewChannelName.text)
+	if res.errored:
+		dashboard.show_error(res.error_msg)
+	
+	refresh_project.call_deferred()
+
+
+func _on_channel_update_busy_lock_changed(locked: bool) -> void:
+	$HB/Channels/VB/ChangeBusy.visible = locked
+	$HB/Channels/VB/VB.visible = not locked

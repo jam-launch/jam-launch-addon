@@ -8,6 +8,7 @@
 
 [sub_resource type="SystemFont" id="SystemFont_s3gwr"]
 font_names = PackedStringArray("Monospace")
+subpixel_positioning = 0
 
 [node name="Project" type="MarginContainer"]
 anchors_preset = 15
@@ -56,11 +57,10 @@ text = "Release Options:"
 
 [node name="NetworkMode" type="OptionButton" parent="HB/Config"]
 layout_mode = 2
-item_count = 3
 selected = 0
 fit_to_longest_item = false
+item_count = 3
 popup/item_0/text = "ENet"
-popup/item_0/id = 0
 popup/item_1/text = "WebSocket"
 popup/item_1/id = 1
 popup/item_2/text = "WebRTC"
@@ -76,7 +76,6 @@ item_count = 5
 popup/item_0/text = "Linux"
 popup/item_0/checkable = 1
 popup/item_0/checked = true
-popup/item_0/id = 0
 popup/item_1/text = "Windows"
 popup/item_1/checkable = 1
 popup/item_1/checked = true
@@ -106,24 +105,27 @@ text = "View Sessions"
 [node name="BtnDelete" type="Button" parent="HB/Config"]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_colors/font_color = Color(1, 0.533333, 0.466667, 1)
-theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
 theme_override_colors/font_hover_color = Color(1, 0.733333, 0.666667, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.866667, 0.8, 1)
 theme_override_colors/font_focus_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/font_color = Color(1, 0.533333, 0.466667, 1)
 theme_override_colors/icon_normal_color = Color(1, 0.533333, 0.466667, 1)
+theme_override_colors/icon_focus_color = Color(1, 0.533333, 0.466667, 1)
 theme_override_colors/icon_pressed_color = Color(1, 0.866667, 0.8, 1)
 theme_override_colors/icon_hover_color = Color(1, 0.733333, 0.666667, 1)
-theme_override_colors/icon_focus_color = Color(1, 0.533333, 0.466667, 1)
 text = "Delete Project"
 icon = ExtResource("2_36hr7")
 
-[node name="Releases" type="VBoxContainer" parent="HB"]
+[node name="Releases" type="ScrollContainer" parent="HB"]
 layout_mode = 2
+horizontal_scroll_mode = 0
 
 [node name="VB" type="VBoxContainer" parent="HB/Releases"]
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_constants/separation = 16
+
+[node name="RecentReleases" type="Label" parent="HB/Releases/VB"]
+layout_mode = 2
+text = "Recent Releases"
 
 [node name="PreparingBusy" type="HBoxContainer" parent="HB/Releases/VB"]
 visible = false
@@ -143,9 +145,53 @@ visible = false
 layout_mode = 2
 text = "No active deployments..."
 
-[node name="ReleaseSummary" parent="HB/Releases/VB" instance=ExtResource("2_x4il8")]
+[node name="VB" type="VBoxContainer" parent="HB/Releases/VB"]
 layout_mode = 2
 size_flags_horizontal = 0
+theme_override_constants/separation = 16
+
+[node name="ReleaseSummary" parent="HB/Releases/VB/VB" instance=ExtResource("2_x4il8")]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="Channels" type="ScrollContainer" parent="HB"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VB" type="VBoxContainer" parent="HB/Channels"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="HB/Channels/VB"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Channels" type="Label" parent="HB/Channels/VB/Header"]
+layout_mode = 2
+text = "Channels"
+
+[node name="Control" type="Control" parent="HB/Channels/VB/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AddChannel" type="Button" parent="HB/Channels/VB/Header"]
+layout_mode = 2
+text = "Add Channel"
+
+[node name="ChangeBusy" type="HBoxContainer" parent="HB/Channels/VB"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BusyBadge" parent="HB/Channels/VB/ChangeBusy" instance=ExtResource("3_232eu")]
+layout_mode = 2
+padding_ratio = 0.1
+
+[node name="Label" type="Label" parent="HB/Channels/VB/ChangeBusy"]
+layout_mode = 2
+text = "Updating channels..."
+
+[node name="VB" type="VBoxContainer" parent="HB/Channels/VB"]
+layout_mode = 2
 
 [node name="AutoRefreshTimer" type="Timer" parent="."]
 one_shot = true
@@ -182,16 +228,44 @@ script = ExtResource("5_d5nsn")
 [node name="ExportPrepBusy" type="Node" parent="."]
 script = ExtResource("5_d5nsn")
 
+[node name="ChannelUpdateBusy" type="Node" parent="."]
+script = ExtResource("5_d5nsn")
+
 [node name="LogRequest" type="HTTPRequest" parent="."]
 use_threads = true
+
+[node name="CreateChannel" type="ConfirmationDialog" parent="."]
+title = "Add Release Channel"
+size = Vector2i(250, 150)
+min_size = Vector2i(200, 150)
+max_size = Vector2i(250, 16384)
+ok_button_text = "Create"
+
+[node name="VB" type="VBoxContainer" parent="CreateChannel"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 242.0
+offset_bottom = 101.0
+
+[node name="Label" type="Label" parent="CreateChannel/VB"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Enter a name for the new release channel"
+autowrap_mode = 3
+
+[node name="NewChannelName" type="LineEdit" parent="CreateChannel/VB"]
+layout_mode = 2
 
 [connection signal="pressed" from="HB/Config/BtnDeploy" to="." method="_on_btn_deploy_pressed"]
 [connection signal="item_selected" from="HB/Config/NetworkMode" to="." method="_on_config_item_selected"]
 [connection signal="pressed" from="HB/Config/BtnSessions" to="." method="_on_btn_sessions_pressed"]
 [connection signal="pressed" from="HB/Config/BtnDelete" to="." method="_on_btn_delete_pressed"]
-[connection signal="show_logs" from="HB/Releases/VB/ReleaseSummary" to="." method="_show_logs"]
-[connection signal="update_release" from="HB/Releases/VB/ReleaseSummary" to="." method="_update_release"]
+[connection signal="show_logs" from="HB/Releases/VB/VB/ReleaseSummary" to="." method="_show_logs"]
+[connection signal="update_release" from="HB/Releases/VB/VB/ReleaseSummary" to="." method="_update_release"]
+[connection signal="pressed" from="HB/Channels/VB/Header/AddChannel" to="." method="_on_add_channel_pressed"]
 [connection signal="timeout" from="AutoRefreshTimer" to="." method="_on_auto_refresh_timer_timeout"]
 [connection signal="confirmed" from="ConfirmDelete" to="." method="_on_confirm_delete_confirmed"]
 [connection signal="lock_changed" from="ExportBusy" to="." method="_on_export_busy_lock_changed"]
 [connection signal="lock_changed" from="ExportPrepBusy" to="." method="_on_export_prep_busy_lock_changed"]
+[connection signal="lock_changed" from="ChannelUpdateBusy" to="." method="_on_channel_update_busy_lock_changed"]
+[connection signal="confirmed" from="CreateChannel" to="." method="_on_create_channel_confirmed"]

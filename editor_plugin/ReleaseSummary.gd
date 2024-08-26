@@ -8,6 +8,12 @@ extends MarginContainer
 @onready var access_icon: TextureRect = $M/HB/VB/Config/MC/VB/Access/AccessIcon
 @onready var jobs: GridContainer = $M/HB/M/PC/MC/VB/Jobs
 
+@onready var check_guests: CheckButton = $M/HB/VB/Config/MC/VB/Guests/CheckGuests
+
+@onready var channel_menu: MenuButton = $M/HB/VB/Config/MC/VB/SetChannel
+@onready var current_channel: Control = $M/HB/VB/Config/MC/VB/CurrentChannel
+@onready var current_channel_lbl: Label = $M/HB/VB/Config/MC/VB/CurrentChannel/Channel
+
 var dashboard: JamEditorPluginDashboard:
 	set(d):
 		dashboard = d
@@ -23,6 +29,8 @@ var local_export_active: bool = false
 
 func _load_lock_changed(locked: bool):
 	check_public.disabled = locked
+	check_guests.disabled = locked
+	channel_menu.disabled = locked
 
 signal update_release(release_id: String, data: Dictionary)
 signal show_logs(log_url: String)
@@ -38,6 +46,14 @@ func _ready():
 		printerr("Failed to load settings for dashboard address")
 		return
 	dashboard_url = "https://%s" % settings.get_value("api", "dashboard_domain")
+	
+	channel_menu.get_popup().index_pressed.connect(_on_channel_selected)
+
+func set_channels(channels: Array):
+	var popup = channel_menu.get_popup()
+	popup.clear()
+	for c in channels:
+		popup.add_item(c)
 
 func set_release(proj_id: String, r: Dictionary):
 	
@@ -79,6 +95,20 @@ func set_release(proj_id: String, r: Dictionary):
 		check_public.button_pressed = false
 		access_icon.texture = preload("res://addons/jam_launch/assets/icons/lock.svg")
 		access_icon.modulate = Color("white")
+	
+	if r.get("allow_guests"):
+		check_guests.button_pressed = true
+	else:
+		check_guests.button_pressed = false
+	
+	if r.get("channel"):
+		current_channel.visible = true
+		channel_menu.visible = false
+		current_channel_lbl.text = "Channel: " + r["channel"]
+	else:
+		current_channel.visible = false
+		channel_menu.visible = true
+		current_channel_lbl.text = ""
 	
 	for child in jobs.get_children():
 		child.queue_free()
@@ -145,3 +175,19 @@ func _on_page_link_pressed():
 
 func on_export_active_changed(export_active: bool):
 	local_export_active = export_active
+
+func _on_check_guests_toggled(toggled_on: bool) -> void:
+	if check_guests.disabled:
+		# ignore check state changes that happen during an update
+		return
+	update_release.emit(release_id, {"allow_guests": toggled_on})
+
+
+func _on_clear_channel_pressed() -> void:
+	if not release_data or not release_data.get("channel"):
+		return
+	update_release.emit(release_id, {"channel": null})
+
+func _on_channel_selected(idx: int) -> void:
+	var channel = channel_menu.get_popup().get_item_text(idx)
+	update_release.emit(release_id, {"channel": channel})

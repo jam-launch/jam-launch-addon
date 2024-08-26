@@ -119,3 +119,27 @@ func get_local_server_keys(project_id: String, release: String) -> Result:
 			"release": release
 		}
 	) 
+
+
+
+func create_channel(project_id: String, channel: String) -> Result:
+	return await _json_http(
+		"/projects/%s/channels" % [project_id],
+		HTTPClient.METHOD_POST,
+		{
+			"name": channel
+		}
+	)
+
+func update_channel(project_id: String, channel: String, props: Dictionary) -> Result:
+	return await _json_http(
+		"/projects/%s/channels/%s" % [project_id, channel],
+		HTTPClient.METHOD_POST,
+		props
+	)
+
+func get_channels(project_id: String, release: String) -> Result:
+	return await _json_http(
+		"/projects/%s/channels" % [project_id],
+		HTTPClient.METHOD_GET
+	) 
