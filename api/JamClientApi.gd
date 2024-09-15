@@ -110,3 +110,6 @@ func leave_game_session(session_id: String) -> Result:
 		HTTPClient.METHOD_POST,
 		{}
 	)
+
+func get_guest_jwt(game_id: String) -> Result:
+	return await _json_http("/guest-auth/%s" % [game_id])

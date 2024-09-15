@@ -80,6 +80,12 @@ var server: JamServer
 ## sync happens automatically when the project page is loaded)
 var game_id: String
 
+
+## Whether or not guests are allowed to play this release. Usually derived from
+## the [code]deployment.cfg[/code] file. This does not need to be enforced by
+## the game in any way - it is mostly provided for UI awareness.
+var allow_guests: bool = false
+
 ## The network mode for the client/server interaction as determined by the 
 ## [code]deployment.cfg[/code] file.
 ## [br][br]
@@ -131,6 +137,7 @@ func _init():
 			printerr("FATAL: deployment.cfg does not contain a game id value")
 			get_tree().quit(1)
 			return
+		allow_guests = deployment_info.get_value("game", "allow_guests", false)
 		network_mode = deployment_info.get_value("game", "network_mode", "enet")
 		has_deployment = true
 

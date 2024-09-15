@@ -32,6 +32,9 @@ extends JamClientUI
 @onready var host_region_select: OptionButton = $CC/M/M/PageStack/HostGame/G/RegionSelect
 @onready var host_btn: Button = $CC/M/M/PageStack/HostGame/HB/Host
 
+@onready var guest_auth_ui: VBoxContainer = $CC/M/M/PageStack/GjwtEntry/Entry/Manual/Guest
+@onready var local_launch_ui: VBoxContainer = $CC/M/M/PageStack/GjwtEntry/Entry/Manual/Local
+
 const REFRESH_NORMAL = 4.0
 const REFRESH_FAST = 2.0
 const REFRESH_SLOW = 5.0
@@ -90,8 +93,11 @@ func _ready():
 	if OS.is_debug_build() and OS.get_name() != "Android":
 		dev_tools.get_popup().id_pressed.connect(_on_devtools_pressed)
 		version_info.text += " (debug)"
+		local_launch_ui.visible = true
 	else:
 		dev_tools.visible = false
+		local_launch_ui.visible = false
+	guest_auth_ui.visible = jam_connect.allow_guests
 	
 	device_auth.active_auth.connect(_on_active_device_auth)
 	device_auth.has_token.connect(_set_gjwt)
@@ -352,3 +358,14 @@ func _on_server_pressed():
 
 func _on_device_auth_errored(msg: String):
 	show_error(msg)
+
+func _on_guest_auth_pressed() -> void:
+	_on_gjwt_fetch_busy(true)
+	
+	var res = await jam_client.api.get_guest_jwt(jam_connect.game_id)
+	if res.errored:
+		show_error(res.error_msg)
+	else:
+		jam_client.set_gjwt(res.data["token"])
+	
+	_on_gjwt_fetch_busy.call_deferred(false)
