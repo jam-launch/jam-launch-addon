@@ -113,3 +113,6 @@ func leave_game_session(session_id: String) -> Result:
 
 func get_guest_jwt(game_id: String) -> Result:
 	return await _json_http("/guest-auth/%s" % [game_id])
+
+func check_guests_allowed(game_id: String) -> Result:
+	return await _json_http("/guest-auth/%s/allowed" % [game_id])

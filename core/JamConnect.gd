@@ -81,10 +81,10 @@ var server: JamServer
 var game_id: String
 
 
-## Whether or not guests are allowed to play this release. Usually derived from
-## the [code]deployment.cfg[/code] file. This does not need to be enforced by
-## the game in any way - it is mostly provided for UI awareness.
+## Whether or not guests are allowed to play this release. This does not need to
+## be enforced by the game in any way - it is mostly provided for UI awareness.
 var allow_guests: bool = false
+
 
 ## The network mode for the client/server interaction as determined by the 
 ## [code]deployment.cfg[/code] file.

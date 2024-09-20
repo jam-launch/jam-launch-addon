@@ -71,6 +71,7 @@ auth_mode = 0
 layout_mode = 2
 
 [node name="Guest" type="VBoxContainer" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual"]
+visible = false
 layout_mode = 2
 
 [node name="Or" type="Label" parent="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Guest"]

@@ -97,6 +97,9 @@ func _ready():
 	else:
 		dev_tools.visible = false
 		local_launch_ui.visible = false
+	
+	var allow_guests = await client_api.check_guests_allowed(jam_connect.game_id)
+	jam_connect.allow_guests = not allow_guests.errored
 	guest_auth_ui.visible = jam_connect.allow_guests
 	
 	device_auth.active_auth.connect(_on_active_device_auth)
