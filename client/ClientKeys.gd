@@ -11,7 +11,7 @@ func _init():
 		add_child(dev_mode_api)
 
 func _get_web_gjwt() -> Variant:
-	var js_return = JavaScriptBridge.eval("getJamLaunchGJWT();")
+	var js_return = JavaScriptBridge.eval("window.getJamLaunchGJWT?.() ?? null;")
 	if !js_return:
 		printerr("failed to retrieve GJWT in browser context")
 	return js_return

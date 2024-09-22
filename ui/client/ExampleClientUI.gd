@@ -10,7 +10,6 @@ extends JamClientUI
 @onready var errors: Control = $Bottom/ErrorArea/Errors
 @onready var version_info: Label = $Bottom/M/VersionInfo
 
-@onready var gjwt_edit: LineEdit = $CC/M/M/PageStack/GjwtEntry/Entry/Manual/EnterGjwt/GjwtEdit
 @onready var device_auth: DeviceAuthUI = $CC/M/M/PageStack/GjwtEntry/Entry/DeviceAuth
 @onready var manual_auth: Control = $CC/M/M/PageStack/GjwtEntry/Entry/Manual
 @onready var gjwt_entry: Control = $CC/M/M/PageStack/GjwtEntry/Entry
@@ -340,13 +339,6 @@ func _on_start_game_pressed():
 	else:
 		show_error("cannot start game without a session that is ready", 5.0)
 		return
-
-func _on_paste_gjwt_pressed():
-	var gjwt := DisplayServer.clipboard_get()
-	_set_gjwt(gjwt)
-
-func _on_submit_gjwt_pressed():
-	_set_gjwt(gjwt_edit.text)
 
 func _set_gjwt(gjwt: String):
 	jam_client.set_gjwt(gjwt)
