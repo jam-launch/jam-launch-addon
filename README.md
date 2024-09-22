@@ -4,8 +4,8 @@ This Godot 4 addon simplifies the deployment and hosting of multiplayer games.
 It includes scripts for bootstrapping multiplayer games and an editor plugin
 that facilitates deployment into the Jam Launch cloud.
 
-Most features require a Jam Launch account. You can sign up for an account
-[here](https://app.jamlaunch.com).
+Developer features require a Jam Launch account with a positive credit balance.
+You can sign up for an account [here](https://app.jamlaunch.com).
 
 ## Example project
 
@@ -14,15 +14,15 @@ There is an example project that uses this addon
 
 ### Try out a deployed version
 
-With a regular Jam Launch account, you can play a deployed version of
-the example project [here](https://app.jamlaunch.com/g/e61CshPH-0K).
+Try out a deployed version of the example project
+[here](https://example.jamlaunch.net).
 
 ## Deploy with Jam Launch Credits
 
 Jam Launch credits can be purchased and used to host your project on Jam Launch infrastructure. You only pay for the resources you use, and deployments can be
 done in one click from the addon's editor plugin:
 
-[![watch demo video](https://img.youtube.com/vi/apw_38sqIZ8/0.jpg)](https://youtu.be/apw_38sqIZ8)
+[![watch demo video](https://img.youtube.com/vi/l0szgibI48A/0.jpg)](https://youtu.be/l0szgibI48A)
 
 ## Test locally
 
