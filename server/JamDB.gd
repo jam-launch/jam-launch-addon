@@ -1,5 +1,5 @@
-extends RefCounted
 class_name JamDB
+extends RefCounted
 ## An interface for a document database for Jam Launch servers
 ##
 ## A database interface that allows the server to persist data rows within and
@@ -10,98 +10,111 @@ class_name JamDB
 
 var _jc: JamConnect
 
-func _init(jam_connect: JamConnect):
+func _init(jam_connect: JamConnect) -> void:
 	_jc = jam_connect
 
-@warning_ignore("unused_parameter")
-func get_db_data(key_1: String, key_2: String):
+
+func get_db_data(_key_1: String, _key_2: String) -> Variant:
 	return null
 
+
 ## Gets the project-scoped data row for the provided key
-func get_game_data(key_2: String):
+func get_game_data(key_2: String) -> Variant:
 	return get_db_data(_jc.get_project_id(), key_2)
-	
+
+
 ## Gets the release-scoped data row for the provided key
-func get_release_data(key_2: String):
+func get_release_data(key_2: String) -> Variant:
 	return get_db_data(_jc.get_game_id(), key_2)
 
+
 ## Gets the session-scoped data row for the provided key
-func get_session_data(key_2: String):
+func get_session_data(key_2: String) -> Variant:
 	return get_db_data(_jc.get_session_id(), key_2)
 
-@warning_ignore("unused_parameter")
-func put_db_data(key_1: String, key_2: String, data: Dictionary):
+
+func put_db_data(_key_1: String, _key_2: String, _data: Dictionary) -> Variant:
 	return false
 
+
 ## Puts a project-scoped data row in the database
-func put_game_data(key_2: String, data: Dictionary):
+func put_game_data(key_2: String, data: Dictionary) -> Variant:
 	return put_db_data(_jc.get_project_id(), key_2, data)
 
+
 ## Puts a release-scoped data row in the database
-func put_release_data(key_2: String, data: Dictionary):
+func put_release_data(key_2: String, data: Dictionary) -> Variant:
 	return put_db_data(_jc.get_game_id(), key_2, data)
 
+
 ## Puts a session-scoped data row in the database
-func put_session_data(key_2: String, data: Dictionary):
+func put_session_data(key_2: String, data: Dictionary) -> Variant:
 	return put_db_data(_jc.get_session_id(), key_2, data)
 
+
 ## Queries for data rows using an AWS DynamoDB filter syntax
-@warning_ignore("unused_parameter")
 func query_db_data(
-		key_condition_expression: String,
-		filter_expression: String,
-		expression_attribute_names: Dictionary,
-		expression_attribute_values: Dictionary) -> Array:
+		_key_condition_expression: String,
+		_filter_expression: String,
+		_expression_attribute_names: Dictionary,
+		_expression_attribute_values: Dictionary) -> Array:
 	return []
 
-@warning_ignore("unused_parameter")
-func get_db_data_async(key_1: String, key_2: String):
+
+func get_db_data_async(_key_1: String, _key_2: String) -> void:
 	_jc.game_db_async_result.emit(null, "No DB available in dev mode")
+
 
 ## Asynchronously gets the project-scoped data row for the provided key.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
-func get_game_data_async(key_2: String):
+func get_game_data_async(key_2: String) -> void:
 	return get_db_data_async(_jc.get_project_id(), key_2)
+
 
 ## Asynchronously gets the release-scoped data row for the provided key.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
-func get_release_data_async(key_2: String):
+func get_release_data_async(key_2: String) -> void:
 	return get_db_data_async(_jc.get_game_id(), key_2)
+
 
 ## Asynchronously gets the session-scoped data row for the provided key.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
-func get_session_data_async(key_2: String):
+func get_session_data_async(key_2: String) -> void:
 	return get_db_data_async(_jc.get_session_id(), key_2)
 
-@warning_ignore("unused_parameter")
-func put_db_data_async(key_1: String, key_2: String, data: Dictionary):
+
+func put_db_data_async(_key_1: String, _key_2: String, _data: Dictionary) -> void:
 	_jc.game_db_async_result.emit(null, "No DB available in dev mode")
+
 
 ## Asynchronously puts a project-scoped data row in the database. Triggers
 ## [signal JamConnect.game_db_async_result] upon completion.
-func put_game_data_async(key_2: String, data: Dictionary):
+func put_game_data_async(key_2: String, data: Dictionary) -> void:
 	return put_db_data_async(_jc.get_project_id(), key_2, data)
+
 
 ## Asynchronously puts a release-scoped data row in the database. Triggers
 ## [signal JamConnect.game_db_async_result] upon completion.
-func put_release_data_async(key_2: String, data: Dictionary):
+func put_release_data_async(key_2: String, data: Dictionary) -> void:
 	return put_db_data_async(_jc.get_game_id(), key_2, data)
+
 
 ## Asynchronously puts a session-scoped data row in the database. Triggers
 ## [signal JamConnect.game_db_async_result] upon completion.
-func put_session_data_async(key_2: String, data: Dictionary):
+func put_session_data_async(key_2: String, data: Dictionary) -> void:
 	return put_db_data_async(_jc.get_session_id(), key_2, data)
+
 
 ## Asynchronously queries for data rows using an AWS DynamoDB filter syntax.
 ## Triggers [signal JamConnect.game_db_async_result] upon completion.
-@warning_ignore("unused_parameter")
 func query_db_data_async(
-		key_condition_expression: String,
-		filter_expression: String,
-		expression_attribute_names: Dictionary,
-		expression_attribute_values: Dictionary):
+		_key_condition_expression: String,
+		_filter_expression: String,
+		_expression_attribute_names: Dictionary,
+		_expression_attribute_values: Dictionary) -> void:
 	_jc.game_db_async_result.emit(null, "No DB available in dev mode")
 
+
 ## Gets the last error generated by the DB client
-func get_last_error():
+func get_last_error() -> String:
 	return "server is in dev mode - no DB available"

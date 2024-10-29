@@ -1,26 +1,27 @@
-extends Node
 class_name ClientKeys
+extends Node
 
 var dev_mode_api: JamDevModeApi
-
 var dev_jwt: JamJwt
 
-func _init():
+func _init() -> void:
 	if OS.is_debug_build():
 		dev_mode_api = JamDevModeApi.new()
 		add_child(dev_mode_api)
 
+
 func _get_web_gjwt() -> Variant:
-	var js_return = JavaScriptBridge.eval("window.getJamLaunchGJWT?.() ?? null;")
-	if !js_return:
+	var js_return: Variant = JavaScriptBridge.eval("window.getJamLaunchGJWT?.() ?? null;")
+	if not js_return:
 		printerr("failed to retrieve GJWT in browser context")
 	return js_return
+
 
 func get_included_gjwt(game_id: String) -> Variant:
 	if OS.get_name() == "Web":
 		return _get_web_gjwt()
 	
-	var gjwt_path := OS.get_executable_path().get_base_dir()
+	var gjwt_path: String = OS.get_executable_path().get_base_dir()
 	if OS.get_name() == "macOS":
 		gjwt_path += "/../Resources"
 	gjwt_path += "/gjwt"
@@ -35,12 +36,13 @@ func get_included_gjwt(game_id: String) -> Variant:
 	
 	return null
 
+
 func get_test_gjwt(gameId: String) -> Variant:
 	if not OS.is_debug_build():
 		push_error("can't get test gjwt if not in dev mode")
 		return null
 	
-	var peer = StreamPeerTCP.new()
+	var peer: StreamPeerTCP = StreamPeerTCP.new()
 	peer.connect_to_host("127.0.0.1", 17343)
 	while true:
 		await get_tree().create_timer(0.1).timeout
@@ -51,9 +53,8 @@ func get_test_gjwt(gameId: String) -> Variant:
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
 			break
 	
-	var parts = gameId.split("-")
+	var parts: PackedStringArray = gameId.split("-")
 	peer.put_string("key/%s/%s" % [parts[0], parts[1]])
-	
 	while true:
 		await get_tree().create_timer(0.1).timeout
 		var err := peer.poll()
@@ -63,8 +64,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 		if peer.get_available_bytes() > 0:
 			break
 	
-	var jwt_response = peer.get_string()
-	
+	var jwt_response: String = peer.get_string()
 	if jwt_response.begins_with("Error:"):
 		push_error("failed to get test creds - %s" % jwt_response)
 		return null

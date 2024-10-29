@@ -6,8 +6,8 @@ var dashboard: JamEditorPluginDashboard
 var project_api: JamProjectApi
 var plugin: EditorPlugin
 
-func page_init():
-	var d = get_parent()
+func page_init() -> void:
+	var d: Node = get_parent()
 	while not d.is_in_group("jam_launch_dashboard"):
 		d = d.get_parent()
 		if not d:
@@ -18,11 +18,14 @@ func page_init():
 	plugin = dashboard.plugin
 	_page_init()
 
-func _page_init():
+
+func _page_init() -> void:
 	pass
 
-func show_init():
+
+func show_init() -> void:
 	pass
 
-func _ready():
+
+func _ready() -> void:
 	add_to_group("jam_editor_plugin_page")
