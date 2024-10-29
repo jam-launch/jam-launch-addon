@@ -11,8 +11,9 @@ var error_msg: String = ""
 static func ok() -> JamError:
 	return JamError.new()
 
+
 static func err(msg: String) -> JamError:
-	var e = JamError.new()
+	var e: JamError = JamError.new()
 	e.errored = true
 	e.error_msg = msg
 	return e

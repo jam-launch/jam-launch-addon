@@ -119,16 +119,16 @@ var m: SceneMultiplayer
 # ----- Core Methods -----
 #
 
-func _init():
+func _init() -> void:
 	print("Creating game node...")
 	
 	thread_helper = JamThreadHelper.new()
 	add_child(thread_helper)
 	
-	var dir := (self.get_script() as Script).get_path().get_base_dir()
-	var deployment_info = ConfigFile.new()
-	var err = deployment_info.load(dir + "/../deployment.cfg")
-	if err != OK:
+	var dir: String = (self.get_script() as Script).get_path().get_base_dir()
+	var deployment_info: ConfigFile = ConfigFile.new()
+	var err: Error = deployment_info.load(dir + "/../deployment.cfg")
+	if not err == OK:
 		print("Game deployment settings could not be located - only the local hosting features will be available...")
 		game_id = "init-undeployed"
 	else:
@@ -141,13 +141,15 @@ func _init():
 		network_mode = deployment_info.get_value("game", "network_mode", "enet")
 		has_deployment = true
 
-func _notification(what):
+
+func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		# force quit after a timeout in case graceful shutdown blocks up
 		await get_tree().create_timer(4.0).timeout
 		get_tree().quit(1)
 
-func _ready():
+
+func _ready() -> void:
 	print("JamConnect node ready, deferring auto start-up...")
 	if not client_ui_scene:
 		client_ui_scene = preload("../ui/client/ExampleClientUI.tscn")
@@ -155,17 +157,18 @@ func _ready():
 	m = multiplayer
 	start_up.call_deferred()
 
+
 ## Start the JamConnect functionality including client/server determination and 
 ## multiplayer peer creation and configuration.
-func start_up():
+func start_up() -> void:
 	print("Running JamConnect start-up...")
 	get_tree().set_auto_accept_quit(false)
 	JamRoot.get_jam_root(get_tree()).jam_connect = self
 	
-	var args := {}
-	for a in OS.get_cmdline_args():
+	var args: Dictionary = {}
+	for a: String in OS.get_cmdline_args():
 		if a.find("=") > -1:
-			var key_value = a.split("=")
+			var key_value: PackedStringArray = a.split("=")
 			args[key_value[0].lstrip("--")] = key_value[1]
 		elif a.begins_with("--"):
 			args[a.lstrip("--")] = true
@@ -180,10 +183,11 @@ func start_up():
 		add_child(client)
 		client.client_start()
 
+
 ## Converts this JamConnect node from being configured as a client to being
 ## being configured as a server in "dev" mode. Used for simplified local hosting
 ## in debug instances launched from the Godot editor.
-func start_as_dev_server():
+func start_as_dev_server() -> void:
 	client.queue_free()
 	client = null
 
@@ -191,14 +195,17 @@ func start_as_dev_server():
 	add_child(server)
 	await server.server_start({"dev": true})
 
+
 ## Gets the project ID (the game ID without the release string)
 func get_project_id() -> String:
 	return game_id.split("-")[0]
+
 
 ## Gets the game ID (a.k.a. release ID - the project ID concatenated with the
 ## release string
 func get_game_id() -> String:
 	return game_id
+
 
 ## Gets the session ID
 func get_session_id() -> String:
@@ -209,104 +216,110 @@ func get_session_id() -> String:
 	else:
 		return ""
 
+
 func is_webrtc_mode() -> bool:
 	return network_mode == "webrtc"
 
-func is_websocket_mode():
+
+func is_websocket_mode() -> bool:
 	return network_mode == "websocket"
-	
+
+
 func is_dedicated_server() -> bool:
 	return multiplayer.is_server() and not is_webrtc_mode()
+
 
 func is_player_server() -> bool:
 	return multiplayer.is_server() and is_webrtc_mode()
 
+
 func is_player() -> bool:
 	return not multiplayer.is_server() or is_player_server()
 
-#
-# ----- Server methods -----
-#
+
+#region Server methods
+
 
 @rpc("reliable")
-func _send_player_joined(pid: int, username: String):
+func _send_player_joined(pid: int, username: String) -> void:
 	player_joined.emit(pid, username)
 
+
 @rpc("reliable")
-func _send_player_left(pid: int, username: String):
+func _send_player_left(pid: int, username: String) -> void:
 	player_left.emit(pid, username)
 
+
 @rpc("reliable", "call_local")
-func _send_game_init_finalized():
+func _send_game_init_finalized() -> void:
 	game_init_finalized.emit()
+
 
 ## A server-callable RPC method for broadcasting informational server messages
 ## to clients
 @rpc("reliable")
-func notify_players(msg: String):
+func notify_players(msg: String) -> void:
 	log_event.emit(msg)
 
+#endregion
 
 func fetch_dev_localhost_key() -> Variant:
-	var peer = StreamPeerTCP.new()
+	var peer: StreamPeerTCP = StreamPeerTCP.new()
 	peer.connect_to_host("127.0.0.1", 17343)
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
-		if err != OK:
+		var err: Error = peer.poll()
+		if not err == OK:
 			push_error("failed to connect to local auth proxy for localhost cert key info - this might result in TLS handshake errors")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
 			break
-	
+
 	peer.put_string("localhostkey")
-	
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
-		if err != OK:
+		var err: Error = peer.poll()
+		if not err == OK:
 			push_error("failed to get response from local auth proxy for localhost cert key")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_available_bytes() > 0:
 			break
-	
-	var response := peer.get_string()
-	
+
+	var response: String = peer.get_string()
 	if response.begins_with("Error:"):
 		push_error("failed to get localhost cert key - %s" % response)
 		return null
 	
 	return response
 
+
 func fetch_dev_localhost_cert() -> Variant:
-	var peer = StreamPeerTCP.new()
+	var peer: StreamPeerTCP = StreamPeerTCP.new()
 	peer.connect_to_host("127.0.0.1", 17343)
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
-		if err != OK:
+		var err: Error = peer.poll()
+		if not err == OK:
 			push_error("failed to connect to local auth proxy for localhost cert - this might result in TLS handshake errors")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
 			break
-	
+
 	peer.put_string("localhostcert")
-	
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
-		if err != OK:
+		var err: Error = peer.poll()
+		if not err == OK:
 			push_error("failed to get response from local auth proxy for localhost cert")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_available_bytes() > 0:
 			break
-	
+
 	var response := peer.get_string()
-	
 	if response.begins_with("Error:"):
 		push_error("failed to get localhost cert - %s" % response)
 		return null

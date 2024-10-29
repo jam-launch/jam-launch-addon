@@ -6,10 +6,10 @@ var stack: Array[int] = []
 
 signal go_back_enabled(enabled: bool)
 
-func _ready():
+func _ready() -> void:
 	tabs_visible = false
 
-func go_back():
+func go_back() -> void:
 	if len(stack) < 2:
 		return
 	stack.pop_back()
@@ -25,7 +25,7 @@ func show_page_node(page_node: Node, push_to_stack: bool = true) -> bool:
 	printerr("Failed to show page node ", page_node)
 	return false
 
-func show_page(idx: int, push_to_stack: bool = true):
+func show_page(idx: int, push_to_stack: bool = true) -> void:
 	current_tab = idx
 	if push_to_stack:
 		stack.push_back(idx)

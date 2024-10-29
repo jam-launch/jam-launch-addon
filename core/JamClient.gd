@@ -3,6 +3,8 @@ extends CanvasLayer
 ## A [CanvasLayer] that provides client-specific multiplayer capabilities as the
 ## child of a [JamConnect] Node
 
+signal fetching_test_gjwt(busy: bool)
+
 ## The client UI used to configure and initiate sessions
 var client_ui: JamClientUI
 
@@ -11,8 +13,7 @@ var client_ui: JamClientUI
 var current_client_token: String
 
 ## A dictionary mapping peer id [code]int[/code]s to username [code]String[/code]s
-var peer_usernames := {}
-
+var peer_usernames: Dictionary = {}
 var test_client_number: int = 1:
 	set(val):
 		if val != test_client_number and OS.is_debug_build():
@@ -20,8 +21,6 @@ var test_client_number: int = 1:
 			await _setup_test_gjwt()
 
 var session_id: String = ""
-
-signal fetching_test_gjwt(busy: bool)
 var gjwt_fetch_busy: bool = false:
 	set(val):
 		gjwt_fetch_busy = val
@@ -33,17 +32,19 @@ var jwt: JamJwt = JamJwt.new()
 var api: JamClientApi
 ## Helper object for acquiring a Game JWT for authentication
 var keys: ClientKeys
-
 var _jc: JamConnect:
 	get:
 		return get_parent()
 
-func _init():
-	layer = 512
+const CANVAS_LAYER = 512
+
+func _init() -> void:
+	layer = CANVAS_LAYER
 	keys = ClientKeys.new()
 	add_child(keys)
 
-func _ready():
+
+func _ready() -> void:
 	api = JamClientApi.new()
 	api.game_id = _jc.game_id
 	api.jwt = jwt
@@ -53,44 +54,48 @@ func _ready():
 	_jc.player_joined.connect(_on_player_joined)
 	_jc.player_left.connect(_on_player_left)
 	
-	var gjwt = keys.get_included_gjwt(_jc.get_game_id())
+	var gjwt: Variant = keys.get_included_gjwt(_jc.get_game_id())
 	if gjwt == null:
-		if OS.is_debug_build() and OS.get_name() != "Android":
+		if OS.is_debug_build() and not OS.get_name() == "Android":
 			_setup_test_gjwt()
 		else:
 			push_error("Failed to load GJWT")
 	else:
 		set_gjwt(gjwt as String)
 
-func _setup_test_gjwt():
+
+func _setup_test_gjwt() -> void:
 	gjwt_fetch_busy = true
-	var gjwt = await keys.get_test_gjwt(_jc.game_id)
+	var gjwt: Variant = await keys.get_test_gjwt(_jc.game_id)
 	gjwt_fetch_busy = false
-	if gjwt != null:
+	if not gjwt == null:
 		set_gjwt(gjwt as String)
 	else:
 		push_error("Failed to load GJWT")
 
-func set_gjwt(gjwt: String):
-	var gjwtRes = jwt.set_token(gjwt)
+
+func set_gjwt(gjwt: String) -> void:
+	var gjwtRes: JamJwt.TokenParseResult = jwt.set_token(gjwt)
 	if gjwtRes.errored:
 		push_error(gjwtRes.error)
 	else:
 		_jc.gjwt_acquired.emit()
 
+
 ## Persists the GJWT so that it can be retrieved in the next run
 func persist_gjwt() -> bool:
 	if not jwt.has_token():
 		return false
-	var gjwt_file = FileAccess.open("user://gjwt-%s" % _jc.get_game_id(), FileAccess.WRITE)
+	var gjwt_file: FileAccess = FileAccess.open("user://gjwt-%s" % _jc.get_game_id(), FileAccess.WRITE)
 	if gjwt_file == null:
 		return false
 	gjwt_file.store_string(jwt.get_token())
 	gjwt_file.close()
 	return true
 
+
 ## Configures and starts client functionality
-func client_start():
+func client_start() -> void:
 	print("Starting as client...")
 	
 	_jc.m.connected_to_server.connect(_on_client_connect)
@@ -102,20 +107,21 @@ func client_start():
 	client_ui.client_ui_initialization(_jc)
 	add_child(client_ui)
 
+
 ## Initiates a connection to a provisioned server
-func client_session_request(host: String, port: int, token: String):
+func client_session_request(host: String, port: int, token: String) -> void:
 	current_client_token = token
 	client_ui.visible = false
 	
 	_jc.log_event.emit("Attempting to connect to %s:%d..." % [host, port])
 	print("Attempting to connect to %s:%d..." % [host, port])
 	
-	var peer
-	var err
+	var peer: MultiplayerPeer
+	var err: Error
 	if _jc.network_mode == "websocket":
 		var chain: X509Certificate = null
 		if host == "localhost" and OS.is_debug_build():
-			var localchain = await _jc.fetch_dev_localhost_cert()
+			var localchain: Variant = await _jc.fetch_dev_localhost_cert()
 			if localchain != null:
 				chain = X509Certificate.new()
 				chain.load_from_string(localchain as String)
@@ -136,25 +142,29 @@ func client_session_request(host: String, port: int, token: String):
 	
 	_jc.m.auth_callback = _on_auth
 
+
 ## Elegantly leaves the game by disconnecting from the server and notifying the
 ## Jam Launch API
-func leave_game():
+func leave_game() -> void:
 	client_ui.visible = true
 	await client_ui.leave_game_session()
 	_jc.m.multiplayer_peer.close()
 
-func _on_client_connect_fail():
+
+func _on_client_connect_fail() -> void:
 	_jc.log_event.emit("Connection to server failed")
 	_jc.local_player_left.emit()
 	client_ui.visible = true
 
-func _on_client_authentication_failed():
+
+func _on_client_authentication_failed() -> void:
 	_jc.log_event.emit("Authentication failed")
 	_on_client_connect_fail()
-	
-func _on_client_authenticating(peer_id: int):
+
+
+func _on_client_authenticating(peer_id: int) -> void:
 	_jc.log_event.emit("Authenticating...")
-	var auth_data = JSON.stringify({
+	var auth_data: String = JSON.stringify({
 		"username": jwt.claims.get("username", "dev-%d" % _jc.m.multiplayer_peer.get_unique_id()),
 		"token": current_client_token
 	})
@@ -163,27 +173,33 @@ func _on_client_authenticating(peer_id: int):
 	# accept the server peer without additional validation
 	_on_auth(1, PackedByteArray())
 
-func _on_auth(peer_id: int, _data: PackedByteArray):
+
+func _on_auth(peer_id: int, _data: PackedByteArray) -> void:
 	# For now, clients do not validate their peers.
 	# Websocket servers with certs provide good server peer validation.
-	var err := _jc.m.complete_auth(peer_id)
-	if err != OK:
+	var err: Error = _jc.m.complete_auth(peer_id)
+	if not err == OK:
 		_jc.log_event.emit("Unexpected failure to complete auth for %d..." % peer_id)
 
-func _on_client_connect():
+
+func _on_client_connect() -> void:
 	_jc.log_event.emit("Connected to server")
 	#_jc.local_player_joined.emit()
 
-func _on_server_disconnect():
+
+func _on_server_disconnect() -> void:
 	_jc.log_event.emit("Server disconnected")
 	_jc.local_player_left.emit()
 	client_ui.visible = true
 
-func _on_game_init_finalized():
+
+func _on_game_init_finalized() -> void:
 	client_ui.visible = false
 
-func _on_player_joined(peer_id: int, username: String):
+
+func _on_player_joined(peer_id: int, username: String) -> void:
 	peer_usernames[peer_id] = username
 
-func _on_player_left(peer_id: int, _username: String):
+
+func _on_player_left(peer_id: int, _username: String) -> void:
 	peer_usernames.erase(peer_id)

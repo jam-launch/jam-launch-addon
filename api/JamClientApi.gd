@@ -8,16 +8,58 @@ enum SessionStatus {
 	INIT, UNKNOWN, PROVISIONING, PENDING, ACTIVATING, RUNNING, READY, DEACTIVATING, STOPPING, DEPROVISIONING, STOPPED
 }
 
+func create_game_session(region: String="us-east-2") -> Result:
+	return await _json_http(
+		"/sessions/%s" % game_id,
+		HTTPClient.METHOD_POST,
+		{
+			"region": region
+		}
+	)
+
+
+func join_game_session(join_id: String) -> Result:
+	return await _json_http(
+		"/sessions/%s/join/%s" % [game_id, join_id],
+		HTTPClient.METHOD_POST,
+		{}
+	)
+
+
+func get_game_session(session_id: String) -> GameSessionResult:
+	return GameSessionResult.from_result(
+		await _json_http("/sessions/%s/check/%s" % [game_id, session_id])
+	)
+
+
+func leave_game_session(session_id: String) -> Result:
+	return await _json_http(
+		"/sessions/%s/leave/%s" % [game_id, session_id],
+		HTTPClient.METHOD_POST,
+		{}
+	)
+
+
+func get_guest_jwt(game_id_url_parameter: String) -> Result:
+	return await _json_http("/guest-auth/%s" % [game_id_url_parameter])
+
+
+func check_guests_allowed(game_id_url_parameter: String) -> Result:
+	return await _json_http("/guest-auth/%s/allowed" % [game_id_url_parameter])
+
+
 class GameSessionAddress:
 	extends RefCounted
 	var ip: String
 	var port: int
 	var domain: String
 
+
 class PlayerInfo:
 	extends RefCounted
 	var user_id: String
 	var token: String
+
 
 class GameSessionResult:
 	extends JamHttpBase.Result
@@ -29,10 +71,8 @@ class GameSessionResult:
 	var join_id: String = ""
 	
 	static func from_result(res: Result) -> GameSessionResult:
-		
 		#print(res.data)
-		
-		var gres = GameSessionResult.new()
+		var gres: GameSessionResult = GameSessionResult.new()
 		gres.data = res.data
 		gres.errored = res.errored
 		gres.error_msg = res.error_msg
@@ -43,8 +83,8 @@ class GameSessionResult:
 		gres.status = SessionStatus.get(res.data["state"], SessionStatus.UNKNOWN)
 		gres.session_id = res.data["id"]
 		gres.region = res.data["region"]
-		for p in res.data["players"]:
-			var pinfo = PlayerInfo.new()
+		for p: Variant in res.data["players"]:
+			var pinfo: PlayerInfo = PlayerInfo.new()
 			pinfo.user_id = p["username"]
 			gres.players.push_back(pinfo)
 			if "joinToken" in p:
@@ -57,7 +97,8 @@ class GameSessionResult:
 			gres.join_id = res.data["joinCode"]
 		
 		return gres
-	
+
+
 	func has_unusable_status() -> bool:
 		return errored or [
 				SessionStatus.UNKNOWN,
@@ -66,7 +107,8 @@ class GameSessionResult:
 				SessionStatus.DEPROVISIONING,
 				SessionStatus.STOPPED
 			].has(status)
-	
+
+
 	func busy_progress() -> float:
 		if status == SessionStatus.INIT:
 			return 1.0 / 6.0
@@ -82,37 +124,3 @@ class GameSessionResult:
 			return 1.0
 		else:
 			return 0.0
-
-func create_game_session(region: String="us-east-2") -> Result:
-	return await _json_http(
-		"/sessions/%s" % game_id,
-		HTTPClient.METHOD_POST,
-		{
-			"region": region
-		}
-	)
-
-func join_game_session(join_id: String) -> Result:
-	return await _json_http(
-		"/sessions/%s/join/%s" % [game_id, join_id],
-		HTTPClient.METHOD_POST,
-		{}
-	)
-
-func get_game_session(session_id: String) -> GameSessionResult:
-	return GameSessionResult.from_result(
-		await _json_http("/sessions/%s/check/%s" % [game_id, session_id])
-	)
-
-func leave_game_session(session_id: String) -> Result:
-	return await _json_http(
-		"/sessions/%s/leave/%s" % [game_id, session_id],
-		HTTPClient.METHOD_POST,
-		{}
-	)
-
-func get_guest_jwt(game_id: String) -> Result:
-	return await _json_http("/guest-auth/%s" % [game_id])
-
-func check_guests_allowed(game_id: String) -> Result:
-	return await _json_http("/guest-auth/%s/allowed" % [game_id])

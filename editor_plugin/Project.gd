@@ -1,89 +1,78 @@
 @tool
 extends JamEditorPluginPage
 
-@onready var net_mode_box: OptionButton = $HB/Config/NetworkMode
-
-@onready var log_popup: Popup = $LogPopup
-@onready var log_display: TextEdit = $LogPopup/Logs
-
-@onready var btn_deploy: Button = $HB/Config/BtnDeploy
-@onready var btn_delete: Button = $HB/Config/BtnDelete
-@onready var btn_sessions: Button = $HB/Config/BtnSessions
-
-@onready var deploy_busy: Control = $HB/Releases/VB/PreparingBusy
-
-@onready var platform_options: MenuButton = $HB/Config/PlatformOptions
-
-@onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
-
-@onready var channels_root: VBoxContainer = $HB/Channels/VB/VB
-@onready var releases_root: VBoxContainer = $HB/Releases/VB/VB
-
-@onready var export_busy: ScopeLocker = $ExportBusy
-@onready var export_prep_busy: ScopeLocker = $ExportPrepBusy
-@onready var export_timeout: SpinBox = $HB/Config/Timeout/Minutes
-@onready var export_parallel: CheckBox = $HB/Config/Parallel
-
-@onready var log_request: HTTPRequest = $LogRequest
-
 signal request_projects_update()
 signal go_back()
 signal session_page_selected(project_id: String, project_name: String)
 
-var project_data = []
+@onready var net_mode_box: OptionButton = $HB/Config/NetworkMode
+@onready var log_popup: Popup = $LogPopup
+@onready var log_display: TextEdit = $LogPopup/Logs
+@onready var btn_deploy: Button = $HB/Config/BtnDeploy
+@onready var btn_delete: Button = $HB/Config/BtnDelete
+@onready var btn_sessions: Button = $HB/Config/BtnSessions
+@onready var deploy_busy: Control = $HB/Releases/VB/PreparingBusy
+@onready var platform_options: MenuButton = $HB/Config/PlatformOptions
+@onready var no_deployments: Control = $HB/Releases/VB/NoDeployments
+@onready var channels_root: VBoxContainer = $HB/Channels/VB/VB
+@onready var releases_root: VBoxContainer = $HB/Releases/VB/VB
+@onready var export_busy: ScopeLocker = $ExportBusy
+@onready var export_prep_busy: ScopeLocker = $ExportPrepBusy
+@onready var export_timeout: SpinBox = $HB/Config/Timeout/Minutes
+@onready var export_parallel: CheckBox = $HB/Config/Parallel
+@onready var log_request: HTTPRequest = $LogRequest
 
-var refresh_retries = 0
-
-var active_project
-var active_id = ""
-
+var project_data: Array = []
+var refresh_retries: int = 0
+var active_project: Dictionary
+var active_id: String = ""
 var waiting_for_export: bool = false
 var auto_export: JamAutoExport
 
-func _ready():
+func _ready() -> void:
 	auto_export = JamAutoExport.new()
 	add_child(auto_export)
 
-func _page_init():
+
+func _page_init() -> void:
 	log_popup.visible = false
 	btn_deploy.icon = dashboard.editor_icon("ArrowUp")
 	btn_sessions.icon = dashboard.editor_icon("GuiVisibilityVisible")
-	
 	dashboard.load_locker.lock_changed.connect(_load_lock_changed)
-	
 	platform_options.get_popup().id_pressed.connect(_on_platform_option_selected)
-	
 
-func show_init():
+
+func show_init() -> void:
 	if active_project:
 		dashboard.toolbar_title.text = active_project["project_name"]
 
-func _load_lock_changed(locked: bool):
+
+func _load_lock_changed(locked: bool) -> void:
 	btn_deploy.disabled = locked
 	net_mode_box.disabled = locked
 	btn_delete.disabled = locked
 
-func refresh_page():
+
+func refresh_page() -> void:
 	refresh_project()
 
-func show_project(project_id: String, project_name: String = "..."):
+
+func show_project(project_id: String, project_name: String = "...") -> void:
 	active_id = project_id
 	dashboard.toolbar_title.text = project_name
 	releases_root.visible = false
 	if not await refresh_project():
 		$AutoRefreshTimer.start(1.0)
 
+
 func refresh_project(repeat: float = 0.0) -> bool:
 	no_deployments.visible = false
-	
 	if len(active_id) < 1:
 		dashboard.show_error("invalid project ID")
 		return false
 	
-	var lock = dashboard.load_locker.get_lock()
-	
-	var res = await project_api.get_project(active_id)
-	
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
+	var res: JamHttpBase.Result = await project_api.get_project(active_id)
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 		return false
@@ -93,43 +82,43 @@ func refresh_project(repeat: float = 0.0) -> bool:
 		$AutoRefreshTimer.start(repeat)
 	return true
 
-func setup_project_data(p):
-	
+
+func setup_project_data(p: Dictionary) -> void:
 	active_project = p
 	dashboard.toolbar_title.text = p["project_name"]
-	
-	var plat_menu = platform_options.get_popup()
-	
-	var available_channels = []
+	var plat_menu: PopupMenu = platform_options.get_popup()
+	var available_channels: Array = []
 	while channels_root.get_child_count() > 0:
-		var c = channels_root.get_child(0)
+		var c: Node = channels_root.get_child(0)
 		channels_root.remove_child(c)
 		c.queue_free()
-	var sorted_channels = active_project.get("channels", [])
-	sorted_channels.sort_custom(func (a, _b): return a.get("default_release", false))
-	for channel in sorted_channels:
+
+	var sorted_channels: Variant = active_project.get("channels", [])
+	sorted_channels.sort_custom(func(a: Variant, _b: Variant)->Variant: return a.get("default_release", false))
+	for channel: Variant in sorted_channels:
 		available_channels.append(channel.get("name"))
-		var channel_release = "No Release"
-		for rel in active_project.get("releases", []):
+		var channel_release: String = "No Release"
+		for rel: Variant in active_project.get("releases", []):
 			if rel.get("channel") == channel.get("name"):
 				channel_release = "Release: %s" % [rel.get("id", "")]
-		var summary = preload("res://addons/jam_launch/editor_plugin/ChannelSummary.tscn").instantiate()
+		var summary: Node = preload("res://addons/jam_launch/editor_plugin/ChannelSummary.tscn").instantiate()
 		channels_root.add_child(summary)
 		summary.set_channel(channel, channel_release)
 		summary.update_channel.connect(_update_channel)
-		
+
 	while releases_root.get_child_count() > 0:
-		var rel = releases_root.get_child(0)
+		var rel: Node = releases_root.get_child(0)
 		releases_root.remove_child(rel)
 		rel.queue_free()
-	var sorted_releases = active_project.get("releases", [])
+
+	var sorted_releases: Variant = active_project.get("releases", [])
 	sorted_releases.reverse()
-	for r in sorted_releases:
-		var rel_summary = preload("res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn").instantiate()
+	for r: Variant in sorted_releases:
+		var rel_summary: Node = preload("res://addons/jam_launch/editor_plugin/ReleaseSummary.tscn").instantiate()
 		releases_root.add_child(rel_summary)
 		rel_summary.dashboard = dashboard
 		rel_summary.build_busy.connect(_on_build_busy)
-		export_busy.lock_changed.connect(rel_summary.on_export_active_changed)
+		export_busy.lock_changed.connect(rel_summary.on_export_active_changed as Callable)
 		rel_summary.set_channels(available_channels)
 		rel_summary.set_release(active_id, r)
 		
@@ -138,8 +127,8 @@ func setup_project_data(p):
 	
 	if len(sorted_releases) > 0:
 		releases_root.visible = true
-		var r = sorted_releases[0]
-		var net_mode = r["network_mode"]
+		var r: Dictionary = sorted_releases[0]
+		var net_mode: String = r["network_mode"]
 		net_mode_box.disabled = false
 		if net_mode == "enet":
 			net_mode_box.select(0)
@@ -154,7 +143,7 @@ func setup_project_data(p):
 		
 		for idx in range(plat_menu.item_count):
 			plat_menu.set_item_checked(idx, false)
-		for b in r["builds"]:
+		for b: Dictionary in r["builds"]:
 			var bname: String = b["name"]
 			if "Linux" == bname:
 				plat_menu.set_item_checked(0, true)
@@ -167,14 +156,14 @@ func setup_project_data(p):
 			elif "Android" == bname:
 				plat_menu.set_item_checked(4, true)
 	
-		if r["id"] != null:
-			var dir = self.get_script().get_path().get_base_dir()
-			var deployment_cfg = ConfigFile.new()
+		if not r["id"] == null:
+			var dir: String = self.get_script().get_path().get_base_dir()
+			var deployment_cfg: ConfigFile = ConfigFile.new()
 			deployment_cfg.set_value("game", "id", "%s-%s" % [active_id, r["id"]])
 			deployment_cfg.set_value("game", "network_mode", net_mode)
 			deployment_cfg.set_value("game", "allow_guests", r.get("allow_guests", false))
-			var err = deployment_cfg.save(dir + "/../deployment.cfg")
-			if err != OK:
+			var err: Error = deployment_cfg.save(dir + "/../deployment.cfg")
+			if not err == OK:
 				dashboard.show_error("Failed to save current deployment configuration")
 				return
 	else:
@@ -185,53 +174,55 @@ func setup_project_data(p):
 		plat_menu.set_item_checked(3, false)
 		plat_menu.set_item_checked(4, false)
 
-func _update_release(release_id: String, props: Dictionary):
+
+func _update_release(release_id: String, props: Dictionary) -> void:
 	if len(active_id) < 1:
-		return false
+		return
 	
 	if dashboard.load_locker.is_locked():
 		dashboard.show_error("cannot update release while handling another request")
-		return
-	var lock = dashboard.load_locker.get_lock()
-	
-	var res = await project_api.update_release(active_id, release_id, props)
+		return 
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
+	var res: JamHttpBase.Result = await project_api.update_release(active_id, release_id, props)
 	
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 	
 	refresh_project.call_deferred()
 
-func _update_channel(channel: String, props: Dictionary):
+
+func _update_channel(channel: String, props: Dictionary) -> void:
 	if len(active_id) < 1:
-		return false
+		return 
 	
 	if dashboard.load_locker.is_locked():
 		dashboard.show_error("cannot update channel while handling another request")
 		return
-	var lock = dashboard.load_locker.get_lock()
-	
-	var res = await project_api.update_channel(active_id, channel, props)
-	
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
+	var res: JamHttpBase.Result = await project_api.update_channel(active_id, channel, props)
+
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 	
 	refresh_project.call_deferred()
 
-func _on_build_busy():
+
+func _on_build_busy() -> void:
 	pass
 	#print("setting auto-refresh")
 	#$AutoRefreshTimer.start(3.0)
+
 
 func _show_logs(log_url: String) -> void:
 	log_display.text = "fetching logs..."
 	log_popup.popup_centered()
 	
-	var err := log_request.request(log_url)
-	if err != OK:
+	var err: Error = log_request.request(log_url)
+	if not err == OK:
 		log_display.text = "failed to fetch logs - error code %d" % err
 		return
 	
-	var resp = await log_request.request_completed
+	var resp: Dictionary = await log_request.request_completed
 	var code: int = resp[1]
 	if code > 299:
 		log_display.text = "failed to fetch logs - HTTP status %d" % code
@@ -239,6 +230,7 @@ func _show_logs(log_url: String) -> void:
 	
 	var response_body: String = resp[3].get_string_from_utf8()
 	log_display.text = response_body
+
 
 func _on_btn_deploy_pressed() -> void:
 	if not active_project:
@@ -248,8 +240,8 @@ func _on_btn_deploy_pressed() -> void:
 	if export_busy.is_locked() or export_prep_busy.is_locked():
 		dashboard.show_error("Cannot release while release tasks are still active")
 		return
-	
-	var net_mode
+
+	var net_mode: String
 	if net_mode_box.get_selected_id() == 0:
 		net_mode = "enet"
 	elif net_mode_box.get_selected_id() == 1:
@@ -260,8 +252,8 @@ func _on_btn_deploy_pressed() -> void:
 		dashboard.show_error("Invalid network mode selection")
 		return
 	
-	var builds = []
-	var plat_menu = platform_options.get_popup()
+	var builds: Array = []
+	var plat_menu: PopupMenu = platform_options.get_popup()
 	if plat_menu.is_item_checked(0):
 		builds.append({
 			"name": "Linux",
@@ -303,53 +295,54 @@ func _on_btn_deploy_pressed() -> void:
 			"is_server": true
 		})
 	
-	var cfg = {
+	var cfg: Dictionary = {
 		"network_mode": net_mode,
 		"export_timeout": export_timeout.value * 60,
 		"parallel": export_parallel.button_pressed,
 		"builds": builds
 	}
-	var prep_res := await _export_prep(cfg)
+	var prep_res: JamResult = await _export_prep(cfg)
 	if prep_res.errored:
 		dashboard.show_error(prep_res.error_msg)
 		return
 	refresh_project.call_deferred()
 	
-	var export_res := await _do_export(cfg, prep_res.value)
+	var export_res: JamError = await _do_export(cfg, prep_res.value as Dictionary)
 	if export_res.errored:
 		dashboard.show_error(export_res.error_msg)
 	
 	refresh_project.call_deferred(3.0)
 
+
 func _export_prep(cfg: Dictionary) -> JamResult:
 	if dashboard.load_locker.is_locked():
 		return JamResult.err("cannot deploy while handling another request")
-	var lock = dashboard.load_locker.get_lock()
-	
-	var busy_lock = export_prep_busy.get_lock()
-	var res = await project_api.prepare_release(active_id, cfg)
-	if !res:
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
+	var _busy_lock: ScopeLocker.ScopeLock = export_prep_busy.get_lock()
+	var res: JamHttpBase.Result = await project_api.prepare_release(active_id, cfg)
+	if not res:
 		return JamResult.err("invalid result from local export attempt")
 	if res.errored:
 		return JamResult.err(res.error_msg)
 	return JamResult.ok(res.data)
 
+
 func _do_export(config: Dictionary, prepare_result: Dictionary) -> JamError:
-	var busy_lock = export_busy.get_lock()
-	var export_config = JamAutoExport.ExportConfig.new()
+	var _busy_lock: ScopeLocker.ScopeLock = export_busy.get_lock()
+	var export_config: JamAutoExport.ExportConfig = JamAutoExport.ExportConfig.new()
 	export_config.network_mode = config["network_mode"]
 	export_config.export_timeout = config["export_timeout"]
 	export_config.parallel = config["parallel"]
 	export_config.game_id = "%s-%s" % [active_id, prepare_result["id"]]
 	export_config.build_configs = ([] as Array[JamAutoExport.BuildConfig])
 	
-	for b in config["builds"]:
+	for b: Dictionary in config["builds"]:
 		var c := JamAutoExport.BuildConfig.new()
 		c.output_target = b["export_name"]
 		c.template_name = b["template_name"]
 		c.no_zip = b.get("no_zip", false)
 		var mapped := false
-		for t in prepare_result["builds"]:
+		for t: Dictionary in prepare_result["builds"]:
 			if t["build_name"] == b["name"]:
 				c.presigned_post = t["upload_target"]
 				c.log_presigned_post = t["log_upload_target"]
@@ -362,38 +355,44 @@ func _do_export(config: Dictionary, prepare_result: Dictionary) -> JamError:
 	
 	return await auto_export.auto_export(export_config)
 
-func _on_auto_refresh_timer_timeout():
+
+func _on_auto_refresh_timer_timeout() -> void:
 	$AutoRefreshTimer.stop()
 	await refresh_project()
 
-func _on_btn_delete_pressed():
+
+func _on_btn_delete_pressed() -> void:
 	$ConfirmDelete.popup()
 
-func _on_confirm_delete_confirmed():
+
+func _on_confirm_delete_confirmed() -> void:
 	if dashboard.load_locker.is_locked():
 		dashboard.show_error("cannot delete while handling another request")
 		return
-	var lock = dashboard.load_locker.get_lock()
-	
-	var res = await project_api.delete_project(active_id)
+
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
+	var res: JamHttpBase.Result = await project_api.delete_project(active_id)
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 		return
+
 	dashboard.pages.go_back()
 
-func _on_btn_sessions_pressed():
+
+func _on_btn_sessions_pressed() -> void:
 	session_page_selected.emit(active_id, active_project["project_name"])
 
-func _on_config_item_selected(_index):
+
+func _on_config_item_selected(_index: int) -> void:
 	if not active_project:
 		return
 	
 	if dashboard.load_locker.is_locked():
 		dashboard.show_error("cannot submit config while handling another request")
 		return
-	var lock = dashboard.load_locker.get_lock()
+	var _lock: ScopeLocker.ScopeLock = dashboard.load_locker.get_lock()
 	
-	var cfg = {}
+	var cfg: Dictionary = {}
 	if net_mode_box.get_selected_id() == 0:
 		cfg["network_mode"] = "enet"
 	elif net_mode_box.get_selected_id() == 1:
@@ -404,25 +403,27 @@ func _on_config_item_selected(_index):
 		dashboard.show_error("invalid network mode selected")
 		return
 	
-	var plat_menu = platform_options.get_popup()
+	var plat_menu: PopupMenu = platform_options.get_popup()
 	if cfg["network_mode"] == "enet":
 		plat_menu.set_item_disabled(3, true)
 		plat_menu.set_item_checked(3, false)
 	else:
 		plat_menu.set_item_disabled(3, false)
 
-func _on_platform_option_selected(idx: int):
-	var menu = platform_options.get_popup()
+
+func _on_platform_option_selected(idx: int) -> void:
+	var menu: PopupMenu = platform_options.get_popup()
 	if menu.is_item_disabled(idx):
 		return
 	menu.set_item_checked(idx, not menu.is_item_checked(idx))
 	menu.show.call_deferred()
 
 
-func _on_export_busy_lock_changed(locked):
+func _on_export_busy_lock_changed(locked: bool) -> void:
 	waiting_for_export = locked
 
-func _on_export_prep_busy_lock_changed(locked):
+
+func _on_export_prep_busy_lock_changed(locked: bool) -> void:
 	deploy_busy.visible = locked
 	releases_root.visible = not locked
 
@@ -433,8 +434,8 @@ func _on_add_channel_pressed() -> void:
 	
 
 func _on_create_channel_confirmed() -> void:
-	var lock = $ChannelUpdateBusy.get_lock()
-	var res = await project_api.create_channel(active_id, $CreateChannel/VB/NewChannelName.text)
+	var _lock: ScopeLocker.ScopeLock  = $ChannelUpdateBusy.get_lock()
+	var res: JamHttpBase.Result = await project_api.create_channel(active_id, $CreateChannel/VB/NewChannelName.text as String)
 	if res.errored:
 		dashboard.show_error(res.error_msg)
 	

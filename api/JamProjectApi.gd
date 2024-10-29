@@ -1,10 +1,10 @@
 @tool
-extends JamHttpBase
 class_name JamProjectApi
+extends JamHttpBase
 
-
-func _ready():
+func _ready() -> void:
 	super()
+
 
 func create_project(project_name: String) -> Result:
 	return await _json_http(
@@ -13,11 +13,14 @@ func create_project(project_name: String) -> Result:
 		{"project_name": project_name}
 	)
 
+
 func list_projects() -> Result:
 	return await _json_http("/projects")
 
+
 func get_project(project_id: String) -> Result:
 	return await _json_http("/projects/%s" % project_id)
+
 
 func delete_project(project_id: String) -> Result:
 	return await _json_http(
@@ -25,10 +28,11 @@ func delete_project(project_id: String) -> Result:
 		HTTPClient.METHOD_DELETE
 	)
 
+
 func prepare_release(project_id: String, config: Dictionary) -> Result:
-	var req = {
+	var req: Dictionary = {
 		"network_mode": config["network_mode"],
-		"builds": config["builds"].map(func(b): return {
+		"builds": config["builds"].map(func(b: Variant) -> Dictionary: return {
 			"name": b["name"],
 			"export_name": b["export_name"],
 			"is_server": b.get("is_server", false),
@@ -42,6 +46,7 @@ func prepare_release(project_id: String, config: Dictionary) -> Result:
 		req
 	)
 
+
 func update_release(project_id: String, release_id: String, props: Dictionary) -> Result:
 	return await _json_http(
 		"/projects/%s/releases/%s" % [project_id, release_id],
@@ -49,12 +54,14 @@ func update_release(project_id: String, release_id: String, props: Dictionary) -
 		props
 	)
 
+
 func post_config(project_id: String, cfg: Dictionary) -> Result:
 	return await _json_http(
 		"/projects/%s/config" % project_id,
 		HTTPClient.METHOD_POST,
 		cfg
 	)
+
 
 func get_build_logs(project_id: String, release_id: String, log_id: String) -> Result:
 	return await _json_http(
@@ -64,8 +71,9 @@ func get_build_logs(project_id: String, release_id: String, log_id: String) -> R
 			log_id,
 		])
 
+
 func get_sessions(project_id: String, active: bool) -> Result:
-	var state = "up"
+	var state: String = "up"
 	if not active:
 		state = "down"
 	return await _json_http(
@@ -73,6 +81,7 @@ func get_sessions(project_id: String, active: bool) -> Result:
 			project_id,
 			state,
 		])
+
 
 func get_session(project_id: String, release_id: String, session_id: String) -> Result:
 	return await _json_http(
@@ -82,6 +91,7 @@ func get_session(project_id: String, release_id: String, session_id: String) -> 
 			session_id,
 		])
 
+
 func get_session_logs(project_id: String, release_id: String, session_id: String) -> Result:
 	return await _json_http(
 		"/projects/%s/releases/%s/sessions/%s/logs" % [
@@ -89,6 +99,7 @@ func get_session_logs(project_id: String, release_id: String, session_id: String
 			release_id,
 			session_id,
 		])
+
 
 func terminate_session(project_id: String, release_id: String, session_id: String) -> Result:
 	return await _json_http(
@@ -101,6 +112,7 @@ func terminate_session(project_id: String, release_id: String, session_id: Strin
 		{}
 	)
 
+
 func get_test_key(project_id: String, release: String, test_num: int) -> Result:
 	return await _json_http(
 		"/projects/%s/testkey" % [project_id],
@@ -110,6 +122,7 @@ func get_test_key(project_id: String, release: String, test_num: int) -> Result:
 			"release": release
 		}
 	) 
+
 
 func get_local_server_keys(project_id: String, release: String) -> Result:
 	return await _json_http(
@@ -121,7 +134,6 @@ func get_local_server_keys(project_id: String, release: String) -> Result:
 	) 
 
 
-
 func create_channel(project_id: String, channel: String) -> Result:
 	return await _json_http(
 		"/projects/%s/channels" % [project_id],
@@ -131,6 +143,7 @@ func create_channel(project_id: String, channel: String) -> Result:
 		}
 	)
 
+
 func update_channel(project_id: String, channel: String, props: Dictionary) -> Result:
 	return await _json_http(
 		"/projects/%s/channels/%s" % [project_id, channel],
@@ -138,7 +151,8 @@ func update_channel(project_id: String, channel: String, props: Dictionary) -> R
 		props
 	)
 
-func get_channels(project_id: String, release: String) -> Result:
+
+func get_channels(project_id: String, _release: String) -> Result:
 	return await _json_http(
 		"/projects/%s/channels" % [project_id],
 		HTTPClient.METHOD_GET

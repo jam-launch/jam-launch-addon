@@ -4,10 +4,11 @@ extends JamHttpBase
 
 var project_id: String = ""
 
-func _ready():
+func _ready() -> void:
 	super()
 	api_url = OS.get_environment("DATA_URL")
 	jwt.set_token(OS.get_environment("DATA_KEY"))
+
 
 func put_object(key: String, object: Dictionary) -> Result:
 	var path := "/proj/%s/data/%s" % [project_id, key]
@@ -16,7 +17,8 @@ func put_object(key: String, object: Dictionary) -> Result:
 		HTTPClient.METHOD_POST,
 		object
 	)
-	
+
+
 func get_object(key: String) -> Result:
 	return await _json_http(
 		"/proj/%s/data/%s" % [project_id, key],

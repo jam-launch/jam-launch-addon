@@ -1,22 +1,6 @@
 @tool
-extends Node
 class_name JamHttpRequestPool
-
-class HttpHolder:
-	extends HTTPRequest
-	var in_use: bool =false
-
-class ScopedClient:
-	extends RefCounted
-	var http: HttpHolder
-			
-	func _init(holder: HttpHolder):
-		http = holder
-		http.in_use = true
-	
-	func _notification(what):
-		if what == NOTIFICATION_PREDELETE:
-			http.in_use = false
+extends Node
 
 func get_client() -> ScopedClient:
 	for c in get_children():
@@ -26,6 +10,26 @@ func get_client() -> ScopedClient:
 	var hh := HttpHolder.new()
 	add_child(hh)
 	return ScopedClient.new(hh)
+
+
+class HttpHolder:
+	extends HTTPRequest
+	var in_use: bool = false
+
+
+class ScopedClient:
+	extends RefCounted
+	var http: HttpHolder
+
+	func _init(holder: HttpHolder) -> void:
+		http = holder
+		http.in_use = true
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_PREDELETE:
+			http.in_use = false
+
+
 	
 
 
