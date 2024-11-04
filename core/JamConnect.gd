@@ -6,7 +6,7 @@ extends Node
 ## handles client and server initialization, and provides a session
 ## establishment GUI for clients. It is designed to be placed in a multiplayer
 ## game's main scene and connected to the player joining/leaving functions via
-## the [signal JamConnect.player_verified] and
+## the [signal JamConnect.player_connected] and
 ## [signal JamConnect.player_disconnected] signals.
 ## [br][br]
 ## When a JamConnect node determines that a game is being started as a server
