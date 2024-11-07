@@ -172,7 +172,7 @@ func _on_auth(peer_id: int, _data: PackedByteArray):
 
 func _on_client_connect():
 	_jc.log_event.emit("Connected to server")
-	#_jc.local_player_joined.emit()
+	_jc.local_player_joined.emit()
 
 func _on_server_disconnect():
 	_jc.log_event.emit("Server disconnected")
