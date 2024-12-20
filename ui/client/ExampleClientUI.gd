@@ -28,7 +28,8 @@ extends JamClientUI
 
 @onready var host_busy: Control = $CC/M/M/PageStack/HostGame/Busy
 @onready var host_busy_lock: ScopeLocker = $CC/M/M/PageStack/HostGame/HostBusy
-@onready var host_region_select: OptionButton = $CC/M/M/PageStack/HostGame/G/RegionSelect
+@onready var host_region_select: OptionButton = %RegionSelect
+var host_regions: Dictionary = {}
 @onready var host_btn: Button = $CC/M/M/PageStack/HostGame/HB/Host
 
 @onready var guest_auth_ui: VBoxContainer = $CC/M/M/PageStack/GjwtEntry/Entry/Manual/Guest
@@ -117,6 +118,38 @@ func _ready():
 	
 	jam_connect.local_player_joining.connect(_on_joining_game)
 	jam_connect.local_player_left.connect(_on_leaving_game)
+	
+
+var hosting_name_map = {
+	"us-east-1": "Virginia",
+	"us-west-1": "California",
+	"eu-west-2": "London",
+	"eu-central-1": "Frankfurt",
+	"ap-south-1": "Mumbai",
+	"ap-northeast-1": "Tokyo",
+	"sa-east-1": "São Paulo"
+}
+
+func _get_hosting_info():
+	var _lock = %HostInfoLock.get_lock()
+	host_regions = {}
+	host_region_select.clear()
+	
+	var res = await jam_client.api.get_game_provisioner_info()
+	if res.errored:
+		show_error("Failed to get hosting options - " + res.error_msg)
+		return
+	
+	for r in res.data["regions"]:
+		var idx = host_region_select.item_count
+		var txt = r
+		if r in hosting_name_map:
+			txt = hosting_name_map[r]
+		host_region_select.add_item(txt)
+		host_region_select.set_item_metadata(idx, r)
+		if r == "us-east-1":
+			host_region_select.select(idx)
+		
 
 func _on_active_device_auth(active: bool):
 	manual_auth.visible = !active
@@ -130,6 +163,7 @@ func _on_gjwt_fetch_busy(busy: bool):
 func _on_gjwt_acquired():
 	pages.show_page_node(home_page, false)
 	logged_in.text = "Logged in as\n%s" % jam_client.jwt.username
+	_get_hosting_info.call_deferred()
 
 var joined_players = {}
 
@@ -229,12 +263,10 @@ func _on_start_host_pressed():
 	pages.show_page_node(host_page)
 
 func _on_host_pressed():
-	var region := "us-east-2"
-	var region_id = host_region_select.get_item_id(host_region_select.selected)
-	if region_id == 0:
-		region = "us-east-2"
-	elif region_id == 1:
-		region = "eu-west-2"
+	var region := "eu-west-2"
+	var region_idx = host_region_select.selected
+	if region_idx >= 0:
+		region = host_region_select.get_item_metadata(region_idx)
 	
 	var _lock = host_busy_lock.get_lock()
 	
@@ -364,3 +396,7 @@ func _on_guest_auth_pressed() -> void:
 		jam_client.set_gjwt(res.data["token"])
 	
 	_on_gjwt_fetch_busy.call_deferred(false)
+
+
+func _on_host_info_lock_lock_changed(locked: bool) -> void:
+	start_host.disabled = locked

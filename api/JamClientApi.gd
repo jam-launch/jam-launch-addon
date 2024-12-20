@@ -83,6 +83,12 @@ class GameSessionResult:
 		else:
 			return 0.0
 
+func get_game_provisioner_info() -> Result:
+	return await _json_http(
+		"/sessions/%s/options" % [game_id],
+		HTTPClient.METHOD_GET
+	)
+
 func create_game_session(region: String="us-east-2") -> Result:
 	return await _json_http(
 		"/sessions/%s" % game_id,

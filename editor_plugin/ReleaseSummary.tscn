@@ -2,7 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://cw4h2pbqj113b" path="res://addons/jam_launch/themes/sub_panel.tres" id="1_8d8ru"]
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/ReleaseSummary.gd" id="1_equt3"]
-[ext_resource type="Texture2D" uid="uid://ds0nr8tqtmbp2" path="res://addons/jam_launch/assets/icons/lock.svg" id="3_l4yxb"]
+[ext_resource type="Texture2D" uid="uid://c3sjqfsgho2ay" path="res://addons/jam_launch/assets/icons/lock.svg" id="3_l4yxb"]
 
 [node name="ReleaseSummary" type="MarginContainer"]
 anchors_preset = 15

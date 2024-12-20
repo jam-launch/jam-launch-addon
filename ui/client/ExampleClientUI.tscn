@@ -4,13 +4,13 @@
 [ext_resource type="Theme" uid="uid://k50541hp21mg" path="res://addons/jam_launch/themes/client_ui/big_theme.tres" id="1_onvdi"]
 [ext_resource type="PackedScene" uid="uid://c5d8u6hwivonk" path="res://addons/jam_launch/ui/pages/PageStack.tscn" id="2_s1vno"]
 [ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="4_lbmx5"]
-[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="4_uf2si"]
+[ext_resource type="FontFile" uid="uid://cwroqw0v5tl81" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="4_uf2si"]
 [ext_resource type="PackedScene" uid="uid://jk7hixxc6pu3" path="res://addons/jam_launch/ui/client/DeviceAuthUI.tscn" id="4_vpvew"]
 [ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="6_ielux"]
-[ext_resource type="Texture2D" uid="uid://bk2lmycbke4cr" path="res://addons/jam_launch/assets/icons/content_copy.svg" id="7_3gepc"]
-[ext_resource type="Texture2D" uid="uid://bivswta38sedp" path="res://addons/jam_launch/assets/icons/content_paste_go.svg" id="7_gr1xc"]
-[ext_resource type="Texture2D" uid="uid://na8vvk6ggh0k" path="res://addons/jam_launch/assets/icons/arrow_back.svg" id="8_qxrcb"]
-[ext_resource type="Texture2D" uid="uid://tqvfnj22uuq1" path="res://addons/jam_launch/assets/icons/settings.svg" id="9_2myoa"]
+[ext_resource type="Texture2D" uid="uid://0s8t8piwoaix" path="res://addons/jam_launch/assets/icons/content_copy.svg" id="7_3gepc"]
+[ext_resource type="Texture2D" uid="uid://bngi27f78gf5m" path="res://addons/jam_launch/assets/icons/content_paste_go.svg" id="7_gr1xc"]
+[ext_resource type="Texture2D" uid="uid://xgronrdov2w5" path="res://addons/jam_launch/assets/icons/arrow_back.svg" id="8_qxrcb"]
+[ext_resource type="Texture2D" uid="uid://cobvhpq2eahrk" path="res://addons/jam_launch/assets/icons/settings.svg" id="9_2myoa"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_jk1cv"]
 
@@ -185,6 +185,10 @@ layout_mode = 2
 text = "Creating Session..."
 horizontal_alignment = 1
 
+[node name="HostInfoLock" type="Node" parent="CC/M/M/PageStack/Home"]
+unique_name_in_owner = true
+script = ExtResource("6_ielux")
+
 [node name="HostGame" type="VBoxContainer" parent="CC/M/M/PageStack"]
 visible = false
 layout_mode = 2
@@ -216,12 +220,9 @@ layout_mode = 2
 text = "Server Region:"
 
 [node name="RegionSelect" type="OptionButton" parent="CC/M/M/PageStack/HostGame/G"]
+unique_name_in_owner = true
 layout_mode = 2
 selected = 0
-item_count = 2
-popup/item_0/text = "North America - East"
-popup/item_1/text = "Europe - West"
-popup/item_1/id = 1
 
 [node name="HB" type="HBoxContainer" parent="CC/M/M/PageStack/HostGame"]
 layout_mode = 2
@@ -440,6 +441,7 @@ theme_override_font_sizes/font_size = 16
 [connection signal="pressed" from="CC/M/M/PageStack/GjwtEntry/Entry/Manual/Local/Dev/Server" to="." method="_on_server_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartJoin" to="." method="_on_start_join_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Home/VB/StartHost" to="." method="_on_start_host_pressed"]
+[connection signal="lock_changed" from="CC/M/M/PageStack/Home/HostInfoLock" to="." method="_on_host_info_lock_lock_changed"]
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/HostBack" to="." method="_on_host_back_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/Host" to="." method="_on_host_pressed"]
 [connection signal="lock_changed" from="CC/M/M/PageStack/HostGame/HostBusy" to="." method="_on_host_busy_lock_changed"]
