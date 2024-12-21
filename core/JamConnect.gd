@@ -66,10 +66,10 @@ signal gjwt_acquired()
 
 ## A reference to the child [JamClient] node that will be instantiated when
 ## running as a client
-var client: JamClient
+var client: JamClient = null
 ## A reference to the child [JamServer] node that will be instantiated when
 ## running as a server
-var server: JamServer
+var server: JamServer = null
 
 ## The Jam Launch Game ID of this game (a hyphen-separated concatenation of the
 ## project ID and release ID, e.g. "projectId-releaseId"). Usually derived from
@@ -170,22 +170,39 @@ func start_up():
 		elif a.begins_with("--"):
 			args[a.lstrip("--")] = true
 	
+	if "window-c" in args:
+		get_window().move_to_center()
+	
+	if "window-x" in args:
+		get_window().position.x += int(args["window-x"])
+		
+	if "window-y" in args:
+		get_window().position.y += int(args["window-y"])
+	
 	if OS.has_feature("server") or "--server" in OS.get_cmdline_args():
 		server = JamServer.new()
 		add_child(server)
 		await server.server_start(args)
+	elif "local-dev-server" in args:
+		start_as_dev_server()
 	else:
 		client = JamClient.new()
 		client.client_ui = client_ui_scene.instantiate()
 		add_child(client)
 		client.client_start()
+		
+		if "local-dev-client" in args:
+			var delay = float(args.get("local-dev-client-delay", "0.75"))
+			await get_tree().create_timer(delay).timeout
+			client.client_session_request("localhost", 7437, "localdev")
 
 ## Converts this JamConnect node from being configured as a client to being
 ## being configured as a server in "dev" mode. Used for simplified local hosting
 ## in debug instances launched from the Godot editor.
 func start_as_dev_server():
-	client.queue_free()
-	client = null
+	if client != null:
+		client.queue_free()
+		client = null
 
 	server = JamServer.new()
 	add_child(server)

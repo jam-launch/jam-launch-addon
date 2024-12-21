@@ -222,7 +222,6 @@ text = "Server Region:"
 [node name="RegionSelect" type="OptionButton" parent="CC/M/M/PageStack/HostGame/G"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 0
 
 [node name="HB" type="HBoxContainer" parent="CC/M/M/PageStack/HostGame"]
 layout_mode = 2
