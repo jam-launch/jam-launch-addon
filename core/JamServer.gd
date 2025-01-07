@@ -277,7 +277,6 @@ func _fetch_local_dev_keys() -> Variant:
 			break
 	
 	var json_response := peer.get_string()
-	print(json_response)
 	
 	if json_response.begins_with("Error:"):
 		push_error("failed to get server creds - %s" % json_response)
