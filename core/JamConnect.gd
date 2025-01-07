@@ -26,42 +26,55 @@ extends Node
 ##
 
 ## Emitted in clients whenever the server sends a notification message
+@warning_ignore("unused_signal")
 signal log_event(msg: String)
 
 ## Emitted in the server whenever a player connects and authenticates with the server
+@warning_ignore("unused_signal")
 signal player_connected(pid: int, username: String)
 ## Emitted in the server whenever a player disconnects from the server
+@warning_ignore("unused_signal")
 signal player_disconnected(pid: int, username: String)
 
 ## Emitted in the server immediately before a "READY" notification is provided
 ## to Jam Launch - this can be used for configuring things before players join.
+@warning_ignore("unused_signal")
 signal server_pre_ready()
 ## Emitted in the server immediately after a "READY" notification is provided
 ## to Jam Launch
+@warning_ignore("unused_signal")
 signal server_post_ready()
 ## Emitted in the server before shutting down - this can be used for last minute
 ## logging or Data API interactions.
+@warning_ignore("unused_signal")
 signal server_shutting_down()
 
 ## Emitted in the client when it starts trying to connect to the server
+@warning_ignore("unused_signal")
 signal local_player_joining()
 ## Emitted in the client when it has been verified
+@warning_ignore("unused_signal")
 signal local_player_joined()
 ## Emitted in the client when it has been disconnected or fails to connect
+@warning_ignore("unused_signal")
 signal local_player_left()
 
 ## Emitted in clients when a player joins
+@warning_ignore("unused_signal")
 signal player_joined(pid: int, username: String)
 ## Emitted in clients when a player leaves
+@warning_ignore("unused_signal")
 signal player_left(pid: int, username: String)
 
 ## Emitted in clients and server when the game has finished a standard
 ## initialization step. By default, this implies that all pending players have
 ## connected as peers of the host/server
+@warning_ignore("unused_signal")
 signal game_init_finalized()
 
 ## Emitted in clients when they have acquired their Jam Launch API credentials
 ## (e.g. via embedded file, test client API, or user entry)
+@warning_ignore("unused_signal")
 signal gjwt_acquired()
 
 ## A reference to the child [JamClient] node that will be instantiated when
@@ -174,10 +187,10 @@ func start_up():
 		get_window().move_to_center()
 	
 	if "window-x" in args:
-		get_window().position.x += int(args["window-x"])
+		get_window().position.x += int(args["window-x"] as String)
 		
 	if "window-y" in args:
-		get_window().position.y += int(args["window-y"])
+		get_window().position.y += int(args["window-y"] as String)
 	
 	if OS.has_feature("server") or "--server" in OS.get_cmdline_args():
 		server = JamServer.new()
@@ -192,7 +205,7 @@ func start_up():
 		client.client_start()
 		
 		if "local-dev-client" in args:
-			var delay = float(args.get("local-dev-client-delay", "0.75"))
+			var delay := float(args.get("local-dev-client-delay", "0.75") as String)
 			await get_tree().create_timer(delay).timeout
 			client.client_session_request("localhost", 7437, "localdev")
 

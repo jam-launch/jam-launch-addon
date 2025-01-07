@@ -98,7 +98,7 @@ func _ready():
 		dev_tools.visible = false
 		local_launch_ui.visible = false
 	
-	var allow_guests = await client_api.check_guests_allowed(jam_connect.game_id)
+	var allow_guests = await client_api.check_guests_allowed()
 	jam_connect.allow_guests = not allow_guests.errored
 	guest_auth_ui.visible = jam_connect.allow_guests
 	
@@ -135,14 +135,14 @@ func _get_hosting_info():
 	host_regions = {}
 	host_region_select.clear()
 	
-	var res = await jam_client.api.get_game_provisioner_info()
+	var res := await jam_client.api.get_game_provisioner_info()
 	if res.errored:
 		show_error("Failed to get hosting options - " + res.error_msg)
 		return
 	
 	for r in res.data["regions"]:
-		var idx = host_region_select.item_count
-		var txt = r
+		var idx := host_region_select.item_count
+		var txt: String = r
 		if r in hosting_name_map:
 			txt = hosting_name_map[r]
 		host_region_select.add_item(txt)
@@ -264,7 +264,7 @@ func _on_start_host_pressed():
 
 func _on_host_pressed():
 	var region := "eu-west-2"
-	var region_idx = host_region_select.selected
+	var region_idx := host_region_select.selected
 	if region_idx >= 0:
 		region = host_region_select.get_item_metadata(region_idx)
 	
@@ -389,11 +389,11 @@ func _on_device_auth_errored(msg: String):
 func _on_guest_auth_pressed() -> void:
 	_on_gjwt_fetch_busy(true)
 	
-	var res = await jam_client.api.get_guest_jwt(jam_connect.game_id)
+	var res := await jam_client.api.get_guest_jwt()
 	if res.errored:
 		show_error(res.error_msg)
 	else:
-		jam_client.set_gjwt(res.data["token"])
+		jam_client.set_gjwt(res.data["token"] as String)
 	
 	_on_gjwt_fetch_busy.call_deferred(false)
 
