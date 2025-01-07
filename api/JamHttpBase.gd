@@ -87,6 +87,11 @@ func _json_http(route: String, method: HTTPClient.Method=HTTPClient.METHOD_GET, 
 		return result
 		
 	var resp = await h.http.request_completed
+	if resp[0] != HTTPRequest.Result.RESULT_SUCCESS:
+		result.errored = true
+		result.error_msg = "HTTP request failure - code {0}".format([resp[0]])
+		return result
+		
 	var response_code = resp[1]
 	var response_body: String = resp[3].get_string_from_utf8()
 	var data = {}

@@ -47,6 +47,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 		var err := peer.poll()
 		if err != OK:
 			push_error("failed to connect to local auth proxy for test creds")
+			peer.disconnect_from_host()
 			return null
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
 			break
@@ -59,6 +60,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 		var err := peer.poll()
 		if err != OK:
 			push_error("failed to get response from local auth proxy for test creds")
+			peer.disconnect_from_host()
 			return null
 		if peer.get_available_bytes() > 0:
 			break
@@ -67,6 +69,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 	
 	if jwt_response.begins_with("Error:"):
 		push_error("failed to get test creds - %s" % jwt_response)
+		peer.disconnect_from_host()
 		return null
 	
 	peer.disconnect_from_host()

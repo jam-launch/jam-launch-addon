@@ -251,10 +251,13 @@ func _setup_local_dev_keys():
 
 func _fetch_local_dev_keys() -> Variant:
 	var peer = StreamPeerTCP.new()
-	peer.connect_to_host("127.0.0.1", 17343)
+	var err := peer.connect_to_host("127.0.0.1", 17343)
+	if err != OK:
+		push_error("failed initial connection to local auth proxy for local server creds")
+		return null
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
+		err = peer.poll()
 		if err != OK:
 			push_error("failed to connect to local auth proxy for local server creds")
 			return null
@@ -266,7 +269,7 @@ func _fetch_local_dev_keys() -> Variant:
 	
 	while true:
 		await get_tree().create_timer(0.1).timeout
-		var err := peer.poll()
+		err = peer.poll()
 		if err != OK:
 			push_error("failed to get response from local auth proxy for server creds")
 			return null
@@ -274,6 +277,7 @@ func _fetch_local_dev_keys() -> Variant:
 			break
 	
 	var json_response := peer.get_string()
+	print(json_response)
 	
 	if json_response.begins_with("Error:"):
 		push_error("failed to get server creds - %s" % json_response)
