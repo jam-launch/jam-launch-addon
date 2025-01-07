@@ -25,8 +25,11 @@ var server_state = {}
 
 var sync_refs = {}
 
-signal sync_step_start(delta: float)
-signal sync_step_end(delta: float)
+const CLIENT_PROCESS_PRIORITY := -1
+const SERVER_PROCESS_PRIORITY := 1000
+
+signal server_sync_step()
+signal client_sync_step()
 
 class StateFrame:
 	extends RefCounted
@@ -82,7 +85,12 @@ func _ready():
 
 func _jam_connect_init(jc: JamConnect):
 	if not jc.m.is_server():
+		process_physics_priority = CLIENT_PROCESS_PRIORITY
+		process_priority = CLIENT_PROCESS_PRIORITY
 		return
+	process_physics_priority = SERVER_PROCESS_PRIORITY
+	process_priority = SERVER_PROCESS_PRIORITY
+	
 	jc.m.peer_connected.connect(_on_peer_connected)
 	jc.m.peer_disconnected.connect(_on_peer_disconnected)
 
@@ -96,14 +104,13 @@ func _on_peer_disconnected(_pid: int):
 	if not multiplayer.is_server():
 		return
 
-func _process(delta):
+func _physics_process(delta):
 	if not multiplayer.has_multiplayer_peer():
 		return
 	
-	sync_step_start.emit(delta)
 	if multiplayer.is_server():
 		sync_clock += delta
-		if sync_clock > sync_interval:
+		if sync_clock >= sync_interval:
 			sync_seq += 1
 			sync_clock -= sync_interval
 			if sync_clock > sync_interval:
@@ -114,6 +121,7 @@ func _process(delta):
 			else:
 				sync_stable = true
 			
+			server_sync_step.emit()
 			if not server_state.is_empty():
 				sync_state.rpc(sync_seq, server_state)
 				server_state = {}
@@ -144,7 +152,7 @@ func _process(delta):
 			segment_time = 0.0
 		
 		# remove expired states
-		while state_interp > sync_interval:
+		while state_interp >= sync_interval:
 			state_interp -= sync_interval
 			if len(state_buffer) > 1:
 				state_buffer.pop_front()
@@ -163,8 +171,8 @@ func _process(delta):
 			state_buffer = state_buffer.slice(overbuffered)
 		elif len(state_buffer) == 1:
 			state_interp = 0.0
-	
-	sync_step_end.emit(delta)
+		
+		client_sync_step.emit()
 
 func amend_server_state(sync_id: int, value: Variant):
 	server_state[sync_id] = value

@@ -22,10 +22,10 @@ func _target_ready():
 		sync_id = get_instance_id()
 		replicator.sync_refs[sync_id] = self
 		replicator.scene_spawn(self)
-		replicator.sync_step_start.connect(_push_server_state)
+		replicator.server_sync_step.connect(_push_server_state)
 	else:
 		replicator.sync_refs[sync_id] = self
-		replicator.sync_step_end.connect(_pull_client_state)
+		replicator.client_sync_step.connect(_pull_client_state)
 
 func _exit_tree():
 	if multiplayer.is_server():
@@ -33,7 +33,7 @@ func _exit_tree():
 	else:
 		replicator.clear_sync_ref(sync_id)
 
-func _push_server_state(_delta: float):
+func _push_server_state():
 	var target = get_parent()
 	var server_state = {}
 	for p in sync_properties:
@@ -42,9 +42,9 @@ func _push_server_state(_delta: float):
 
 const LERP_TYPES = [TYPE_INT, TYPE_FLOAT, TYPE_VECTOR2, TYPE_VECTOR3, TYPE_VECTOR4, TYPE_COLOR, TYPE_QUATERNION, TYPE_BASIS]
 
-func _pull_client_state(_delta: float):
+func _pull_client_state():
 	var target = get_parent()
-	var s = replicator.get_state(sync_id)
+	var s := replicator.get_state(sync_id)
 	if not s.valid:
 		return
 	for p in s.start_state:
