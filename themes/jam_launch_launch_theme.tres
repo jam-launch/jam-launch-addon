@@ -1,8 +1,8 @@
 [gd_resource type="Theme" load_steps=6 format=3 uid="uid://ei4p7e7xwi5w"]
 
-[ext_resource type="FontFile" uid="uid://uaiu7lyf2um7" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Bold.ttf" id="1_8bpkk"]
-[ext_resource type="FontFile" uid="uid://dkxbh2r1sq84" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-BoldItalic.ttf" id="2_mv5xo"]
-[ext_resource type="FontFile" uid="uid://cl6ym4xejm545" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Italic.ttf" id="3_qcxy5"]
+[ext_resource type="FontFile" uid="uid://ul7oda2mxe7p" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Bold.ttf" id="1_8bpkk"]
+[ext_resource type="FontFile" uid="uid://gn647f6rslb3" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-BoldItalic.ttf" id="2_mv5xo"]
+[ext_resource type="FontFile" uid="uid://dxnrj8dduar5" path="res://addons/jam_launch/assets/fonts/Open_Sans/OpenSans-Italic.ttf" id="3_qcxy5"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ktnxh"]
 

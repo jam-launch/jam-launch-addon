@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://n3xyecwue5d7"]
 
-[ext_resource type="Texture2D" uid="uid://c8h7ed8ji1wnb" path="res://addons/jam_launch/assets/icons/check_circle.svg" id="1_msjcb"]
+[ext_resource type="Texture2D" uid="uid://dqo5k55kj7pfl" path="res://addons/jam_launch/assets/icons/check_circle.svg" id="1_msjcb"]
 
 [node name="SuccessBadge" type="TextureRect"]
 modulate = Color(0, 0.6, 0.2, 1)

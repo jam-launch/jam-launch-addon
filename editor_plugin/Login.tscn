@@ -3,8 +3,8 @@
 [ext_resource type="Script" path="res://addons/jam_launch/editor_plugin/Login.gd" id="1_qc7ch"]
 [ext_resource type="Script" path="res://addons/jam_launch/api/JamLoginApi.gd" id="2_5k84e"]
 [ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="2_051wn"]
-[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="2_csf7e"]
-[ext_resource type="Texture2D" uid="uid://dvvpfyr061bd1" path="res://addons/jam_launch/assets/star-jar-outlined_128x128.png" id="2_dpb47"]
+[ext_resource type="FontFile" uid="uid://cwroqw0v5tl81" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="2_csf7e"]
+[ext_resource type="Texture2D" uid="uid://8ho7kii24nuc" path="res://addons/jam_launch/assets/star-jar-outlined_128x128.png" id="2_dpb47"]
 [ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="5_hf7pv"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r7f6r"]

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://addons/jam_launch/ui/client/DeviceAuthUI.gd" id="1_hd2xw"]
 [ext_resource type="PackedScene" uid="uid://d1rvdodn3tw7w" path="res://addons/jam_launch/ui/BusyCircle.tscn" id="2_nlny5"]
-[ext_resource type="FontFile" uid="uid://drcgski530d27" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="3_i6h7r"]
+[ext_resource type="FontFile" uid="uid://cwroqw0v5tl81" path="res://addons/jam_launch/assets/fonts/Azeret/AzeretMono-Medium.ttf" id="3_i6h7r"]
 [ext_resource type="Script" path="res://addons/jam_launch/api/JamLoginApi.gd" id="4_4j6ob"]
 [ext_resource type="Script" path="res://addons/jam_launch/util/ScopeLocker.gd" id="5_voc5j"]
 

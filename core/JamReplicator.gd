@@ -106,11 +106,13 @@ func _process(delta):
 				if sync_stable:
 					push_warning("sync interval lagging due to large _process delta - resetting sync clock")
 				sync_clock = 0.0
+				sync_stable = false
 			else:
 				sync_stable = true
 			
-			sync_state.rpc(sync_seq, server_state)
-			server_state = {}
+			if not server_state.is_empty():
+				sync_state.rpc(sync_seq, server_state)
+				server_state = {}
 	else:
 		state_interp += delta
 		
@@ -143,10 +145,10 @@ func _process(delta):
 			if len(state_buffer) > 1:
 				state_buffer.pop_front()
 			else:
-				if got_initial_state:
-					push_warning("state buffer depleted")
+				# if got_initial_state:
+				# 	push_warning("state buffer depleted")
 				state_interp = 0.0
-				return StateInterp.invalid()
+				return
 		
 		# remove over-buffered states
 		var overbuffered: int = len(state_buffer) - target_state_buffer_len
@@ -167,11 +169,11 @@ func sync_state(seq: int, data: Dictionary):
 		got_initial_state = true
 		state_interp = 0.0
 		state_buffer.append(StateFrame.from(seq, data))
-	elif seq > state_buffer[- 1].seq:
-		data.merge(state_buffer[ - 1].data)
+	elif seq > state_buffer[-1].seq:
+		data.merge(state_buffer[-1].data)
 		state_buffer.append(StateFrame.from(seq, data))
-		if seq > state_buffer[- 1].seq + 1:
-			push_warning("state seq skipped %d" % (seq - state_buffer[ - 1].seq))
+		if seq > state_buffer[-1].seq + 1:
+			push_warning("state seq skipped %d" % (seq - state_buffer[-1].seq))
 	elif seq < state_buffer[0].seq:
 		push_warning("state drop %d" % seq)
 	else:
@@ -196,7 +198,7 @@ func _instantiate_spawn_scene(scene_path: String) -> Node:
 		spawn_scene_cache[scene_path] = scene
 	return spawn_scene_cache[scene_path].instantiate()
 
-func scene_spawn(sync_node: JamSync, peer_id: int=-1):
+func scene_spawn(sync_node: JamSync, peer_id: int = -1):
 	var target = sync_node.get_parent()
 	var target_node_path = "/" + target.get_path().get_concatenated_names()
 	
