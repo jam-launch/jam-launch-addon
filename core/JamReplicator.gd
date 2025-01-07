@@ -25,6 +25,9 @@ var server_state = {}
 
 var sync_refs = {}
 
+signal sync_step_start(delta: float)
+signal sync_step_end(delta: float)
+
 class StateFrame:
 	extends RefCounted
 	var seq: int
@@ -60,7 +63,7 @@ class StateInterp:
 		
 		if len(sbuf) == 1:
 			s.end_state = s.start_state
-			s.progress = 0.0
+			s.progress = interp
 		else:
 			if sync_id not in sbuf[1].data:
 				return StateInterp.invalid()
@@ -97,6 +100,7 @@ func _process(delta):
 	if not multiplayer.has_multiplayer_peer():
 		return
 	
+	sync_step_start.emit(delta)
 	if multiplayer.is_server():
 		sync_clock += delta
 		if sync_clock > sync_interval:
@@ -145,8 +149,8 @@ func _process(delta):
 			if len(state_buffer) > 1:
 				state_buffer.pop_front()
 			else:
-				# if got_initial_state:
-				# 	push_warning("state buffer depleted")
+				#if got_initial_state:
+					#printerr("state buffer depleted")
 				state_interp = 0.0
 				return
 		
@@ -159,6 +163,8 @@ func _process(delta):
 			state_buffer = state_buffer.slice(overbuffered)
 		elif len(state_buffer) == 1:
 			state_interp = 0.0
+	
+	sync_step_end.emit(delta)
 
 func amend_server_state(sync_id: int, value: Variant):
 	server_state[sync_id] = value
