@@ -85,24 +85,47 @@ func _ready():
 
 func _jam_connect_init(jc: JamConnect):
 	if not jc.m.is_server():
-		process_physics_priority = CLIENT_PROCESS_PRIORITY
-		process_priority = CLIENT_PROCESS_PRIORITY
 		return
-	process_physics_priority = SERVER_PROCESS_PRIORITY
-	process_priority = SERVER_PROCESS_PRIORITY
 	
 	jc.m.peer_connected.connect(_on_peer_connected)
 	jc.m.peer_disconnected.connect(_on_peer_disconnected)
+	
+	jc.local_player_left.connect(_reset_values)
 
 func _on_peer_connected(pid: int):
 	if not multiplayer.is_server():
+		process_physics_priority = CLIENT_PROCESS_PRIORITY
+		process_priority = CLIENT_PROCESS_PRIORITY
 		return
+		
+	process_physics_priority = SERVER_PROCESS_PRIORITY
+	process_priority = SERVER_PROCESS_PRIORITY
+	
 	for sync_id in sync_refs:
 		scene_spawn(sync_refs[sync_id] as JamSync, pid)
 
 func _on_peer_disconnected(_pid: int):
 	if not multiplayer.is_server():
 		return
+
+func _reset_values():
+	sync_seq = 0
+	sync_clock = 0.0
+	sync_stable = false
+
+	state_buffer = []
+	state_interp = 0.0
+	got_initial_state = false
+	target_state_buffer_len = 4
+	target_state_buffer_len_min = 4
+	
+	segment_time = 0.0
+	segment_length = 5.0
+	drops_in_segment = 0
+	drops_threshold = 3
+	dropless_segments = 0
+	dropless_threshold = 5
+	buffer_increases = 0
 
 func _physics_process(delta):
 	if not multiplayer.has_multiplayer_peer():

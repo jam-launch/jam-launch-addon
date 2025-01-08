@@ -52,7 +52,7 @@ func get_string_data(url: String) -> JamResult:
 	var h = pool.get_client()
 	var err = h.http.request(url)
 	if err != OK:
-		return JamResult.err("HTTP request error")
+		return JamResult.err("HTTP request error ({0})".format(err))
 	
 	var resp = await h.http.request_completed
 	if resp[1] > 299:
@@ -83,16 +83,23 @@ func _json_http(route: String, method: HTTPClient.Method=HTTPClient.METHOD_GET, 
 		)
 	if err != OK:
 		result.errored = true
-		result.error_msg = "HTTP request error"
+		result.error_msg = "HTTP request error ({0})".format(err)
 		return result
 		
 	var resp = await h.http.request_completed
-	if resp[0] != HTTPRequest.Result.RESULT_SUCCESS:
-		result.errored = true
-		result.error_msg = "HTTP request failure - code {0}".format([resp[0]])
+	
+	var http_result = resp[0]
+	var response_code = resp[1]
+	# TODO: web export 204 responses sometimes just have the RESULT_NO_RESPONSE status -
+	#       maybe this is a bug that will be fixed eventually?
+	if response_code == 204 or http_result == HTTPRequest.Result.RESULT_NO_RESPONSE:
 		return result
 		
-	var response_code = resp[1]
+	if http_result != HTTPRequest.Result.RESULT_SUCCESS:
+		result.errored = true
+		result.error_msg = "HTTP request failure - code {0} ({1})".format([resp[0], route])
+		return result
+		
 	var response_body: String = resp[3].get_string_from_utf8()
 	var data = {}
 	if len(response_body) > 0:
