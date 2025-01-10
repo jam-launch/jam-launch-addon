@@ -133,7 +133,7 @@ theme_override_constants/margin_bottom = 3
 
 [node name="Interpolation" type="Label" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/InterpolationTitle/MarginContainer"]
 layout_mode = 2
-text = "Interpolation"
+text = "Sync Mode"
 vertical_alignment = 1
 
 [node name="ActionsTitle" type="MarginContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps"]
