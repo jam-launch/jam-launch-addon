@@ -1,8 +1,12 @@
 class_name JamReplicator
 extends Node
 
-const sync_interval = 1.0 / 30.0
-var sync_seq = 0
+var min_frames_per_sync: int = 3:
+	set(val):
+		min_frames_per_sync = val
+		sync_interval = (1.0 / Engine.physics_ticks_per_second) * min_frames_per_sync
+var sync_interval: float = (1.0 / Engine.physics_ticks_per_second) * min_frames_per_sync
+var sync_seq: int = 0
 var sync_clock: float = 0.0
 var sync_stable: bool = false
 
@@ -29,7 +33,7 @@ const CLIENT_PROCESS_PRIORITY := -1
 const SERVER_PROCESS_PRIORITY := 1000
 
 signal server_sync_step()
-signal client_sync_step()
+signal client_sync_step(is_sequence_step: bool)
 
 class StateFrame:
 	extends RefCounted
@@ -41,39 +45,6 @@ class StateFrame:
 		f.seq = s
 		f.data = d
 		return f
-
-class StateInterp:
-	extends RefCounted
-	var start_state: Variant
-	var end_state: Variant
-	var progress: float
-	var valid: bool
-	
-	static func invalid():
-		var s = StateInterp.new()
-		s.valid = false
-		return s
-	
-	static func create(sbuf: Array[StateFrame], sync_id: int, interp: float):
-		if len(sbuf) < 1:
-			return StateInterp.invalid()
-		
-		var s = StateInterp.new()
-		s.valid = true
-		if sync_id not in sbuf[0].data:
-			return StateInterp.invalid()
-		s.start_state = sbuf[0].data[sync_id]
-		
-		if len(sbuf) == 1:
-			s.end_state = s.start_state
-			s.progress = interp
-		else:
-			if sync_id not in sbuf[1].data:
-				return StateInterp.invalid()
-			s.end_state = sbuf[1].data[sync_id]
-			s.progress = interp
-			
-		return s
 
 static func get_replicator(tree: SceneTree) -> JamReplicator:
 	return JamRoot.get_jam_root(tree).jam_replicator
@@ -91,6 +62,11 @@ func _jam_connect_init(jc: JamConnect):
 	jc.m.peer_disconnected.connect(_on_peer_disconnected)
 	
 	jc.local_player_left.connect(_reset_values)
+
+func request_max_frames_per_sync(max_frames_per_sync: int):
+	if max_frames_per_sync > min_frames_per_sync:
+		return
+	min_frames_per_sync = max_frames_per_sync
 
 func _on_peer_connected(pid: int):
 	if not multiplayer.is_server():
@@ -147,6 +123,7 @@ func _physics_process(delta):
 			server_sync_step.emit()
 			if not server_state.is_empty():
 				sync_state.rpc(sync_seq, server_state)
+				#print(JSON.stringify(server_state, "  "))
 				server_state = {}
 	else:
 		state_interp += delta
@@ -175,7 +152,10 @@ func _physics_process(delta):
 			segment_time = 0.0
 		
 		# remove expired states
+		var is_sequence_step := false
 		while state_interp >= sync_interval:
+			is_sequence_step = true
+			sync_seq += 1
 			state_interp -= sync_interval
 			if len(state_buffer) > 1:
 				state_buffer.pop_front()
@@ -195,7 +175,7 @@ func _physics_process(delta):
 		elif len(state_buffer) == 1:
 			state_interp = 0.0
 		
-		client_sync_step.emit()
+		client_sync_step.emit(is_sequence_step)
 
 func amend_server_state(sync_id: int, value: Variant):
 	server_state[sync_id] = value
@@ -224,8 +204,12 @@ func sync_state(seq: int, data: Dictionary):
 				break
 			idx += 1
 
-func get_state(sync_id: int) -> StateInterp:
-	return StateInterp.create(state_buffer, sync_id, state_interp / sync_interval)
+func get_state(sync_id: int, ahead: int = 0) -> Variant:
+	if len(state_buffer) < 1 + ahead:
+		return null
+	if sync_id not in state_buffer[ahead].data:
+		return null
+	return state_buffer[ahead].data[sync_id]
 
 var spawn_scene_cache = {}
 
@@ -236,12 +220,12 @@ func _instantiate_spawn_scene(scene_path: String) -> Node:
 	return spawn_scene_cache[scene_path].instantiate()
 
 func scene_spawn(sync_node: JamSync, peer_id: int = -1):
-	var target = sync_node.get_parent()
+	var target := sync_node.get_parent()
 	var target_node_path = "/" + target.get_path().get_concatenated_names()
 	
 	var sprops = {}
-	for p in sync_node.spawn_properties:
-		sprops[p] = target.get(p)
+	for p in sync_node.sync_props:
+		sprops[p.path] = p.get_from(target)
 	
 	if peer_id == -1:
 		_scene_spawn.rpc(target_node_path, target.scene_file_path, sprops, sync_node.sync_id)
@@ -263,7 +247,7 @@ func _scene_spawn(node_path: String, scene_path: String, spawn_properties: Dicti
 		return
 	var spawned_node := _instantiate_spawn_scene(scene_path)
 	for k in spawn_properties:
-		spawned_node.set(k as String, spawn_properties[k])
+		spawned_node.set_indexed(k as NodePath, spawn_properties[k])
 	spawned_node.name = node_path.rsplit("/", true, 1)[1]
 	for child in spawned_node.get_children():
 		if is_instance_of(child, JamSync):

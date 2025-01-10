@@ -1,0 +1,240 @@
+[gd_scene load_steps=7 format=3 uid="uid://c266tae03mwn"]
+
+[ext_resource type="Script" path="res://addons/jam_launch/jam_sync_editor_plugin/JamSyncEditor.gd" id="1_ojsox"]
+[ext_resource type="Script" path="res://addons/jam_launch/jam_sync_editor_plugin/SyncPropertySelect.gd" id="2_ooxqs"]
+
+[sub_resource type="Image" id="Image_n14tq"]
+data = {
+"data": PackedByteArray(255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 224, 224, 224, 255, 224, 224, 224, 255, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0, 255, 255, 255, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_hi33q"]
+image = SubResource("Image_n14tq")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rpeah"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m4min"]
+bg_color = Color(0.0666667, 0.0666667, 0.0666667, 1)
+
+[node name="JamSyncEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ojsox")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="AddProp" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add property to sync..."
+icon = SubResource("ImageTexture_hi33q")
+
+[node name="VSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Path"
+
+[node name="PropPath" type="LineEdit" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = ":property"
+
+[node name="AddPropPath" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add From Path"
+icon = SubResource("ImageTexture_hi33q")
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+self_modulate = Color(1, 1, 1, 0.294118)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_rpeah")
+
+[node name="SyncProps" type="GridContainer" parent="MarginContainer/VBoxContainer/PanelContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 4
+
+[node name="PropertyTitle" type="PanelContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps"]
+self_modulate = Color(1, 1, 1, 0.513726)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_m4min")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/PropertyTitle"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 3
+
+[node name="Property" type="Label" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/PropertyTitle/MarginContainer"]
+layout_mode = 2
+text = "Property"
+vertical_alignment = 1
+
+[node name="IntervalTitle" type="PanelContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps"]
+self_modulate = Color(1, 1, 1, 0.513726)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_m4min")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/IntervalTitle"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 3
+
+[node name="Frequency" type="Label" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/IntervalTitle/MarginContainer"]
+layout_mode = 2
+text = "Sync Interval Multiplier"
+vertical_alignment = 1
+
+[node name="InterpolationTitle" type="PanelContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps"]
+self_modulate = Color(1, 1, 1, 0.513726)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_m4min")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/InterpolationTitle"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 3
+
+[node name="Interpolation" type="Label" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps/InterpolationTitle/MarginContainer"]
+layout_mode = 2
+text = "Interpolation"
+vertical_alignment = 1
+
+[node name="ActionsTitle" type="MarginContainer" parent="MarginContainer/VBoxContainer/PanelContainer/SyncProps"]
+layout_mode = 2
+
+[node name="NodeSelectPopup" type="Popup" parent="."]
+unique_name_in_owner = true
+title = "Select a Node"
+size = Vector2i(358, 508)
+
+[node name="MarginContainer" type="MarginContainer" parent="NodeSelectPopup"]
+custom_minimum_size = Vector2(350, 500)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NodeSelectPopup/MarginContainer"]
+layout_mode = 2
+
+[node name="NodeTree" type="Tree" parent="NodeSelectPopup/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="NodeSelectPopup/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="CancelNodeSelect" type="Button" parent="NodeSelectPopup/MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancel"
+
+[node name="SelectNode" type="Button" parent="NodeSelectPopup/MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Select Node"
+
+[node name="PropertySelectPopup" type="Popup" parent="."]
+unique_name_in_owner = true
+title = "Select a Property"
+size = Vector2i(350, 500)
+
+[node name="MarginContainer" type="MarginContainer" parent="PropertySelectPopup"]
+custom_minimum_size = Vector2(350, 500)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PropertySelectPopup/MarginContainer"]
+layout_mode = 2
+
+[node name="PropList" type="Tree" parent="PropertySelectPopup/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("2_ooxqs")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PropertySelectPopup/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="CancelPropSelect" type="Button" parent="PropertySelectPopup/MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancel"
+
+[node name="SelectProp" type="Button" parent="PropertySelectPopup/MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Select Node"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/AddProp" to="." method="_on_add_prop_pressed"]
+[connection signal="text_submitted" from="MarginContainer/VBoxContainer/HBoxContainer/PropPath" to="." method="_on_prop_path_text_submitted"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/AddPropPath" to="." method="_on_add_prop_path_pressed"]
+[connection signal="item_activated" from="NodeSelectPopup/MarginContainer/VBoxContainer/NodeTree" to="." method="_on_node_tree_item_activated"]
+[connection signal="item_selected" from="NodeSelectPopup/MarginContainer/VBoxContainer/NodeTree" to="." method="_on_node_tree_item_selected"]
+[connection signal="nothing_selected" from="NodeSelectPopup/MarginContainer/VBoxContainer/NodeTree" to="." method="_on_node_tree_nothing_selected"]
+[connection signal="pressed" from="NodeSelectPopup/MarginContainer/VBoxContainer/HBoxContainer/CancelNodeSelect" to="NodeSelectPopup" method="hide"]
+[connection signal="pressed" from="NodeSelectPopup/MarginContainer/VBoxContainer/HBoxContainer/SelectNode" to="." method="_on_select_node_pressed"]
+[connection signal="item_activated" from="PropertySelectPopup/MarginContainer/VBoxContainer/PropList" to="." method="_on_prop_list_item_activated"]
+[connection signal="item_selected" from="PropertySelectPopup/MarginContainer/VBoxContainer/PropList" to="." method="_on_prop_list_item_selected"]
+[connection signal="nothing_selected" from="PropertySelectPopup/MarginContainer/VBoxContainer/PropList" to="." method="_on_prop_list_nothing_selected"]
+[connection signal="pressed" from="PropertySelectPopup/MarginContainer/VBoxContainer/HBoxContainer/CancelPropSelect" to="PropertySelectPopup" method="hide"]
+[connection signal="pressed" from="PropertySelectPopup/MarginContainer/VBoxContainer/HBoxContainer/SelectProp" to="." method="_on_select_prop_pressed"]

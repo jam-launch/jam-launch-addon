@@ -253,13 +253,13 @@ func _fetch_local_dev_keys() -> Variant:
 	var peer = StreamPeerTCP.new()
 	var err := peer.connect_to_host("127.0.0.1", 17343)
 	if err != OK:
-		push_error("failed initial connection to local auth proxy for local server creds")
+		push_error("failed initial connection to local auth proxy for local server credentials")
 		return null
 	while true:
 		await get_tree().create_timer(0.1).timeout
 		err = peer.poll()
 		if err != OK:
-			push_error("failed to connect to local auth proxy for local server creds")
+			push_error("failed to connect to local auth proxy for local server credentials")
 			return null
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
 			break
@@ -271,20 +271,20 @@ func _fetch_local_dev_keys() -> Variant:
 		await get_tree().create_timer(0.1).timeout
 		err = peer.poll()
 		if err != OK:
-			push_error("failed to get response from local auth proxy for server creds")
+			push_error("failed to get response from local auth proxy for server credentials")
 			return null
 		if peer.get_available_bytes() > 0:
 			break
 	
 	var json_response := peer.get_string()
 	
-	if json_response.begins_with("Error:"):
-		push_error("failed to get server creds - %s" % json_response)
+	if json_response.begins_with(JamAuthProxy.ERROR_PREFIX):
+		push_warning("failed to get server credentials - %s" % json_response)
 		return null
 	
 	var result = JSON.parse_string(json_response)
 	if result == null:
-		push_error("failed to parse server creds result - %s" % json_response)
+		push_error("failed to parse server credentials result - %s" % json_response)
 		return null
 	
 	peer.disconnect_from_host()

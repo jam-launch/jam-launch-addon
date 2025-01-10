@@ -1,6 +1,8 @@
 @tool
 extends EditorPlugin
 
+var jam_sync_editor: Control = null
+
 # A class member to hold the dock during the plugin life cycle.
 var dashboard = null
 
@@ -17,14 +19,23 @@ func _enter_tree():
 	main_screen.add_child(dashboard)
 	dashboard.hide()
 	
-	add_custom_type("JamConnect", "Node", preload("../core/JamConnect.gd"), preload("../assets/star-jar-outlined_16x16.png"))
 	add_custom_type("ScopeLocker", "Node", preload("../util/ScopeLocker.gd"), editor_interface.get_base_control().get_theme_icon("Lock", "EditorIcons"))
+	add_custom_type("JamConnect", "Node", preload("../core/JamConnect.gd"), preload("../assets/star-jar-outlined_16x16.png"))
+	add_custom_type("JamSyncProperty", "Resource", preload("../core/JamSyncProperty.gd"), preload("../assets/icons/JamSync.png"))
+	add_custom_type("JamSyncConfig", "Resource", preload("../core/JamSyncConfig.gd"), preload("../assets/icons/JamSync.png"))
 	add_custom_type("JamSync", "Node", preload("../core/JamSync.gd"), preload("../assets/icons/JamSync.png"))
 
 func _exit_tree():
+	if jam_sync_editor:
+		remove_control_from_bottom_panel(jam_sync_editor)
+		jam_sync_editor.queue_free()
+		jam_sync_editor = null
+	
+	remove_custom_type("JamSync")
+	remove_custom_type("JamSyncConfig")
+	remove_custom_type("JamSyncProperty")
 	remove_custom_type("JamConnect")
 	remove_custom_type("ScopeLocker")
-	remove_custom_type("JamSync")
 
 	if dashboard:
 		dashboard.free()

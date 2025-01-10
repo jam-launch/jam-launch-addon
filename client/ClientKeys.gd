@@ -37,7 +37,7 @@ func get_included_gjwt(game_id: String) -> Variant:
 
 func get_test_gjwt(gameId: String) -> Variant:
 	if not OS.is_debug_build():
-		push_error("can't get test gjwt if not in dev mode")
+		push_error("can't get test credentials if not in dev mode")
 		return null
 	
 	var peer = StreamPeerTCP.new()
@@ -46,7 +46,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 		await get_tree().create_timer(0.1).timeout
 		var err := peer.poll()
 		if err != OK:
-			push_error("failed to connect to local auth proxy for test creds")
+			push_error("failed to connect to local auth proxy for test credentials")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_status() == StreamPeerTCP.STATUS_CONNECTED:
@@ -59,7 +59,7 @@ func get_test_gjwt(gameId: String) -> Variant:
 		await get_tree().create_timer(0.1).timeout
 		var err := peer.poll()
 		if err != OK:
-			push_error("failed to get response from local auth proxy for test creds")
+			push_error("failed to get response from local auth proxy for test credentials")
 			peer.disconnect_from_host()
 			return null
 		if peer.get_available_bytes() > 0:
@@ -67,8 +67,8 @@ func get_test_gjwt(gameId: String) -> Variant:
 	
 	var jwt_response = peer.get_string()
 	
-	if jwt_response.begins_with("Error:"):
-		push_error("failed to get test creds - %s" % jwt_response)
+	if jwt_response.begins_with(JamAuthProxy.ERROR_PREFIX):
+		push_warning("failed to get test credentials from auth proxy - %s" % jwt_response)
 		peer.disconnect_from_host()
 		return null
 	

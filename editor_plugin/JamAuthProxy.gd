@@ -10,6 +10,8 @@ var api: JamProjectApi
 var localhostKey: String
 var localhostCert: String
 
+const ERROR_PREFIX = "[Auth Proxy Error]"
+
 class RequestHandler:
 	extends Node
 	
@@ -37,37 +39,44 @@ class RequestHandler:
 		elif req_parts[0] == "localhostcert":
 			_get_localhost_cert(req_parts)
 		else:
-			await _err("Unexpected auth proxy request: %s" % req_parts[0])
+			await _err("unexpected auth proxy request: %s" % req_parts[0])
 			return
 	
 	func _err(msg: String):
-		printerr(msg)
-		peer.put_string("Error: %s" % msg)
+		peer.put_string("%s %s" % [ERROR_PREFIX, msg])
 		await get_tree().create_timer(1.0).timeout
 		is_done = true
 	
 	func _get_testclient_key(req_parts: PackedStringArray):
 		if len(req_parts) != 3:
-			await _err("Expected 3 parts in key request, got %d" % len(req_parts))
+			await _err("request error: Expected 3 parts in key request, got %d" % len(req_parts))
 			return
 		
-		var test_num = (request_num % 9) + 1
+		if not api.jwt.has_token():
+			await _err("failed to get test client key: no credentials (not logged into addon?)")
+			return
+		
+		var test_num := (request_num % 9) + 1
 		var res := await api.get_test_key(req_parts[1], req_parts[2], test_num)
 		if res.errored:
-			await _err(res.error_msg)
+			await _err("failed to get test client key: %s" % res.error_msg)
 			return
-		peer.put_string(res.data["test_jwt"])
+		peer.put_string(res.data["test_jwt"] as String)
 		await get_tree().create_timer(1.0).timeout
 		is_done = true
 	
 	func _get_server_keys(req_parts: PackedStringArray):
 		if len(req_parts) != 3:
-			await _err("Expected 3 parts in server keys request, got %d" % len(req_parts))
+			await _err("expected 3 parts in server keys request, got %d" % len(req_parts))
+			return
+		
+		if not api.jwt.has_token():
+			await _err("failed to get local server keys: no credentials (not logged into addon?)")
 			return
 		
 		var res := await api.get_local_server_keys(req_parts[1], req_parts[2])
 		if res.errored:
-			await _err(res.error_msg)
+			await _err("failed to get server keys: %s" % res.error_msg)
 			return
 		peer.put_string(JSON.stringify(res.data))
 		await get_tree().create_timer(1.0).timeout
@@ -75,7 +84,7 @@ class RequestHandler:
 	
 	func _get_localhost_key(req_parts: PackedStringArray):
 		if len(req_parts) != 1:
-			await _err("Expected 1 part in localhost key request, got %d" % len(req_parts))
+			await _err("expected 1 part in localhost key request, got %d" % len(req_parts))
 			return
 		peer.put_string(localhostKey)
 		await get_tree().create_timer(1.0).timeout
@@ -83,7 +92,7 @@ class RequestHandler:
 	
 	func _get_localhost_cert(req_parts: PackedStringArray):
 		if len(req_parts) != 1:
-			await _err("Expected 1 parts in localhost cert request, got %d" % len(req_parts))
+			await _err("expected 1 part in localhost cert request, got %d" % len(req_parts))
 			return
 		peer.put_string(localhostCert)
 		await get_tree().create_timer(1.0).timeout
@@ -125,7 +134,7 @@ func get_port():
 	return server.get_local_port()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(_delta: float):
 	if not server.is_listening():
 		return
 	
@@ -145,7 +154,7 @@ func _process(delta):
 			continue
 		
 		var req_string = c.get_string()
-		var req = RequestHandler.new()
+		var req := RequestHandler.new()
 		req.localhostKey = localhostKey
 		req.localhostCert = localhostCert
 		req.request = req_string

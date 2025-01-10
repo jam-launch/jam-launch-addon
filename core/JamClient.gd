@@ -58,7 +58,7 @@ func _ready():
 		if OS.is_debug_build() and OS.get_name() != "Android":
 			_setup_test_gjwt()
 		else:
-			push_error("Failed to load GJWT")
+			push_warning("did not load client credentials")
 	else:
 		set_gjwt(gjwt as String)
 
@@ -69,7 +69,7 @@ func _setup_test_gjwt():
 	if gjwt != null:
 		set_gjwt(gjwt as String)
 	else:
-		push_error("Failed to load GJWT")
+		push_warning("failed to load client test credentials")
 
 func set_gjwt(gjwt: String):
 	var gjwtRes = jwt.set_token(gjwt)
