@@ -19,6 +19,37 @@ class PlayerInfo:
 	var user_id: String
 	var token: String
 
+class SessionListing:
+	var id: String
+	var name: String
+	var created_at: String
+	var join_code: String
+
+class SessionListingResult:
+	extends JamHttpBase.Result
+	var sessions: Array[SessionListing] = []
+	
+	static func from_result(res: Result) -> SessionListingResult:
+		var sres = SessionListingResult.new()
+		sres.data = res.data
+		sres.errored = res.errored
+		sres.error_msg = res.error_msg
+		
+		if res.errored:
+			return sres
+			
+		print(res.data)
+		
+		for s_data in sres.data["sessions"]:
+			var s = SessionListing.new()
+			s.id = s_data["id"]
+			s.name = s_data["name"]
+			s.join_code = s_data["join_code"]
+			s.created_at = s_data["created_at"]
+			sres.sessions.append(s)
+		
+		return sres
+
 class GameSessionResult:
 	extends JamHttpBase.Result
 	var session_id: String = ""
@@ -89,12 +120,14 @@ func get_game_provisioner_info() -> Result:
 		HTTPClient.METHOD_GET
 	)
 
-func create_game_session(region: String="us-east-2") -> Result:
+func create_game_session(region: String="us-east-2", listing_name: Variant = null, private: bool = false) -> Result:
 	return await _json_http(
 		"/sessions/%s" % game_id,
 		HTTPClient.METHOD_POST,
 		{
-			"region": region
+			"region": region,
+			"listing_name": listing_name,
+			"private": private
 		}
 	)
 
@@ -103,6 +136,11 @@ func join_game_session(join_id: String) -> Result:
 		"/sessions/%s/join/%s" % [game_id, join_id],
 		HTTPClient.METHOD_POST,
 		{}
+	)
+
+func get_public_game_sessions() -> SessionListingResult:
+	return SessionListingResult.from_result(
+		await _json_http("/sessions/%s/open" % [game_id])
 	)
 
 func get_game_session(session_id: String) -> GameSessionResult:

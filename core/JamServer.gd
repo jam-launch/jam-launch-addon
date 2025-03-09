@@ -30,6 +30,9 @@ var session_id: String = "unset":
 		if callback_api:
 			callback_api.session_id = v
 
+var pre_join_shutdown_timer: Timer = Timer.new()
+var uptime_shutdown_timer: Timer = Timer.new()
+
 var _jc: JamConnect:
 	get:
 		return get_parent()
@@ -147,6 +150,22 @@ func server_start(args: Dictionary):
 			printerr("FATAL: Failed to set READY status in database - %s - aborting..." % res.error_msg)
 			get_tree().quit()
 		_jc.server_post_ready.emit()
+	
+	if _jc.pre_join_timeout_minutes > 0:
+		pre_join_shutdown_timer.start(_jc.pre_join_timeout_minutes * 60)
+		pre_join_shutdown_timer.timeout.connect(_on_pre_join_timeout_shutdown)
+	
+	if _jc.maximum_uptime_minutes > 0:
+		uptime_shutdown_timer.start(_jc.maximum_uptime_minutes * 60)
+		uptime_shutdown_timer.timeout.connect(_on_max_uptime_timeout)
+
+func _on_pre_join_timeout_shutdown():
+	print("shutting down after ", _jc.pre_join_timeout_minutes, " minutes due to pre-join timeout configuration...")
+	shut_down(false)
+
+func _on_max_uptime_timeout():
+	print("shutting down after ", _jc.maximum_uptime_minutes, " minutes due to maximum uptime configuration...")
+	shut_down(true)
 
 ## Authenticates a player by verifying the provided [code]username[/code] and
 ## [code]token[/code] with the Jam Launch callback. In developer mode, a token
@@ -198,6 +217,9 @@ func _on_peer_connect(peer_id: int):
 		printerr("Unexpected connect without username record - peer_id %d" % peer_id)
 		return
 	
+	if not pre_join_shutdown_timer.is_stopped():
+		pre_join_shutdown_timer.stop()
+	
 	var username = peer_usernames[peer_id]
 	for other in peer_usernames.keys():
 		if peer_usernames[other] != username:
@@ -215,7 +237,7 @@ func _on_peer_disconnect(pid: int):
 		_jc.player_disconnected.emit(pid, username)
 		_jc._send_player_left.rpc(pid, username)
 	
-	if peer_usernames.is_empty():
+	if peer_usernames.is_empty() and _jc.shutdown_when_empty:
 		print("All peers disconnected - shutting down...")
 		shut_down(false)
 

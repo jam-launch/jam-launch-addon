@@ -77,6 +77,23 @@ signal game_init_finalized()
 @warning_ignore("unused_signal")
 signal gjwt_acquired()
 
+## The amount of time in minutes that the server will wait for players to join.
+## If no players join before the timeout is reached, the server will shut down.
+## [br]
+## A value of [code]0[/code] means that no timeout will be enforced.
+@export_range(0, 120) var pre_join_timeout_minutes: int = 15
+
+## The maximum time that a server is allowed to run before it should shut itself
+## down. This is primarily meant as a convenience/backup in case the server
+## fails to end itself appropriately.
+## [br]
+## A value of [code]0[/code] means that no automatic uptime shutdown will be
+## performed.
+@export_range(0, 60 * 24) var maximum_uptime_minutes: int = 0
+
+## If true, shuts down the server when all players have disconnected.
+@export var shutdown_when_empty: bool = true
+
 ## A reference to the child [JamClient] node that will be instantiated when
 ## running as a client
 var client: JamClient = null

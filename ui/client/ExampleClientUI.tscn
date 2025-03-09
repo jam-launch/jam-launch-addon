@@ -209,6 +209,24 @@ layout_mode = 2
 text = "Creating Session..."
 horizontal_alignment = 1
 
+[node name="HostConfig" type="VBoxContainer" parent="CC/M/M/PageStack/HostGame"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HostGameName" type="LineEdit" parent="CC/M/M/PageStack/HostGame/HostConfig"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Game Name"
+
+[node name="HB" type="HBoxContainer" parent="CC/M/M/PageStack/HostGame/HostConfig"]
+layout_mode = 2
+alignment = 2
+
+[node name="HostPrivate" type="CheckBox" parent="CC/M/M/PageStack/HostGame/HostConfig/HB"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Private"
+
 [node name="G" type="GridContainer" parent="CC/M/M/PageStack/HostGame"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
@@ -263,17 +281,6 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="PasteCode" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
-layout_mode = 2
-text = "Paste Join Code"
-icon = ExtResource("7_gr1xc")
-icon_alignment = 2
-
-[node name="Or" type="Label" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
-layout_mode = 2
-text = "or"
-horizontal_alignment = 1
-
 [node name="EnterCode" type="HBoxContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
 layout_mode = 2
 theme_override_constants/separation = 8
@@ -288,12 +295,35 @@ theme_override_constants/minimum_character_width = 4
 theme_override_fonts/font = ExtResource("4_uf2si")
 max_length = 4
 
+[node name="PasteCode" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode"]
+layout_mode = 2
+icon = ExtResource("7_gr1xc")
+icon_alignment = 2
+
 [node name="JoinWithCode" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode"]
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "Join
 "
+
+[node name="ActiveSessionsBusy" parent="CC/M/M/PageStack/JoinGameCode/Entry" instance=ExtResource("4_lbmx5")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+padding_ratio = 0.3
+
+[node name="ActiveSessions" type="ScrollContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+
+[node name="ActiveList" type="ItemList" parent="CC/M/M/PageStack/JoinGameCode/Entry/ActiveSessions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Misc" type="HBoxContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry"]
 layout_mode = 2
@@ -303,8 +333,32 @@ theme_override_constants/separation = 8
 layout_mode = 2
 icon = ExtResource("8_qxrcb")
 
+[node name="Container" type="MarginContainer" parent="CC/M/M/PageStack/JoinGameCode/Entry/Misc"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActiveRefresh" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/Misc"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Refresh"
+
+[node name="JoinSelected" type="Button" parent="CC/M/M/PageStack/JoinGameCode/Entry/Misc"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Join"
+
 [node name="JoinBusy" type="Node" parent="CC/M/M/PageStack/JoinGameCode"]
 script = ExtResource("6_ielux")
+
+[node name="ActiveRefBusy" type="Node" parent="CC/M/M/PageStack/JoinGameCode"]
+unique_name_in_owner = true
+script = ExtResource("6_ielux")
+
+[node name="ActiveSessionAutoRefresh" type="Timer" parent="CC/M/M/PageStack/JoinGameCode"]
+unique_name_in_owner = true
+wait_time = 10.0
 
 [node name="Session" type="MarginContainer" parent="CC/M/M/PageStack"]
 visible = false
@@ -444,12 +498,18 @@ theme_override_font_sizes/font_size = 16
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/HostBack" to="." method="_on_host_back_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/HostGame/HB/Host" to="." method="_on_host_pressed"]
 [connection signal="lock_changed" from="CC/M/M/PageStack/HostGame/HostBusy" to="." method="_on_host_busy_lock_changed"]
-[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/PasteCode" to="." method="_on_paste_code_pressed"]
 [connection signal="text_changed" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinCode" to="." method="_on_join_code_text_changed"]
 [connection signal="text_submitted" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinCode" to="." method="_on_join_code_text_submitted"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/PasteCode" to="." method="_on_paste_code_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/EnterCode/JoinWithCode" to="." method="_on_join_with_code_pressed"]
+[connection signal="item_activated" from="CC/M/M/PageStack/JoinGameCode/Entry/ActiveSessions/ActiveList" to="." method="_on_active_list_item_activated"]
+[connection signal="item_selected" from="CC/M/M/PageStack/JoinGameCode/Entry/ActiveSessions/ActiveList" to="." method="_on_active_list_item_selected"]
 [connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/Misc/JoinCodeBack" to="." method="_on_join_code_back_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/Misc/ActiveRefresh" to="." method="_on_active_refresh_pressed"]
+[connection signal="pressed" from="CC/M/M/PageStack/JoinGameCode/Entry/Misc/JoinSelected" to="." method="_on_join_selected_pressed"]
 [connection signal="lock_changed" from="CC/M/M/PageStack/JoinGameCode/JoinBusy" to="." method="_on_join_busy_lock_changed"]
+[connection signal="lock_changed" from="CC/M/M/PageStack/JoinGameCode/ActiveRefBusy" to="." method="_on_active_ref_busy_lock_changed"]
+[connection signal="timeout" from="CC/M/M/PageStack/JoinGameCode/ActiveSessionAutoRefresh" to="." method="_on_active_session_auto_refresh_timeout"]
 [connection signal="timeout" from="CC/M/M/PageStack/Session/SessionRefresh" to="." method="_on_session_refresh_timeout"]
 [connection signal="pressed" from="CC/M/M/PageStack/Session/M/VB/JoinInfo/JoinCodeCopy" to="." method="_on_join_code_copy_pressed"]
 [connection signal="pressed" from="CC/M/M/PageStack/Session/M/VB/StartBox/StartGame" to="." method="_on_start_game_pressed"]
