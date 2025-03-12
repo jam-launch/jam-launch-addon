@@ -44,6 +44,9 @@ func _ready():
 	
 	data_api = JamDataApi.new()
 	add_child(data_api)
+	
+	add_child(pre_join_shutdown_timer)
+	add_child(uptime_shutdown_timer)
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -188,6 +191,12 @@ func _auth_callback(peer_id: int, data: PackedByteArray):
 		push_error("Auth failure - peer id %d - %s" % [peer_id, res.error_msg])
 		_jc.m.disconnect_peer(peer_id)
 		return
+	
+	if _jc.maximum_player_count > 0:
+		if peer_usernames.size() >= _jc.maximum_player_count:
+			push_error("Auth failure - peer id %d - maximum player count has been reached" % [peer_id])
+			_jc.m.disconnect_peer(peer_id)
+			return
 	
 	print("Correlating peer %d with username %s" % [peer_id, username])
 	peer_usernames[peer_id] = username

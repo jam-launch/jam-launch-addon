@@ -94,6 +94,12 @@ signal gjwt_acquired()
 ## If true, shuts down the server when all players have disconnected.
 @export var shutdown_when_empty: bool = true
 
+## The maximum number of players that can be connected before auth checks will
+## auto-fail for all players trying to connect.
+##
+## A value less than 1 means that no limit is imposed.
+@export var maximum_player_count: int = 0
+
 ## A reference to the child [JamClient] node that will be instantiated when
 ## running as a client
 var client: JamClient = null
